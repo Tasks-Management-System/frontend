@@ -2,7 +2,7 @@ export interface User {
     _id: string;
     name: string;
     email: string;
-    password: string;
+    password?: string;
     role: string[];
     profileImage: string | null;
     address: any[]; // you can refine later
@@ -14,6 +14,9 @@ export interface User {
     dob: string | null;
     gender: "male" | "female" | "other";
     isActive: boolean;
+    isEmailVerified?: boolean;
+    emailVerificationToken?: string | null;
+    emailVerificationExpiresAt?: string | null;
     createdAt: string;
     updatedAt: string;
     __v: number;

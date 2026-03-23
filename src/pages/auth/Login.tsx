@@ -3,9 +3,10 @@ import Button from "../../components/UI/Button"
 import Input from "../../components/UI/Input"
 import { Link, useNavigate } from "react-router-dom"
 import { FcGoogle } from "react-icons/fc"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ApiError } from "../../apis/apiService"
 import { login } from "../../apis/api/auth"
+import toast from "react-hot-toast"
 
 const Login = () => {
     const navigate = useNavigate()
@@ -31,11 +32,39 @@ const Login = () => {
         try {
             const res = await loginMutation.mutateAsync({ email: formData.email, password: formData.password })
             if (res?.token) localStorage.setItem("token", res.token)
+            if (res?.user?._id) localStorage.setItem("userId", res.user._id)
+            toast.success("Login successful")
             navigate("/")
         } catch (error) {
-            setErrors({ email: (error as ApiError)?.message || "Invalid email or password", password: "" })
+            const message = (error as ApiError)?.message || "Invalid email or password"
+            toast.error(message)
+            setErrors({ email: message, password: "" })
         }
     }
+
+    useEffect(() => {
+        if(localStorage.getItem("token")) {
+            navigate("/")
+        }
+    }, [navigate])
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const verified = params.get("verified")
+        const reason = params.get("reason")
+
+        if (verified === "true") {
+            toast.success("Email verified successfully. You can now login.")
+        } else if (verified === "false") {
+            if (reason === "missing_token") {
+                toast.error("Verification link is invalid.")
+            } else if (reason === "invalid_or_expired") {
+                toast.error("Verification link is expired or invalid. Please register again.")
+            } else {
+                toast.error("Email verification failed. Please try again.")
+            }
+        }
+    }, [])
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
             <h1 className="text-2xl font-bold">EMS Pro</h1>
@@ -76,15 +105,15 @@ const Login = () => {
                             {(loginMutation.error as ApiError)?.message || "Login failed"}
                         </div>
                     )}
-
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="remember" />
+                        <label htmlFor="remember" className="text-sm text-gray-500">Remember me</label>
+                    </div>
                     <Button variant="primary" type="submit" disabled={loginMutation.isPending}>
                         {loginMutation.isPending ? "Signing in..." : "Sign In"}
                         <MoveRight size={18} />
                     </Button>
-                    <div className="flex items-center gap-2">
-                        <Input type="checkbox" id="remember" />
-                        <label htmlFor="remember" className="text-sm text-gray-500">Remember me</label>
-                    </div>
+
                     <div>
                         <Button variant="outline" type="button" className="w-full" >
                             <FcGoogle size={24} /> Continue with Google

@@ -5,10 +5,31 @@ import SignUp from './pages/auth/SignUp'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Dashboard from './pages/dashboard/Dashboard'
 import Tasks from './pages/tasks/Tasks'
+import { Toaster } from 'react-hot-toast'
+import Profile from './pages/profile/Profile'
+import Settings from './pages/settings/Settings'
 
 function App() {
   return (
+    <>
+    <Toaster 
+    position="top-right"
+    toastOptions={{
+      duration: 3000,
+      style: {
+        background: '#ffffff',
+        color: '#000000',
+      },
+      error: {
+        iconTheme: {
+          primary: '#ff0000',
+          secondary: '#fff',
+        },
+      },
+    }}
+    />
     <Routes>
+
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route element={<DashboardLayout />}>
@@ -19,10 +40,12 @@ function App() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/salary" element={<Dashboard />} />
         <Route path="/hiring" element={<Dashboard />} />
-        <Route path="/settings" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }
 

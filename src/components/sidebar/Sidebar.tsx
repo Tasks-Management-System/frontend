@@ -20,7 +20,7 @@ const navItems = [
   { path: "/leave", label: "Leave", icon: Calendar },
   { path: "/salary", label: "Salary", icon: Banknote },
   { path: "/hiring", label: "Hiring", icon: UserPlus },
-  { path: "/settings", label: "Settings", icon: Settings },
+  // { path: "/settings", label: "Settings", icon: Settings },
 ];
 
 const Sidebar = () => {

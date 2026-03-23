@@ -1,8 +1,15 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../sidebar/Sidebar";
 import Header from "../header/Header";
+import { useEffect } from "react";
 
 const DashboardLayout = () => {
+  const navigate = useNavigate()
+  useEffect(() => {
+    if(!localStorage.getItem("token")) {
+      navigate("/login")
+    }
+  }, [navigate])
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />

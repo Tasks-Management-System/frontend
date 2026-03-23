@@ -1,11 +1,11 @@
 export const apiPath = {
     auth: {
-        signup: "/auth/signup",
+        signup: "/auth/register",
         login: "/auth/login",
         getUsers: "/auth",
-        getUserById: "/auth/:id",
-        updateUser: "/auth/:id",
-        deleteUser: "/auth/:id",
+        getUserById: "/auth/",
+        updateUser: "/auth/",
+        deleteUser: "/auth/",
         logout: "/auth/logout",
         refreshToken: "/auth/refresh-token",
     },

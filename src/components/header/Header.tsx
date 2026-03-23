@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { getUserById } from "../../apis/api/auth";
 
 const routeTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -20,20 +21,17 @@ const profileMenuItems = [
   { path: "/logout", label: "Sign out", icon: LogOut },
 ];
 
-interface HeaderProps {
-  /** Optional profile image URL; if not set, initials are shown */
-  profileImageUrl?: string;
-  userName?: string;
-}
-
-const Header = ({ profileImageUrl, userName = "John Doe" }: HeaderProps) => {
+const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
+  const userId = localStorage.getItem("userId") ?? ""
 
   const location = useLocation()
   const title = routeTitles[location.pathname]
+
+  const {  data: user} = getUserById(userId)
 
   const handleAttendanceToggle = () => {
     if (!isCheckedIn) {
@@ -71,9 +69,9 @@ const Header = ({ profileImageUrl, userName = "John Doe" }: HeaderProps) => {
   }, [isCheckedIn, startTime]);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const initials = userName
-    .split(" ")
-    .map((n) => n[0])
+  const initials = user?.name
+    ?.split(" ")
+    ?.map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -135,16 +133,16 @@ const Header = ({ profileImageUrl, userName = "John Doe" }: HeaderProps) => {
             aria-expanded={isMenuOpen}
             aria-haspopup="true"
           >
-            <div className="flex flex-col items-center ">
-              <p className="text-sm font-medium">John Doe</p>
-              <p className="text-xs text-gray-500">Admin</p>
+            <div className="flex flex-col items-end">
+              <p className="text-sm font-medium capitalize">{user?.name ?? "—"}</p>
+              <p className="text-xs text-gray-500 uppercase">{user?.role?.[0] ?? "—"}</p>
             </div>
 
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm shrink-0 overflow-hidden ring-2 ring-white shadow-sm">
-              {profileImageUrl ? (
+              {user?.profileImage ? (
                 <img
-                  src={profileImageUrl}
-                  alt={userName}
+                  src={user.profileImage}
+                  alt={user.name}
                   className="w-full h-full object-cover"
                 />
               ) : (

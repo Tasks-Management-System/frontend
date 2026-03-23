@@ -111,6 +111,42 @@ export async function request<T = unknown>(
     return data as T;
 }
 
+export async function uploadFormData<T = unknown>(
+    method: HttpMethod,
+    path: string,
+    formData: FormData,
+    options: Omit<RequestOptions, "body"> = {}
+): Promise<T> {
+    const { auth = true, token = null, query, headers, ...init } = options;
+    const finalToken = token ?? (auth ? getStoredToken() : null);
+    const url = appendQuery(joinUrl(API_BASE_URL, path), query);
+
+    const finalHeaders: HeadersInit = {
+        ...(finalToken ? { Authorization: `Bearer ${finalToken}` } : {}),
+        ...(headers || {}),
+    };
+
+    const res = await fetch(url, {
+        ...init,
+        method,
+        headers: finalHeaders,
+        body: formData,
+    });
+
+    const data = await parseMaybeJson(res);
+
+    if (!res.ok) {
+        const message =
+            (data as any)?.message ||
+            (typeof data === "string" && data) ||
+            res.statusText ||
+            "Request failed";
+        throw new ApiError({ message, status: res.status, data });
+    }
+
+    return data as T;
+}
+
 export const api = {
     get: <T = unknown>(path: string, options?: Omit<RequestOptions, "body">) =>
         request<T>("GET", path, options),
@@ -131,5 +167,11 @@ export const api = {
     ) => request<T>("PATCH", path, { ...(options || {}), body }),
     del: <T = unknown>(path: string, options?: Omit<RequestOptions, "body">) =>
         request<T>("DELETE", path, options),
+    upload: <T = unknown>(
+        method: HttpMethod,
+        path: string,
+        formData: FormData,
+        options?: Omit<RequestOptions, "body">
+    ) => uploadFormData<T>(method, path, formData, options),
 };
 
