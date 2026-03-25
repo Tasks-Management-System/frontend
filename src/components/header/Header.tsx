@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, Menu } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { getUserById } from "../../apis/api/auth";
 
@@ -11,7 +11,7 @@ const routeTitles: Record<string, string> = {
   "/attendance": "Attendance",
   "/leave": "Leave",
   "/salary": "Salary",
-  "/hiring": "Hiring",
+  "/employee": "Employees",
   "/settings": "Settings",
 };
 
@@ -21,15 +21,21 @@ const profileMenuItems = [
   { path: "/logout", label: "Sign out", icon: LogOut },
 ];
 
-const Header = () => {
+type HeaderProps = {
+  onOpenSidebar?: () => void;
+};
+
+const Header = ({ onOpenSidebar }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const userId = localStorage.getItem("userId") ?? ""
 
-  const location = useLocation()
-  const title = routeTitles[location.pathname]
+  const location = useLocation();
+  const title =
+    routeTitles[location.pathname] ??
+    (location.pathname.startsWith("/tasks") ? "Tasks" : "Workspace");
 
   const {  data: user} = getUserById(userId)
 
@@ -87,10 +93,22 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40 h-22">
-      <div className="flex items-center justify-between h-full px-4 sm:px-6">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold">{title}</h1>
+    <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/80 shadow-sm sticky top-0 z-30 min-h-16">
+      <div className="flex items-center justify-between min-h-16 px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          {onOpenSidebar ? (
+            <button
+              type="button"
+              className="lg:hidden inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white p-2 text-gray-700 shadow-sm hover:bg-gray-50"
+              aria-label="Open menu"
+              onClick={onOpenSidebar}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          ) : null}
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-900">
+            {title}
+          </h1>
         </div>
         <div className="relative flex items-center gap-2" ref={menuRef} >
           <div className="flex items-center gap-4">

@@ -18,6 +18,7 @@ import {
 import { getUserById, useUpdateProfileImage, useUpdateUser } from "../../apis/api/auth";
 import toast from "react-hot-toast";
 import Modal from "../../components/UI/Model";
+import { PillTabBar } from "../../components/UI/PillTabBar";
 import type { User as UserType } from "../../types/user.types";
 
 const tabs = [
@@ -211,29 +212,12 @@ const Profile = () => {
         </div>
 
         <div className="px-4 sm:px-6 border-t border-gray-100 py-4 sm:py-5 overflow-x-auto scrollbar-hide">
-          <div className="relative inline-flex bg-gray-100 p-1 shadow-lg rounded-full min-w-max">
-            <div
-              className="absolute top-1 bottom-1 rounded-full bg-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-all duration-300 ease-in-out"
-              style={{
-                width: `calc((100% - 8px) / ${tabs.length})`,
-                transform: `translateX(${tabs.findIndex((tab) => tab.key === activeTab) * 100}%)`,
-              }}
-            />
-
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`relative z-10 inline-flex items-center justify-center text-center min-w-[120px] sm:min-w-[140px] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap transition-all duration-200 ${
-                  activeTab === tab.key
-                    ? "text-black/90 scale-105"
-                    : "text-black/50 hover:text-black/70"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <PillTabBar
+            items={tabs.map((t) => ({ key: t.key, label: t.label }))}
+            activeKey={activeTab}
+            onTabChange={setActiveTab}
+            className="min-w-max"
+          />
         </div>
       </div>
 

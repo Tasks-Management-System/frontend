@@ -27,6 +27,31 @@ export const signup = () => {
     })
 }
 
+export type AdminCreateUserInput = {
+    name: string
+    email: string
+    password: string
+    role: "admin" | "employee" | "hr" | "manager"
+}
+
+export const useCreateUserByAdmin = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationKey: ["createUserByAdmin"],
+        mutationFn: async (body: AdminCreateUserInput) => {
+            const res = await api.post<{ success: boolean; message?: string; user: User }>(
+                apiPath.auth.createUser,
+                body,
+                { auth: true }
+            )
+            return res
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] })
+        },
+    })
+}
+
 export const getUserById = (id: string) => {
     return useQuery({
         queryKey: ["user", id],
@@ -83,6 +108,23 @@ export const getUsers = () => {
         queryFn: async () => {
             const res = await api.get<{ users: User[] }>(apiPath.auth.getUsers, { auth: true })
             return res.users
+        },
+    })
+}
+
+/** Returns [] when the current user cannot list users (e.g. not admin/hr). */
+export const useAssignableUsers = () => {
+    return useQuery<User[]>({
+        queryKey: ["users", "assignable"],
+        queryFn: async (): Promise<User[]> => {
+            try {
+                const res = await api.get<{ users: User[] }>(apiPath.auth.getUsers, {
+                    auth: true,
+                })
+                return res.users
+            } catch {
+                return []
+            }
         },
     })
 }

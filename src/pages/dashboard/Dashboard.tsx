@@ -1,4 +1,5 @@
 import Button from "../../components/UI/Button";
+import Input from "../../components/UI/Input";
 import { CircleCheckBig, Download, FolderPlus, NotebookPen, Presentation, User, UserPlus } from "lucide-react";
 import {
   LineChart,
@@ -10,8 +11,11 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import toast from "react-hot-toast";
 import Modal from "../../components/UI/Model";
+import { getUserById, useCreateUserByAdmin, type AdminCreateUserInput } from "../../apis/api/auth";
+import { ApiError } from "../../apis/apiService";
 
 const dashboardData = [
   {
@@ -77,11 +81,54 @@ const projectData = [
 ];
 const Dashboard = () => {
   const [openModal, setOpenModal] = useState<string | null>(null);
+  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
+  const { data: sessionUser } = getUserById(userId);
+  const createUserMutation = useCreateUserByAdmin();
+
+  const [employeeForm, setEmployeeForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "employee" as AdminCreateUserInput["role"],
+  });
+
+  const sessionRole = sessionUser?.role?.[0];
+  const canCreateUsers = sessionRole === "admin" || sessionRole === "super-admin";
+  const roleOptions: AdminCreateUserInput["role"][] =
+    sessionRole === "super-admin"
+      ? ["admin", "employee", "hr", "manager"]
+      : ["employee", "hr", "manager"];
+
   const handleOpen = (modal: string) => {
     setOpenModal(modal);
+    if (modal === "employee") {
+      setEmployeeForm((prev) => ({
+        ...prev,
+        name: "",
+        email: "",
+        password: "",
+        role: roleOptions.includes(prev.role) ? prev.role : roleOptions[0],
+      }));
+    }
   };
   const handleClose = () => {
     setOpenModal(null);
+  };
+
+  const handleCreateEmployee = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!canCreateUsers) {
+      toast.error("Only administrators can create users.");
+      return;
+    }
+    try {
+      await createUserMutation.mutateAsync(employeeForm);
+      toast.success("User created with the selected role.");
+      handleClose();
+    } catch (err) {
+      const msg = (err as ApiError)?.message || "Could not create user";
+      toast.error(msg);
+    }
   };
   return (
     <div>
@@ -282,17 +329,92 @@ const Dashboard = () => {
         }
       >
         {/* Dynamic Content */}
-        {openModal === "employee" && <p>Add Employee Form Here</p>}
+        {openModal === "employee" &&
+          (canCreateUsers ? (
+            <form onSubmit={handleCreateEmployee} className="flex flex-col gap-3 mt-1">
+              <Input
+                label="Full name"
+                name="name"
+                value={employeeForm.name}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, name: e.target.value }))
+                }
+                required
+                placeholder="Jane Doe"
+              />
+              <Input
+                label="Email"
+                name="email"
+                type="email"
+                value={employeeForm.email}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, email: e.target.value }))
+                }
+                required
+                placeholder="jane@company.com"
+              />
+              <Input
+                label="Temporary password"
+                name="password"
+                type="password"
+                value={employeeForm.password}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, password: e.target.value }))
+                }
+                required
+                placeholder="At least 6 characters"
+              />
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700" htmlFor="create-user-role">
+                  Role
+                </label>
+                <select
+                  id="create-user-role"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  value={employeeForm.role}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({
+                      ...s,
+                      role: e.target.value as AdminCreateUserInput["role"],
+                    }))
+                  }
+                >
+                  {roleOptions.map((r) => (
+                    <option key={r} value={r}>
+                      {r.charAt(0).toUpperCase() + r.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500">
+                  This role is saved on the new account and controls what they can access.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2 mt-2">
+                <Button variant="outline" type="button" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending ? "Creating…" : "Create user"}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <p className="text-sm text-gray-600">
+              Only an admin or super-admin can add users and assign roles.
+            </p>
+          ))}
         {openModal === "project" && <p>Create Project Form Here</p>}
         {openModal === "task" && <p>Assign Task Form Here</p>}
         {openModal === "leave" && <p>Approve Leave UI Here</p>}
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button>Save</Button>
-        </div>
+        {openModal !== "employee" ? (
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button>Save</Button>
+          </div>
+        ) : null}
       </Modal>
     </div>
   );

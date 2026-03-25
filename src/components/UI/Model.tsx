@@ -6,9 +6,11 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  /** Tailwind classes for the modal panel (width, max-width, etc.) */
+  panelClassName?: string;
 }
 
-const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
+const Modal = ({ isOpen, onClose, title, children, panelClassName }: ModalProps) => {
 
   // ESC key close
   useEffect(() => {
@@ -31,8 +33,8 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 />
       {/* Modal */}
       <div
-        className="relative bg-white w-full max-w-md rounded-2xl shadow-xl
-        transform transition-all duration-300 scale-100 opacity-100"
+        className={`relative bg-white w-full max-w-md rounded-2xl shadow-xl
+        transform transition-all duration-300 scale-100 opacity-100 ${panelClassName ?? ""}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b">

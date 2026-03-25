@@ -4,6 +4,8 @@ export interface User {
     email: string;
     password?: string;
     role: string[];
+    /** Set by the backend when an admin manages this user (employee / hr / manager). */
+    managedBy?: string | null;
     profileImage: string | null;
     address: any[]; // you can refine later
     phone: string | null;

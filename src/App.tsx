@@ -39,7 +39,7 @@ function App() {
         <Route path="/projects" element={<Dashboard />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/salary" element={<Dashboard />} />
-        <Route path="/hiring" element={<Dashboard />} />
+        <Route path="/employee" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
       </Route>
