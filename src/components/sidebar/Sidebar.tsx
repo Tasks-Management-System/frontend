@@ -9,12 +9,22 @@ import {
   UserPlus,
   ChevronDown,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
-import { useMemo, useState } from "react";
-import { useProjectsList } from "../../apis/api/projects";
+import { useMemo, useState, type FormEvent } from "react";
+import toast from "react-hot-toast";
+import {
+  useCreateProject,
+  useProjectsList,
+  type CreateProjectInput,
+} from "../../apis/api/projects";
 import { getUserById } from "../../apis/api/auth";
+import { ApiError } from "../../apis/apiService";
 import type { Project } from "../../types/project.types";
+import Modal from "../UI/Model";
+import Input from "../UI/Input";
+import Button from "../UI/Button";
 
 const PROJECT_ACCENTS = [
   "bg-violet-500",
@@ -51,9 +61,19 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
+  const createProjectMutation = useCreateProject();
   const userId = localStorage.getItem("userId") ?? "";
   const { data: user } = getUserById(userId);
   const [projectsOpen, setProjectsOpen] = useState(true);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const [projectForm, setProjectForm] = useState<CreateProjectInput>({
+    projectName: "",
+    description: "",
+  });
+
+  const canCreateProjects = (user?.role ?? []).some((r) =>
+    ["admin", "manager", "super-admin"].includes(r)
+  );
 
   const selectedProjectId = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -70,6 +90,24 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     .slice(0, 2);
 
   const roleLabel = user?.role?.[0] ?? "Member";
+
+  const openCreateProject = () => {
+    setProjectForm({ projectName: "", description: "" });
+    setCreateProjectOpen(true);
+  };
+
+  const handleSubmitCreateProject = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await createProjectMutation.mutateAsync(projectForm);
+      toast.success("Project created");
+      setCreateProjectOpen(false);
+      setProjectsOpen(true);
+      onMobileClose?.();
+    } catch (err) {
+      toast.error((err as ApiError)?.message ?? "Could not create project");
+    }
+  };
 
   const linkClass = ({
     isActive,
@@ -142,19 +180,35 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
         </NavLink>
 
         <div className="pt-1">
-          <button
-            type="button"
-            onClick={() => setProjectsOpen((o) => !o)}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100/90"
-          >
-            <FolderKanban className="h-5 w-5 shrink-0 text-gray-500" />
-            <span className="flex-1 truncate">Projects</span>
-            {projectsOpen ? (
-              <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
-            ) : (
-              <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
-            )}
-          </button>
+          <div className="flex items-center gap-0.5 pr-1">
+            <button
+              type="button"
+              onClick={() => setProjectsOpen((o) => !o)}
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100/90"
+            >
+              <FolderKanban className="h-5 w-5 shrink-0 text-gray-500" />
+              <span className="flex-1 truncate">Projects</span>
+              {projectsOpen ? (
+                <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+              )}
+            </button>
+            {canCreateProjects ? (
+              <button
+                type="button"
+                onClick={() => {
+                  openCreateProject();
+                  setProjectsOpen(true);
+                }}
+                className="shrink-0 rounded-lg p-2 text-gray-500 transition-colors hover:bg-violet-50 hover:text-violet-700"
+                title="New project"
+                aria-label="Create new project"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
 
           {projectsOpen ? (
             <div className="mt-1 space-y-0.5 border-l border-gray-200/80 ml-4 pl-2">
@@ -214,6 +268,51 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
           </div>
         </button>
       </div>
+
+      <Modal
+        isOpen={createProjectOpen}
+        onClose={() => setCreateProjectOpen(false)}
+        title="New project"
+      >
+        <form
+          onSubmit={handleSubmitCreateProject}
+          className="mt-1 flex flex-col gap-3"
+        >
+          <Input
+            label="Project name"
+            name="projectName"
+            value={projectForm.projectName}
+            onChange={(e) =>
+              setProjectForm((s) => ({ ...s, projectName: e.target.value }))
+            }
+            required
+            placeholder="e.g. Website redesign"
+          />
+          <Input
+            label="Description"
+            name="description"
+            type="textarea"
+            value={projectForm.description}
+            onChange={(e) =>
+              setProjectForm((s) => ({ ...s, description: e.target.value }))
+            }
+            required
+            placeholder="Short summary"
+          />
+          <div className="mt-2 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setCreateProjectOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createProjectMutation.isPending}>
+              {createProjectMutation.isPending ? "Creating…" : "Create"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 
@@ -229,7 +328,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       />
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200/80 bg-white/95 shadow-[4px_0_24px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-transform duration-300 ease-out",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200/80 bg-white/40 shadow-[4px_0_24px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-transform duration-300 ease-out",
           "lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         ].join(" ")}

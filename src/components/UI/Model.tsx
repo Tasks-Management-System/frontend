@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -23,33 +24,39 @@ const Modal = ({ isOpen, onClose, title, children, panelClassName }: ModalProps)
 
   if (!isOpen) return null;
 
-  return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isOpen ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}>
-
-      {/* Overlay */}
+  /** Portal avoids `position: fixed` being clipped by transformed ancestors (e.g. sidebar). */
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? "modal-title" : undefined}
+    >
       <div
-  className="absolute inset-0 bg-black/20 backdrop-blur-xs transition-transform duration-300"
-  onClick={onClose}
-/>
-      {/* Modal */}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
-        className={`relative bg-white w-full max-w-md rounded-2xl shadow-xl
-        transform transition-all duration-300 scale-100 opacity-100 ${panelClassName ?? ""}`}
+        className={`relative z-10 mx-auto w-full max-w-md max-h-[min(90dvh,720px)] overflow-y-auto rounded-2xl bg-white shadow-xl ${panelClassName ?? ""}`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h2 className="font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose}>
-            <X className="w-5 h-5 text-gray-500 hover:text-black" />
+        <div className="flex items-center justify-between border-b px-5 py-4">
+          <h2 id="modal-title" className="font-semibold text-gray-800">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
-
-        {/* Content */}
-        <div className="p-5">
-          {children}
-        </div>
+        <div className="p-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
