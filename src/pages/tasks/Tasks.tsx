@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Archive,
   CalendarDays,
   Columns3,
   LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   Plus,
   UserRound,
@@ -30,6 +32,9 @@ import { PillTabBar, type PillTabItem } from "../../components/UI/PillTabBar";
 
 type TabKey = "all" | "my" | "archived";
 type ViewMode = "cards" | "kanban";
+
+const KANBAN_FETCH_LIMIT = 100;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "all", label: "All Tasks" },
@@ -87,6 +92,21 @@ function isPopulatedProject(p: Task["project"]): p is Project {
   return typeof p === "object" && p !== null && "projectName" in p;
 }
 
+function taskProjectName(task: Task): string {
+  return isPopulatedProject(task.project) ? task.project.projectName : "Project";
+}
+
+function taskAssigneeName(task: Task): string {
+  if (
+    task.assignedTo &&
+    typeof task.assignedTo === "object" &&
+    "name" in task.assignedTo
+  ) {
+    return task.assignedTo.name;
+  }
+  return "Unassigned";
+}
+
 function formatDue(d?: string | null) {
   if (!d) return "—";
   try {
@@ -109,16 +129,8 @@ function TaskCard({
   onStatusChange: (id: string, status: TaskStatus) => void;
   updating: boolean;
 }) {
-  const assignee =
-    task.assignedTo &&
-    typeof task.assignedTo === "object" &&
-    "name" in task.assignedTo
-      ? task.assignedTo.name
-      : "Unassigned";
-
-  const projectName = isPopulatedProject(task.project)
-    ? task.project.projectName
-    : "Project";
+  const assignee = taskAssigneeName(task);
+  const projectName = taskProjectName(task);
 
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white/90 p-4 shadow-[0_8px_30px_rgba(15,23,42,0.05)] ring-1 ring-black/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
@@ -225,6 +237,9 @@ export default function Tasks() {
 
   const [tab, setTab] = useState<TabKey>("all");
   const [view, setView] = useState<ViewMode>("kanban");
+  /** Server pagination for cards + table (default 10 rows per page). */
+  const [taskListPage, setTaskListPage] = useState(1);
+  const [taskListLimit, setTaskListLimit] = useState(10);
   const [createOpen, setCreateOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -240,7 +255,19 @@ export default function Tasks() {
   const { data: projects = [] } = useProjectsList(100);
   const { data: users = [] } = useAssignableUsers();
   const canCreateTask = (me?.role ?? []).some(
-    (r) => r === "admin" || r === "manager"
+    (r) =>
+      r === "super-admin" ||
+      r === "admin" ||
+      r === "manager" ||
+      r === "hr" ||
+      r === "employee"
+  );
+  const canAssignOthers = (me?.role ?? []).some(
+    (r) =>
+      r === "super-admin" ||
+      r === "admin" ||
+      r === "manager" ||
+      r === "hr"
   );
   const createMut = useCreateTask();
   const updateMut = useUpdateTask();
@@ -253,21 +280,50 @@ export default function Tasks() {
   const listFilters = useMemo(() => {
     const archived = tab === "archived";
     const scope = tab === "my" ? ("my" as const) : undefined;
+    if (view === "cards") {
+      return {
+        page: taskListPage,
+        limit: taskListLimit,
+        project: projectId,
+        archived,
+        scope,
+      };
+    }
     return {
-      limit: 100,
+      page: 1,
+      limit: KANBAN_FETCH_LIMIT,
       project: projectId,
       archived,
       scope,
     };
+  }, [tab, projectId, view, taskListPage, taskListLimit]);
+
+  useEffect(() => {
+    setTaskListPage(1);
   }, [tab, projectId]);
 
   const { data: tasksRes, isLoading, isError, error } = useTasksList(listFilters);
   const rawTasks = tasksRes?.tasks ?? [];
-  /** Hide Done tasks from All/My once `updatedAt` is ≥24h ago (still show everything in Archived). */
+  const pagination = tasksRes?.pagination;
+
+  /** Hide Done tasks from All/My once `updatedAt` is ≥24h ago (still show everything in Archived). Skip on cards view so server pagination matches the table. */
   const tasks = useMemo(() => {
     if (tab === "archived") return rawTasks;
+    if (view === "cards") return rawTasks;
     return withoutStaleCompletedTasks(rawTasks);
-  }, [rawTasks, tab]);
+  }, [rawTasks, tab, view]);
+
+  const tableRangeLabel = useMemo(() => {
+    const total = pagination?.totalTasks ?? 0;
+    const currentPage = pagination?.currentPage ?? taskListPage;
+    if (total === 0) return "No tasks";
+    if (tasks.length === 0) {
+      return `Page ${currentPage} · 0 of ${total}`;
+    }
+    const from = (currentPage - 1) * taskListLimit + 1;
+    const to = from + tasks.length - 1;
+    return `${from}–${to} of ${total}`;
+  }, [pagination, taskListPage, taskListLimit, tasks.length]);
 
   const grouped = useMemo(() => {
     const g: Record<TaskStatus, Task[]> = {
@@ -313,7 +369,9 @@ export default function Tasks() {
         description: formDescription.trim() || undefined,
         dueDate: formDue ? new Date(formDue).toISOString() : undefined,
         priority: formPriority as "low" | "medium" | "urgent",
-        assignedTo: formAssignee || undefined,
+        ...(canAssignOthers
+          ? { assignedTo: formAssignee || undefined }
+          : {}),
         status: "pending",
       });
       toast.success("Task created");
@@ -337,6 +395,12 @@ export default function Tasks() {
   const heading = selectedProject
     ? selectedProject.projectName
     : "Tasks";
+
+  const showGlobalEmpty =
+    !isLoading &&
+    !isError &&
+    tasks.length === 0 &&
+    (view !== "cards" || (pagination?.totalTasks ?? 0) === 0);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -366,7 +430,7 @@ export default function Tasks() {
               className="inline-flex items-center gap-2 shadow-[0_8px_24px_rgba(109,40,217,0.25)]"
             >
               <Plus className="h-4 w-4" />
-              Create Task
+              Create task
             </Button>
           ) : null}
         </div>
@@ -394,23 +458,206 @@ export default function Tasks() {
         <div className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-800">
           {(error as Error)?.message ?? "Failed to load tasks."}
         </div>
-      ) : tasks.length === 0 ? (
+      ) : showGlobalEmpty ? (
         <div className="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white to-gray-50 px-6 py-16 text-center shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
           <p className="text-sm font-medium text-gray-800">No tasks here yet</p>
           <p className="mt-1 text-sm text-gray-500">
             Create a task or adjust filters to see work items.
           </p>
+          {canCreateTask ? (
+            <div className="mt-6 flex justify-center">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={openCreate}
+                className="inline-flex items-center gap-2 shadow-[0_8px_24px_rgba(109,40,217,0.25)]"
+              >
+                <Plus className="h-4 w-4" />
+                Create task
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : view === "cards" ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task._id}
-              task={task}
-              onStatusChange={handleStatusChange}
-              updating={updatingId === task._id}
-            />
-          ))}
+        <div className="space-y-10">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {tasks.map((task) => (
+              <TaskCard
+                key={task._id}
+                task={task}
+                onStatusChange={handleStatusChange}
+                updating={updatingId === task._id}
+              />
+            ))}
+          </div>
+
+          <section
+            className="space-y-3"
+            aria-labelledby="tasks-list-table-title"
+          >
+            <h3
+              id="tasks-list-table-title"
+              className="text-lg font-semibold tracking-tight text-gray-900"
+            >
+              Task list
+            </h3>
+            <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50/90 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <th scope="col" className="px-4 py-3.5">
+                        Project
+                      </th>
+                      <th scope="col" className="px-4 py-3.5">
+                        Task
+                      </th>
+                      <th scope="col" className="px-4 py-3.5">
+                        Description
+                      </th>
+                      <th scope="col" className="px-4 py-3.5">
+                        Assignee
+                      </th>
+                      <th scope="col" className="px-4 py-3.5 whitespace-nowrap">
+                        Due
+                      </th>
+                      <th scope="col" className="px-4 py-3.5 whitespace-nowrap">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {tasks.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-12 text-center text-sm text-gray-500"
+                        >
+                          No tasks on this page. Use the arrows or change rows
+                          per page.
+                        </td>
+                      </tr>
+                    ) : null}
+                    {tasks.map((task) => (
+                      <tr
+                        key={`row-${task._id}`}
+                        className="transition-colors hover:bg-violet-50/40"
+                      >
+                        <td className="px-4 py-3 align-top">
+                          <span className="font-medium text-gray-700">
+                            {taskProjectName(task)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <span className="font-semibold text-gray-900">
+                            {task.taskName}
+                          </span>
+                        </td>
+                        <td className="max-w-xs px-4 py-3 align-top text-gray-600">
+                          <span className="line-clamp-2">
+                            {task.description?.trim()
+                              ? task.description
+                              : "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 align-top text-gray-700">
+                          {taskAssigneeName(task)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 align-top text-gray-600">
+                          {formatDue(task.dueDate)}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="flex items-center gap-2">
+                            <label
+                              className="sr-only"
+                              htmlFor={`table-status-${task._id}`}
+                            >
+                              Status for {task.taskName}
+                            </label>
+                            <select
+                              id={`table-status-${task._id}`}
+                              disabled={updatingId === task._id}
+                              value={task.status}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  task._id,
+                                  e.target.value as TaskStatus
+                                )
+                              }
+                              className="min-w-[8.5rem] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                            >
+                              {STATUS_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                            {updatingId === task._id ? (
+                              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-violet-600" />
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                  <span className="text-gray-500">Rows per page</span>
+                  <select
+                    value={taskListLimit}
+                    onChange={(e) => {
+                      setTaskListLimit(Number(e.target.value));
+                      setTaskListPage(1);
+                    }}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-900 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                    aria-label="Rows per page"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-sm text-gray-600 tabular-nums">
+                  {tableRangeLabel}
+                </p>
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    disabled={pagination?.previousPage == null}
+                    onClick={() => {
+                      const prev = pagination?.previousPage;
+                      if (prev != null) setTaskListPage(prev);
+                    }}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-40"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-[4.5rem] px-2 text-center text-xs font-medium text-gray-500 tabular-nums">
+                    {pagination?.totalPages
+                      ? `${pagination.currentPage} / ${pagination.totalPages}`
+                      : "—"}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={pagination?.nextPage == null}
+                    onClick={() => {
+                      const next = pagination?.nextPage;
+                      if (next != null) setTaskListPage(next);
+                    }}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-40"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-3 lg:overflow-visible">
@@ -457,7 +704,7 @@ export default function Tasks() {
               onChange={setFormPriority}
             />
           </div>
-          {userOptions.length > 0 ? (
+          {canAssignOthers && userOptions.length > 0 ? (
             <Dropdown
               label="Assign to"
               placeholder="Unassigned"
@@ -465,6 +712,11 @@ export default function Tasks() {
               value={formAssignee}
               onChange={setFormAssignee}
             />
+          ) : null}
+          {!canAssignOthers ? (
+            <p className="text-xs text-gray-500">
+              This task will be assigned to you.
+            </p>
           ) : null}
           <Input
             label="Title"

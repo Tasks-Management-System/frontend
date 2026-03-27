@@ -41,8 +41,12 @@ export const apiPath = {
         getHiringById: "/hiring/",
         deleteHiring: "/hiring/",
         updateHiring: "/hiring/update/",
-    }
- 
+    },
+    notes: {
+        list: "/notes",
+        create: "/notes/create",
+        byId: "/notes/",
+    },
 }
 
 /**

@@ -27,7 +27,16 @@ export function clientCurrentSessionWorkedMs(
   return Math.max(0, Date.now() - start - breakMs);
 }
 
-export const attendanceTodayQueryKey = ["attendance", "today"] as const;
+export function localYmd(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function attendanceListQueryKey(date: string) {
+  return ["attendance", "list", date] as const;
+}
 
 export function pickMyAttendanceRecord(
   res: AttendanceListResponse | undefined,
@@ -43,24 +52,28 @@ export function pickMyAttendanceRecord(
     if (typeof u === "string") return u === myUserId;
     return false;
   });
-  if (match) return match;
-  if (attendance.length === 1) return attendance[0];
-  return null;
+  // Never fall back to attendance[0]: admins get everyone's rows for the day; a single
+  // employee record would wrongly show as the logged-in user's punch state.
+  return match ?? null;
 }
 
-export function useTodayAttendance(enabled = true) {
+export function useAttendanceList(date: string, enabled = true) {
   return useQuery({
-    queryKey: attendanceTodayQueryKey,
-    enabled,
+    queryKey: attendanceListQueryKey(date),
+    enabled: enabled && !!date,
     queryFn: async () => {
       return api.get<AttendanceListResponse>(apiPath.attendance.getAttendance, {
         auth: true,
+        query: { date },
       });
     },
-    /** Pick up a new calendar day (fresh `date` on server) without a full reload. */
     refetchInterval: 60 * 1000,
     refetchOnWindowFocus: true,
   });
+}
+
+export function useTodayAttendance(enabled = true) {
+  return useAttendanceList(localYmd(), enabled);
 }
 
 export function usePunchIn() {
@@ -74,7 +87,7 @@ export function usePunchIn() {
         { auth: true }
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: attendanceTodayQueryKey });
+      qc.invalidateQueries({ queryKey: ["attendance"] });
     },
   });
 }
@@ -90,7 +103,7 @@ export function usePunchOut() {
         { auth: true }
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: attendanceTodayQueryKey });
+      qc.invalidateQueries({ queryKey: ["attendance"] });
     },
   });
 }
@@ -106,7 +119,7 @@ export function useStartBreak() {
         { auth: true }
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: attendanceTodayQueryKey });
+      qc.invalidateQueries({ queryKey: ["attendance"] });
     },
   });
 }
@@ -122,7 +135,7 @@ export function useEndBreak() {
         { auth: true }
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: attendanceTodayQueryKey });
+      qc.invalidateQueries({ queryKey: ["attendance"] });
     },
   });
 }

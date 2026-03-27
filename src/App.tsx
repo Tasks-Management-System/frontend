@@ -8,6 +8,8 @@ import Tasks from './pages/tasks/Tasks'
 import { Toaster } from 'react-hot-toast'
 import Profile from './pages/profile/Profile'
 import Settings from './pages/settings/Settings'
+import Attendance from './pages/attendance/Attendance'
+import StickyNotes from './pages/notes/StickyNotes'
 
 function App() {
   return (
@@ -34,10 +36,11 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/attendance" element={<Dashboard />} />
+        <Route path="/attendance" element={<Attendance />} />
         <Route path="/leave" element={<Dashboard />} />
         <Route path="/projects" element={<Dashboard />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/notes" element={<StickyNotes />} />
         <Route path="/salary" element={<Dashboard />} />
         <Route path="/employee" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />

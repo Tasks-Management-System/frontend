@@ -20,6 +20,7 @@ const routeTitles: Record<string, string> = {
   "/tasks": "Tasks",
   "/projects": "Projects",
   "/attendance": "Attendance",
+  "/notes": "Sticky notes",
   "/leave": "Leave",
   "/salary": "Salary",
   "/employee": "Employees",

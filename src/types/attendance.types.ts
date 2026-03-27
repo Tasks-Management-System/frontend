@@ -39,6 +39,8 @@ export type AttendanceListResponse = {
   success: boolean;
   message: string;
   attendance: AttendanceRecord[];
+  /** Server anchor for the queried calendar day (ISO). */
+  date?: string;
 };
 
 export type AttendanceMutationResponse = {

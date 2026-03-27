@@ -13,7 +13,7 @@ export type TaskListFilters = {
 };
 
 export function useTasksList(filters: TaskListFilters) {
-  const { page = 1, limit = 80, project, archived, scope, search } = filters;
+  const { page = 1, limit = 10, project, archived, scope, search } = filters;
   return useQuery({
     queryKey: ["tasks", { page, limit, project, archived, scope, search }],
     queryFn: async () => {
