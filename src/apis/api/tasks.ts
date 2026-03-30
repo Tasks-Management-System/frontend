@@ -40,7 +40,7 @@ export type CreateTaskInput = {
   description?: string;
   dueDate?: string;
   priority?: "low" | "medium" | "urgent";
-  status?: "pending" | "in_progress" | "completed";
+  status?: "pending" | "in_progress" | "review" | "completed";
 };
 
 export function useCreateTask() {
@@ -61,7 +61,7 @@ export type UpdateTaskInput = {
   taskName?: string;
   description?: string;
   dueDate?: string | null;
-  status?: "pending" | "in_progress" | "completed";
+  status?: "pending" | "in_progress" | "review" | "completed";
   priority?: "low" | "medium" | "urgent";
   archived?: boolean;
 };

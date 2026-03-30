@@ -8,3 +8,12 @@
 *::-webkit-scrollbar {
   display: none;               /* Chrome / Safari / Opera */
 }
+
+/* Sticky notes: smooth drag (DOM transform); disable transitions while dragging */
+.sticky-note--dragging {
+  transition: none !important;
+  cursor: grabbing !important;
+}
+.sticky-note--dragging * {
+  cursor: grabbing !important;
+}

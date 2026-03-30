@@ -69,6 +69,11 @@ const STATUS_UI: Record<
     className:
       "bg-violet-50 text-violet-800 ring-1 ring-violet-200/80",
   },
+  review: {
+    label: "Review",
+    className:
+      "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80",
+  },
   completed: {
     label: "Done",
     className:
@@ -85,6 +90,7 @@ const PRIORITY_OPTIONS = [
 const STATUS_OPTIONS = [
   { label: "Todo", value: "pending" },
   { label: "In Progress", value: "in_progress" },
+  { label: "Review", value: "review" },
   { label: "Done", value: "completed" },
 ];
 
@@ -329,6 +335,7 @@ export default function Tasks() {
     const g: Record<TaskStatus, Task[]> = {
       pending: [],
       in_progress: [],
+      review: [],
       completed: [],
     };
     for (const t of tasks) {
@@ -660,7 +667,7 @@ export default function Tasks() {
           </section>
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-3 lg:overflow-visible">
+        <div className="flex gap-4 overflow-x-auto pb-2 xl:grid xl:grid-cols-4 xl:overflow-visible">
           <KanbanColumn
             title="Todo"
             tasks={grouped.pending}
@@ -670,6 +677,12 @@ export default function Tasks() {
           <KanbanColumn
             title="In Progress"
             tasks={grouped.in_progress}
+            onStatusChange={handleStatusChange}
+            updatingId={updatingId}
+          />
+          <KanbanColumn
+            title="Review"
+            tasks={grouped.review}
             onStatusChange={handleStatusChange}
             updatingId={updatingId}
           />

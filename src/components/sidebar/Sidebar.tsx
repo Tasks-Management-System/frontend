@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ChevronRight,
   Plus,
+  Notebook,
+  NotepadText,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
 import { useMemo, useState, type FormEvent } from "react";
@@ -47,7 +49,7 @@ function accentForId(id: string) {
 const mainNav = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { path: "/tasks", label: "Tasks", icon: CheckSquare, end: false },
-  { path: "/notes", label: "Sticky notes", icon: StickyNote, end: false },
+  { path: "/notes", label: "Notes", icon: NotepadText, end: false },
   { path: "/attendance", label: "Attendance", icon: Clock, end: false },
   { path: "/leave", label: "Leave", icon: Calendar, end: false },
   { path: "/salary", label: "Salary", icon: Banknote, end: false },

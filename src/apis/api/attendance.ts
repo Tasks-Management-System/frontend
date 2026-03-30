@@ -38,6 +38,50 @@ export function attendanceListQueryKey(date: string) {
   return ["attendance", "list", date] as const;
 }
 
+export function attendanceRangeQueryKey(from: string, to: string) {
+  return ["attendance", "range", from, to] as const;
+}
+
+/** Monday 00:00 local for the calendar week containing `d`. */
+export function startOfWeekMonday(d = new Date()): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const dow = x.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  x.setDate(x.getDate() + diff);
+  return x;
+}
+
+export function addDays(d: Date, n: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+/** Seven YYYY-MM-DD strings Mon → Sun. */
+export function weekDayYmds(weekMonday: Date): string[] {
+  return Array.from({ length: 7 }, (_, i) => localYmd(addDays(weekMonday, i)));
+}
+
+export function useAttendanceRange(
+  from: string,
+  to: string,
+  enabled = true
+) {
+  return useQuery({
+    queryKey: attendanceRangeQueryKey(from, to),
+    enabled: enabled && !!from && !!to,
+    queryFn: async () => {
+      return api.get<AttendanceListResponse>(apiPath.attendance.getAttendance, {
+        auth: true,
+        query: { from, to },
+      });
+    },
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function pickMyAttendanceRecord(
   res: AttendanceListResponse | undefined,
   myUserId: string

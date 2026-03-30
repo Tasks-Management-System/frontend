@@ -1,7 +1,7 @@
 import type { Project } from "./project.types";
 import type { User } from "./user.types";
 
-export type TaskStatus = "pending" | "in_progress" | "completed";
+export type TaskStatus = "pending" | "in_progress" | "review" | "completed";
 
 export interface Task {
   _id: string;

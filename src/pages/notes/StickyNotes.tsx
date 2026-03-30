@@ -93,70 +93,66 @@ function randomBoardPosition(): { positionX: number; positionY: number } {
 
 type DragSession = {
   id: string;
-  startX: number;
-  startY: number;
+  startClientX: number;
+  startClientY: number;
   originX: number;
   originY: number;
   boardW: number;
   boardH: number;
+  el: HTMLElement;
 };
 
 export default function StickyNotes() {
   const boardRef = useRef<HTMLDivElement>(null);
   const dragSession = useRef<DragSession | null>(null);
+  const zoomRef = useRef(1);
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createContent, setCreateContent] = useState("");
   const [createColor, setCreateColor] = useState<StickyColorId>("lemon");
 
-  const [livePos, setLivePos] = useState<{
-    id: string;
-    x: number;
-    y: number;
-  } | null>(null);
   const [zoom, setZoom] = useState(1);
 
   const { data, isLoading, isError, error } = useMyNotes(false);
   const createMut = useCreateNote();
   const patchMut = usePatchNote();
+  const patchMutRef = useRef(patchMut);
+  patchMutRef.current = patchMut;
   const notes = data?.notes ?? [];
+  zoomRef.current = zoom;
 
-  const notePosition = useCallback(
-    (note: StickyNoteType) => {
-      if (livePos?.id === note._id) {
-        return { x: livePos.x, y: livePos.y };
-      }
-      return {
-        x: note.positionX ?? 12,
-        y: note.positionY ?? 12,
-      };
-    },
-    [livePos]
-  );
+  function notePosition(note: StickyNoteType) {
+    return {
+      x: note.positionX ?? 12,
+      y: note.positionY ?? 12,
+    };
+  }
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       const s = dragSession.current;
       if (!s) return;
-      const dxPct = ((e.clientX - s.startX) / s.boardW) * 100;
-      const dyPct = ((e.clientY - s.startY) / s.boardH) * 100;
-      setLivePos({
-        id: s.id,
-        x: clamp(s.originX + dxPct, 0, 82),
-        y: clamp(s.originY + dyPct, 0, 78),
-      });
+      e.preventDefault();
+      const dx = e.clientX - s.startClientX;
+      const dy = e.clientY - s.startClientY;
+      const z = zoomRef.current;
+      s.el.style.transform = `translate3d(${dx / z}px, ${dy / z}px, 0)`;
     };
     const finishDrag = (e: PointerEvent) => {
       const s = dragSession.current;
       if (!s) return;
       dragSession.current = null;
-      setLivePos(null);
-      const dxPct = ((e.clientX - s.startX) / s.boardW) * 100;
-      const dyPct = ((e.clientY - s.startY) / s.boardH) * 100;
+      const dxPct = ((e.clientX - s.startClientX) / s.boardW) * 100;
+      const dyPct = ((e.clientY - s.startClientY) / s.boardH) * 100;
       const nx = clamp(s.originX + dxPct, 0, 82);
       const ny = clamp(s.originY + dyPct, 0, 78);
-      patchMut.mutate(
+      s.el.style.transform = "";
+      s.el.style.zIndex = "";
+      s.el.style.willChange = "";
+      s.el.classList.remove("sticky-note--dragging");
+      document.body.style.userSelect = "";
+      patchMutRef.current.mutate(
         { id: s.id, body: { positionX: nx, positionY: ny } },
         {
           onError: (err) => {
@@ -167,7 +163,7 @@ export default function StickyNotes() {
         }
       );
     };
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);
     return () => {
@@ -175,7 +171,7 @@ export default function StickyNotes() {
       window.removeEventListener("pointerup", finishDrag);
       window.removeEventListener("pointercancel", finishDrag);
     };
-  }, [patchMut]);
+  }, []);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -201,21 +197,34 @@ export default function StickyNotes() {
       if (!boardRef.current) return;
       e.preventDefault();
       e.stopPropagation();
+      const article = (e.currentTarget as HTMLElement).closest(
+        "[data-sticky-note]"
+      ) as HTMLElement | null;
+      if (!article) return;
+
       const br = boardRef.current.getBoundingClientRect();
       const pos = notePosition(note);
       dragSession.current = {
         id: note._id,
-        startX: e.clientX,
-        startY: e.clientY,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
         originX: pos.x,
         originY: pos.y,
         boardW: br.width,
         boardH: br.height,
+        el: article,
       };
-      setLivePos({ id: note._id, x: pos.x, y: pos.y });
-      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+      article.style.zIndex = "60";
+      article.style.willChange = "transform";
+      article.classList.add("sticky-note--dragging");
+      document.body.style.userSelect = "none";
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch {
+        /* older browsers */
+      }
     },
-    [notePosition]
+    []
   );
 
   const handleColorChange = (noteId: string, color: StickyColorId) => {
@@ -364,21 +373,20 @@ export default function StickyNotes() {
             notes.map((note) => {
               const { x, y } = notePosition(note);
               const card = stickyCardClasses(note.color);
-              const dragging = livePos?.id === note._id;
               return (
                 <article
                   key={note._id}
+                  data-sticky-note
                   className={`
                     absolute w-[min(15.5rem,calc(100vw-3rem))] max-w-[248px] rounded-xl border bg-gradient-to-br p-0
                     shadow-[3px_3px_0_rgba(15,23,42,0.07),0_12px_28px_rgba(15,23,42,0.06)]
-                    transition-shadow
+                    z-10
                     ${card}
-                    ${dragging ? "z-50 scale-[1.02] shadow-lg ring-2 ring-violet-400/40" : "z-10"}
                   `}
                   style={{ left: `${x}%`, top: `${y}%` }}
                 >
                   <div
-                    className="flex cursor-grab items-center gap-1.5 border-b border-black/5 bg-black/[0.03] px-2 py-1.5 active:cursor-grabbing"
+                    className="flex cursor-grab touch-none items-center gap-1.5 border-b border-black/5 bg-black/[0.03] px-2 py-1.5 active:cursor-grabbing"
                     onPointerDown={(e) => handleGripDown(e, note)}
                     role="presentation"
                   >

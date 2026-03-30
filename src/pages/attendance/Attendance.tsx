@@ -2,12 +2,20 @@ import { useMemo, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
-  Clock,
   Loader2,
 } from "lucide-react";
 import { getUserById } from "../../apis/api/auth";
-import { localYmd, useAttendanceList } from "../../apis/api/attendance";
+import {
+  addDays,
+  localYmd,
+  startOfWeekMonday,
+  useAttendanceList,
+  useAttendanceRange,
+  weekDayYmds,
+} from "../../apis/api/attendance";
+import { PillTabBar } from "../../components/UI/PillTabBar";
 import type {
   AttendanceBreak,
   AttendanceRecord,
@@ -59,6 +67,37 @@ function userLabel(record: AttendanceRecord) {
   }
   return "—";
 }
+
+function recordUserId(record: AttendanceRecord): string {
+  const u = record.user;
+  if (typeof u === "object" && u !== null && "_id" in u) {
+    return String((u as { _id: string })._id);
+  }
+  if (typeof u === "string") return u;
+  return "";
+}
+
+function recordDateYmd(record: AttendanceRecord): string {
+  if (!record.date) return "";
+  try {
+    return localYmd(new Date(record.date));
+  } catch {
+    return "";
+  }
+}
+
+function shortDayHeading(ymd: string): string {
+  const [y, mo, d] = ymd.split("-").map(Number);
+  if (!y || !mo || !d) return ymd;
+  const dt = new Date(y, mo - 1, d);
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(dt);
+}
+
+type ViewMode = "day" | "week";
 
 const STATUS_UI: Record<
   string,
@@ -202,10 +241,184 @@ function AttendanceRow({
   );
 }
 
+function WeeklySummaryTable({
+  days,
+  records,
+  isAdmin,
+  selfUserId,
+  isLoading,
+  isError,
+  error,
+  weekLabel,
+  onPrevWeek,
+  onNextWeek,
+}: {
+  days: string[];
+  records: AttendanceRecord[];
+  isAdmin: boolean;
+  selfUserId: string;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  weekLabel: string;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+}) {
+  const matrix = useMemo(() => {
+    const byUserAndDay = new Map<string, Map<string, AttendanceRecord>>();
+    for (const r of records) {
+      const uid = recordUserId(r);
+      if (!uid) continue;
+      const ymd = recordDateYmd(r);
+      if (!ymd) continue;
+      if (!byUserAndDay.has(uid)) byUserAndDay.set(uid, new Map());
+      byUserAndDay.get(uid)!.set(ymd, r);
+    }
+
+    let rowKeys: { id: string; name: string }[] = [];
+    if (isAdmin) {
+      const seen = new Map<string, string>();
+      for (const r of records) {
+        const id = recordUserId(r);
+        if (!id) continue;
+        if (!seen.has(id)) seen.set(id, userLabel(r));
+      }
+      rowKeys = [...seen.entries()]
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      const uid =
+        (records.length > 0 ? recordUserId(records[0]) : "") || selfUserId;
+      rowKeys = [{ id: uid || "me", name: "Your hours" }];
+    }
+
+    const rows = rowKeys.map(({ id, name }) => {
+      const dayMap = byUserAndDay.get(id) ?? new Map();
+      let weekMs = 0;
+      const cells = days.map((ymd) => {
+        const rec = dayMap.get(ymd);
+        const ms = rec?.dayWorkedMs ?? 0;
+        weekMs += ms;
+        return {
+          ymd,
+          rec,
+          ms,
+          display:
+            rec && (ms > 0 || rec.status === "working" || rec.status === "on_break")
+              ? rec.readableDayTotal ?? formatMs(ms)
+              : "—",
+        };
+      });
+      return { id, name, cells, weekMs };
+    });
+
+    return rows;
+  }, [records, days, isAdmin, selfUserId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Loading week…
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        {(error as Error)?.message ?? "Could not load attendance."}
+      </div>
+    );
+  }
+
+  if (records.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center text-sm text-slate-500">
+        No attendance in this week yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-medium text-slate-700">{weekLabel}</p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onPrevWeek}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onNextWeek}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
+            aria-label="Next week"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/90 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {isAdmin && (
+                <th className="sticky left-0 z-10 bg-slate-50/95 px-3 py-3">
+                  Employee
+                </th>
+              )}
+              {days.map((ymd) => (
+                <th key={ymd} className="px-2 py-3 text-center">
+                  {shortDayHeading(ymd)}
+                </th>
+              ))}
+              <th className="px-3 py-3 text-center">Week total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matrix.map((row) => (
+              <tr
+                key={row.id}
+                className="border-b border-slate-100 text-slate-800"
+              >
+                {isAdmin && (
+                  <td className="sticky left-0 z-10 bg-white px-3 py-3 font-medium text-slate-900">
+                    {row.name}
+                  </td>
+                )}
+                {row.cells.map((c) => (
+                  <td
+                    key={c.ymd}
+                    className="px-2 py-3 text-center tabular-nums text-slate-700"
+                  >
+                    <span title={c.rec ? String(c.rec.status) : undefined}>
+                      {c.display}
+                    </span>
+                  </td>
+                ))}
+                <td className="px-3 py-3 text-center font-semibold tabular-nums text-slate-900">
+                  {formatMs(row.weekMs)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function Attendance() {
   const userId = localStorage.getItem("userId") ?? "";
   const { data: user } = getUserById(userId);
+  const [view, setView] = useState<ViewMode>("day");
   const [date, setDate] = useState(() => localYmd());
+  const [weekMonday, setWeekMonday] = useState(() => startOfWeekMonday());
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const isAdmin = useMemo(() => {
@@ -214,49 +427,123 @@ export default function Attendance() {
     return roles.includes("admin") || roles.includes("super-admin");
   }, [user?.role]);
 
-  const { data, isLoading, isError, error } = useAttendanceList(date, !!userId);
+  const weekFrom = localYmd(weekMonday);
+  const weekTo = localYmd(addDays(weekMonday, 6));
+  const weekDays = useMemo(() => weekDayYmds(weekMonday), [weekMonday]);
+
+  const weekLabelFull = useMemo(() => {
+    const a = shortDayHeading(weekFrom);
+    const b = shortDayHeading(weekTo);
+    const y = weekMonday.getFullYear();
+    return `${a} – ${b}, ${y}`;
+  }, [weekFrom, weekTo, weekMonday]);
+
+  const { data, isLoading, isError, error } = useAttendanceList(
+    date,
+    !!userId && view === "day"
+  );
+
+  const {
+    data: weekData,
+    isLoading: weekLoading,
+    isError: weekError,
+    error: weekErr,
+  } = useAttendanceRange(weekFrom, weekTo, !!userId && view === "week");
 
   const rows = data?.attendance ?? [];
+  const weekRows = weekData?.attendance ?? [];
 
   return (
     <div className="min-h-0 flex-1 space-y-6 p-4 md:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-slate-900">
             Attendance
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {isAdmin
-              ? "All team members for the selected day."
-              : "Your clock in, breaks, and clock out for the selected day."}
+            {view === "day"
+              ? isAdmin
+                ? "All team members for the selected day."
+                : "Your clock in, breaks, and clock out for the selected day."
+              : isAdmin
+                ? "Worked time per day for everyone (Mon–Sun)."
+                : "Your worked time for each day this week."}
           </p>
         </div>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
-          <CalendarDays className="h-4 w-4 text-slate-400" />
-          <span className="sr-only">Date</span>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <PillTabBar
+            size="sm"
+            items={[
+              { key: "day", label: "Day" },
+              { key: "week", label: "Week" },
+            ]}
+            activeKey={view}
+            onTabChange={(k) => setView(k as ViewMode)}
           />
-        </label>
+          {view === "day" ? (
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <CalendarDays className="h-4 w-4 text-slate-400" />
+              <span className="sr-only">Date</span>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
+            </label>
+          ) : (
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <CalendarDays className="h-4 w-4 text-slate-400" />
+              <span className="sr-only">Jump to week</span>
+              <input
+                type="date"
+                value={localYmd(weekMonday)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!v) return;
+                  const [y, m, d] = v.split("-").map(Number);
+                  setWeekMonday(startOfWeekMonday(new Date(y, m - 1, d)));
+                }}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
+            </label>
+          )}
+        </div>
       </div>
 
-      {isLoading && (
+      {view === "week" && (
+        <WeeklySummaryTable
+          days={weekDays}
+          records={weekRows}
+          isAdmin={isAdmin}
+          selfUserId={userId}
+          isLoading={weekLoading}
+          isError={weekError}
+          error={weekErr as Error | null}
+          weekLabel={weekLabelFull}
+          onPrevWeek={() =>
+            setWeekMonday((m) => addDays(m, -7))
+          }
+          onNextWeek={() =>
+            setWeekMonday((m) => addDays(m, 7))
+          }
+        />
+      )}
+
+      {view === "day" && isLoading && (
         <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin" />
           Loading attendance…
         </div>
       )}
 
-      {isError && (
+      {view === "day" && isError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {(error as Error)?.message ?? "Could not load attendance."}
         </div>
       )}
 
-      {!isLoading && !isError && rows.length === 0 && (
+      {view === "day" && !isLoading && !isError && rows.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center text-sm text-slate-500">
           No attendance record for this date.
           {isAdmin
@@ -265,7 +552,7 @@ export default function Attendance() {
         </div>
       )}
 
-      {!isLoading && !isError && rows.length > 0 && (
+      {view === "day" && !isLoading && !isError && rows.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
