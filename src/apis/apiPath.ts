@@ -29,11 +29,12 @@ export const apiPath = {
         getAttendance: "/attendance",
         punchOut: "/attendance/punch-out",
     },
-    leaves: {
-        getLeaves: "/leaves",
-        applyLeave:"/leaves/apply",
-        updateLeaveStatus: "/leaves/",
-        getLeaveById: "/leaves/",
+    leave: {
+        history: "/leave",
+        pending: "/leave/pending",
+        apply: "/leave/apply",
+        byId: "/leave/",
+        updateStatus: "/leave/",
     },
     hiring: {
         createHiring: "/hiring/create",

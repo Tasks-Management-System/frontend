@@ -7,11 +7,9 @@ import {
   CheckSquare,
   Banknote,
   UserPlus,
-  StickyNote,
   ChevronDown,
   ChevronRight,
   Plus,
-  Notebook,
   NotepadText,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";

@@ -10,6 +10,7 @@ import Profile from './pages/profile/Profile'
 import Settings from './pages/settings/Settings'
 import Attendance from './pages/attendance/Attendance'
 import StickyNotes from './pages/notes/StickyNotes'
+import Leave from './pages/leave/Leave'
 
 function App() {
   return (
@@ -37,7 +38,7 @@ function App() {
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/attendance" element={<Attendance />} />
-        <Route path="/leave" element={<Dashboard />} />
+        <Route path="/leave" element={<Leave />} />
         <Route path="/projects" element={<Dashboard />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/notes" element={<StickyNotes />} />
