@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Settings, LogOut, ChevronDown, Menu, Coffee } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { getUserById } from "../../apis/api/auth";
@@ -14,6 +14,13 @@ import {
 } from "../../apis/api/attendance";
 import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
+import { resolveProfileImageUrl } from "../../utils/mediaUrl";
+import {
+  clearStoredUserRoles,
+  getStoredUserRoles,
+  userHasAnyRole,
+  type AppRole,
+} from "../../utils/moduleAccess";
 
 const routeTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -24,13 +31,24 @@ const routeTitles: Record<string, string> = {
   "/leave": "Leave",
   "/salary": "Salary",
   "/employee": "Employees",
+  "/calendar": "Calendar",
   "/settings": "Settings",
 };
 
-const profileMenuItems = [
+const SETTINGS_ROLES: readonly AppRole[] = ["admin", "hr", "super-admin"];
+
+type ProfileMenuItem = {
+  path: string;
+  label: string;
+  icon: typeof User;
+  roles?: readonly AppRole[];
+  action?: "logout";
+};
+
+const profileMenuItems: ProfileMenuItem[] = [
   { path: "/profile", label: "My Profile", icon: User },
-  { path: "/settings", label: "Settings", icon: Settings },
-  { path: "/logout", label: "Sign out", icon: LogOut },
+  { path: "/settings", label: "Settings", icon: Settings, roles: SETTINGS_ROLES },
+  { path: "/login", label: "Sign out", icon: LogOut, action: "logout" },
 ];
 
 function formatElapsed(ms: number) {
@@ -46,11 +64,25 @@ type HeaderProps = {
 };
 
 const Header = ({ onOpenSidebar }: HeaderProps) => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const userId = localStorage.getItem("userId") ?? "";
 
   const { data: user } = getUserById(userId);
+  const menuRoles =
+    (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
+  const visibleProfileItems = profileMenuItems.filter((item) =>
+    userHasAnyRole(menuRoles, item.roles)
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    clearStoredUserRoles();
+    setIsMenuOpen(false);
+    navigate("/login", { replace: true });
+  };
   const { data: attendanceRes, isLoading: attendanceLoading } =
     useTodayAttendance(!!userId);
   const todayRecord = useMemo(
@@ -157,6 +189,11 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
     .toUpperCase()
     .slice(0, 2);
 
+  const headerProfileUrl = useMemo(
+    () => resolveProfileImageUrl(user?.profileImage),
+    [user?.profileImage]
+  );
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -258,12 +295,12 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
               <p className="text-xs text-gray-500 uppercase">{user?.role?.[0] ?? "—"}</p>
             </div>
 
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm shrink-0 overflow-hidden ring-2 ring-white shadow-sm">
-              {user?.profileImage ? (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-sm font-semibold text-white shadow-sm ring-2 ring-white">
+              {headerProfileUrl ? (
                 <img
-                  src={user.profileImage}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
+                  src={headerProfileUrl}
+                  alt={user?.name ?? ""}
+                  className="h-full w-full object-cover object-center"
                 />
               ) : (
                 <span className="select-none">{initials}</span>
@@ -288,18 +325,31 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
             role="menu"
           >
             <div className="py-1.5">
-              {profileMenuItems.map(({ path, label, icon: Icon }) => (
-                <Link
-                  key={path}
-                  to={path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-violet-700 transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl"
-                  role="menuitem"
-                >
-                  <Icon className="w-4 h-4 text-gray-400 shrink-0" />
-                  {label}
-                </Link>
-              ))}
+              {visibleProfileItems.map(({ path, label, icon: Icon, action }) =>
+                action === "logout" ? (
+                  <button
+                    key="logout"
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 hover:text-violet-700 transition-colors duration-150 last:rounded-b-xl"
+                    role="menuitem"
+                  >
+                    <Icon className="w-4 h-4 text-gray-400 shrink-0" />
+                    {label}
+                  </button>
+                ) : (
+                  <Link
+                    key={path}
+                    to={path}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-violet-700 transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl"
+                    role="menuitem"
+                  >
+                    <Icon className="w-4 h-4 text-gray-400 shrink-0" />
+                    {label}
+                  </Link>
+                )
+              )}
             </div>
           </div>
         </div>

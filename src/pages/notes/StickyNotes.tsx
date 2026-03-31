@@ -22,6 +22,7 @@ import { useCreateNote, useMyNotes, usePatchNote } from "../../apis/api/notes";
 import type { StickyNote as StickyNoteType } from "../../types/notes.types";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";
+import { StickyNotesBoardSkeleton } from "../../components/UI/Skeleton";
 import {
   STICKY_COLOR_OPTIONS,
   stickyCardClasses,
@@ -349,10 +350,7 @@ export default function StickyNotes() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(203,213,225)_1px,transparent_0)] [background-size:24px_24px] opacity-[0.35]" />
           <div className="relative h-full min-h-full min-w-full w-full">
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center gap-2 text-sm text-gray-500">
-              <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
-              Loading your board…
-            </div>
+            <StickyNotesBoardSkeleton />
           ) : isError ? (
             <div className="absolute inset-0 flex items-center justify-center p-4">
               <div className="rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-800">

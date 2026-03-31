@@ -1,10 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { api } from "../apiService";
 import { apiPath } from "../apiPath";
 import type {
   ApplyLeaveBody,
   ApplyLeaveResponse,
+  LeaveHistoryPaginatedResponse,
   LeaveHistoryResponse,
+  LeaveStatus,
   PendingLeavesResponse,
   UpdateLeaveStatusBody,
   UpdateLeaveStatusResponse,
@@ -13,6 +20,7 @@ import type {
 export const leaveHistoryQueryKey = ["leave", "history"] as const;
 export const leavePendingQueryKey = ["leave", "pending"] as const;
 
+/** Full list (no query params) — used where every row is needed at once. */
 export function useLeaveHistory(enabled = true) {
   return useQuery({
     queryKey: leaveHistoryQueryKey,
@@ -22,6 +30,41 @@ export function useLeaveHistory(enabled = true) {
         auth: true,
       });
       return res.leaves;
+    },
+  });
+}
+
+export type PaginatedLeaveHistoryResult = {
+  leaves: LeaveHistoryPaginatedResponse["leaves"];
+  pagination: LeaveHistoryPaginatedResponse["pagination"];
+};
+
+/** Paged + optional status filter (server-side). */
+export function usePaginatedLeaveHistory(options: {
+  page: number;
+  limit?: number;
+  status: "all" | LeaveStatus;
+  enabled?: boolean;
+}) {
+  const { page, limit = 10, status, enabled = true } = options;
+  return useQuery({
+    queryKey: ["leave", "history", "paged", page, limit, status],
+    enabled,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<PaginatedLeaveHistoryResult> => {
+      const query: Record<string, string | number> = { page, limit };
+      if (status !== "all") query.status = status;
+      const res = await api.get<LeaveHistoryPaginatedResponse>(
+        apiPath.leave.history,
+        { auth: true, query }
+      );
+      if (!res.pagination) {
+        throw new Error("Expected paginated leave response");
+      }
+      return {
+        leaves: res.leaves ?? [],
+        pagination: res.pagination,
+      };
     },
   });
 }
@@ -49,7 +92,7 @@ export function useApplyLeave() {
       });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: leaveHistoryQueryKey });
+      qc.invalidateQueries({ queryKey: ["leave", "history"] });
       qc.invalidateQueries({ queryKey: leavePendingQueryKey });
       qc.invalidateQueries({ queryKey: ["user"] });
     },
@@ -74,7 +117,7 @@ export function useUpdateLeaveStatus() {
       );
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: leaveHistoryQueryKey });
+      qc.invalidateQueries({ queryKey: ["leave", "history"] });
       qc.invalidateQueries({ queryKey: leavePendingQueryKey });
       qc.invalidateQueries({ queryKey: ["user"] });
     },

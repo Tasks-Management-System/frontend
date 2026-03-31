@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Loader2,
 } from "lucide-react";
 import { getUserById } from "../../apis/api/auth";
 import {
@@ -16,6 +15,10 @@ import {
   weekDayYmds,
 } from "../../apis/api/attendance";
 import { PillTabBar } from "../../components/UI/PillTabBar";
+import {
+  AttendanceDayTableSkeleton,
+  AttendanceWeekSkeleton,
+} from "../../components/UI/Skeleton";
 import type {
   AttendanceBreak,
   AttendanceRecord,
@@ -317,10 +320,7 @@ function WeeklySummaryTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        Loading week…
-      </div>
+      <AttendanceWeekSkeleton isAdmin={isAdmin} dayCount={days.length} />
     );
   }
 
@@ -531,10 +531,7 @@ export default function Attendance() {
       )}
 
       {view === "day" && isLoading && (
-        <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading attendance…
-        </div>
+        <AttendanceDayTableSkeleton showUser={isAdmin} />
       )}
 
       {view === "day" && isError && (

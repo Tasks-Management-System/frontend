@@ -1,10 +1,9 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
-  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Inbox,
-  Info,
-  Loader2,
   Plus,
   User,
 } from "lucide-react";
@@ -13,7 +12,6 @@ import { getUserById } from "../../apis/api/auth";
 import { localYmd } from "../../apis/api/attendance";
 import {
   useApplyLeave,
-  useLeaveHistory,
   usePendingLeaveRequests,
   useUpdateLeaveStatus,
 } from "../../apis/api/leave";
@@ -22,13 +20,12 @@ import { PillTabBar } from "../../components/UI/PillTabBar";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";
 import Modal from "../../components/UI/Model";
-import type {
-  LeaveBalanceSnapshot,
-  LeaveDaysMode,
-  LeaveRecord,
-  LeaveStatus,
-  LeaveSubType,
-} from "../../types/leave.types";
+import {
+  LeaveBalanceSummary,
+  MyLeaveHistoryPanel,
+} from "../../components/leave/MyLeaveSection";
+import { LeaveInboxTableSkeleton } from "../../components/UI/Skeleton";
+import type { LeaveDaysMode, LeaveRecord, LeaveSubType } from "../../types/leave.types";
 
 const dateFmt = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -62,34 +59,7 @@ function applicantName(leave: LeaveRecord): string {
   return "—";
 }
 
-const STATUS_UI: Record<
-  LeaveStatus,
-  { label: string; className: string }
-> = {
-  pending: {
-    label: "Pending",
-    className: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80",
-  },
-  approved: {
-    label: "Approved",
-    className: "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/80",
-  },
-  rejected: {
-    label: "Rejected",
-    className: "bg-rose-50 text-rose-900 ring-1 ring-rose-200/80",
-  },
-};
-
-function StatusBadge({ status }: { status: LeaveStatus }) {
-  const ui = STATUS_UI[status];
-  return (
-    <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ui.className}`}
-    >
-      {ui.label}
-    </span>
-  );
-}
+const INBOX_PAGE_SIZE = 10;
 
 function TypeBadge({ type }: { type: string }) {
   const paid = type === "paidLeave";
@@ -106,39 +76,9 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-function StatCard({
-  title,
-  value,
-  hint,
-}: {
-  title: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        {title}
-      </p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
-        {value}
-      </p>
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
-    </div>
-  );
-}
-
-function defaultBalance(): LeaveBalanceSnapshot {
-  return { totalBalance: 24, paidLeave: 12, leaveTaken: 0 };
-}
-
 export default function Leave() {
   const userId = localStorage.getItem("userId") ?? "";
   const { data: user, isLoading: userLoading } = getUserById(userId);
-  const { data: history = [], isLoading: historyLoading } = useLeaveHistory(
-    !!userId
-  );
-
   const roles = user?.role ?? [];
   const canReview = roles.some((r) =>
     ["admin", "hr", "super-admin"].includes(r)
@@ -148,29 +88,31 @@ export default function Leave() {
   const { data: pending = [], isLoading: pendingLoading } =
     usePendingLeaveRequests(!!userId && canReview && tab === "inbox");
 
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | LeaveStatus
-  >("all");
+  const [inboxPage, setInboxPage] = useState(1);
 
-  const filteredHistory = useMemo(() => {
-    if (statusFilter === "all") return history;
-    return history.filter((l) => l.status === statusFilter);
-  }, [history, statusFilter]);
+  useEffect(() => {
+    setInboxPage(1);
+  }, [tab]);
 
-  const balance: LeaveBalanceSnapshot =
-    user?.leaves?.[0] && typeof user.leaves[0] === "object"
-      ? {
-          totalBalance: Number(
-            (user.leaves[0] as LeaveBalanceSnapshot).totalBalance ?? 24
-          ),
-          paidLeave: Number(
-            (user.leaves[0] as LeaveBalanceSnapshot).paidLeave ?? 12
-          ),
-          leaveTaken: Number(
-            (user.leaves[0] as LeaveBalanceSnapshot).leaveTaken ?? 0
-          ),
-        }
-      : defaultBalance();
+  const inboxTotalPages = Math.max(
+    1,
+    Math.ceil(pending.length / INBOX_PAGE_SIZE)
+  );
+  const safeInboxPage = Math.min(
+    Math.max(1, inboxPage),
+    inboxTotalPages
+  );
+  const inboxSliceStart = (safeInboxPage - 1) * INBOX_PAGE_SIZE;
+  const visiblePending = pending.slice(
+    inboxSliceStart,
+    inboxSliceStart + INBOX_PAGE_SIZE
+  );
+
+  useEffect(() => {
+    if (inboxPage > inboxTotalPages) {
+      setInboxPage(inboxTotalPages);
+    }
+  }, [inboxPage, inboxTotalPages]);
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [daysMode, setDaysMode] = useState<LeaveDaysMode>("single");
@@ -302,159 +244,45 @@ export default function Leave() {
         )}
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <StatCard
-          title="Annual balance"
-          value={userLoading ? "…" : String(balance.totalBalance)}
-          hint="Days remaining in your general pool"
-        />
-        <StatCard
-          title="Paid leave (month)"
-          value={userLoading ? "…" : String(balance.paidLeave)}
-          hint="First request each month may use paid days when available"
-        />
-        <StatCard
-          title="Taken (tracked)"
-          value={userLoading ? "…" : String(balance.leaveTaken)}
-          hint="Includes pending and approved days"
-        />
-      </div>
+      <LeaveBalanceSummary
+        user={user}
+        userLoading={userLoading}
+        className="mt-6"
+      />
 
-      <div className="mt-4 flex gap-2 rounded-xl border border-sky-100 bg-sky-50/60 p-3 text-sm text-sky-950">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
-        <p>
-          <span className="font-medium">How it works:</span> Each calendar month,
-          your first pending or approved request can draw from paid leave when you
-          have paid days left. Additional days in that month use your annual
-          balance or are marked unpaid if the pool is insufficient. HR is notified
-          by email when you submit; you receive email when a decision is made.
-        </p>
-      </div>
-
-      {tab === "mine" && (
-        <>
-          <div className="mt-8 flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-slate-700">Filter:</span>
-            {(
-              [
-                ["all", "All"],
-                ["pending", "Pending"],
-                ["approved", "Approved"],
-                ["rejected", "Rejected"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setStatusFilter(key)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                  statusFilter === key
-                    ? "bg-violet-600 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">Dates</th>
-                  <th className="px-4 py-3">Duration</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Reason</th>
-                  <th className="px-4 py-3">Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historyLoading ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                      <Loader2 className="mx-auto h-6 w-6 animate-spin text-violet-600" />
-                    </td>
-                  </tr>
-                ) : filteredHistory.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                      <CalendarDays className="mx-auto mb-2 h-10 w-10 text-slate-300" />
-                      No leave requests match this filter.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredHistory.map((row) => (
-                    <tr
-                      key={row._id}
-                      className="border-b border-slate-100 text-slate-800"
-                    >
-                      <td className="px-4 py-3 align-top">
-                        <div className="font-medium text-slate-900">
-                          {formatDate(row.fromDate)}
-                        </div>
-                        {row.days === "multiple" &&
-                          row.toDate &&
-                          row.toDate !== row.fromDate && (
-                            <div className="text-xs text-slate-500">
-                              → {formatDate(row.toDate)}
-                            </div>
-                          )}
-                      </td>
-                      <td className="px-4 py-3 align-top tabular-nums">
-                        {leaveDurationLabel(row)}
-                      </td>
-                      <td className="px-4 py-3 align-top">
-                        <TypeBadge type={row.type} />
-                      </td>
-                      <td className="px-4 py-3 align-top">
-                        <StatusBadge status={row.status} />
-                      </td>
-                      <td className="max-w-xs px-4 py-3 align-top text-slate-700">
-                        {row.reason}
-                      </td>
-                      <td className="max-w-[200px] px-4 py-3 align-top text-xs text-slate-500">
-                        {row.adminComment?.trim() || "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
+      {(!canReview || tab === "mine") && (
+        <MyLeaveHistoryPanel enabled={!!userId} />
       )}
 
       {tab === "inbox" && canReview && (
-        <div className="mt-8 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-3">Employee</th>
-                <th className="px-4 py-3">Dates</th>
-                <th className="px-4 py-3">Duration</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Reason</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingLoading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-violet-600" />
-                  </td>
+        <div className="mt-8 space-y-4">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3">Employee</th>
+                  <th className="px-4 py-3">Dates</th>
+                  <th className="px-4 py-3">Duration</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Reason</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
-              ) : pending.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                    <Inbox className="mx-auto mb-2 h-10 w-10 text-slate-300" />
-                    No pending requests. You&apos;re all caught up.
-                  </td>
-                </tr>
-              ) : (
-                pending.map((row) => (
+              </thead>
+              <tbody>
+                {pendingLoading ? (
+                  <LeaveInboxTableSkeleton rows={5} />
+                ) : pending.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-12 text-center text-slate-500"
+                    >
+                      <Inbox className="mx-auto mb-2 h-10 w-10 text-slate-300" />
+                      No pending requests. You&apos;re all caught up.
+                    </td>
+                  </tr>
+                ) : (
+                  visiblePending.map((row) => (
                   <tr
                     key={row._id}
                     className="border-b border-slate-100 text-slate-800"
@@ -529,10 +357,53 @@ export default function Leave() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {!pendingLoading && pending.length > 0 && (
+            <div className="flex flex-col items-center justify-between gap-3 text-slate-600 sm:flex-row">
+              <p className="text-sm tabular-nums">
+                Showing{" "}
+                <span className="font-medium text-slate-900">
+                  {inboxSliceStart + 1}–
+                  {Math.min(
+                    inboxSliceStart + INBOX_PAGE_SIZE,
+                    pending.length
+                  )}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-slate-900">
+                  {pending.length}
+                </span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={safeInboxPage <= 1}
+                  onClick={() => setInboxPage(safeInboxPage - 1)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden />
+                  Previous
+                </button>
+                <span className="min-w-20 text-center text-sm tabular-nums">
+                  Page {safeInboxPage} / {inboxTotalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={safeInboxPage >= inboxTotalPages}
+                  onClick={() => setInboxPage(safeInboxPage + 1)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

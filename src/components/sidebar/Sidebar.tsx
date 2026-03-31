@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Plus,
   NotepadText,
+  Calendar1Icon,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
 import { useMemo, useState, type FormEvent } from "react";
@@ -22,10 +23,17 @@ import {
 } from "../../apis/api/projects";
 import { getUserById } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
+import { resolveProfileImageUrl } from "../../utils/mediaUrl";
+import { SidebarProjectsSkeleton } from "../UI/Skeleton";
 import type { Project } from "../../types/project.types";
 import Modal from "../UI/Model";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
+import {
+  getStoredUserRoles,
+  userHasAnyRole,
+  type AppRole,
+} from "../../utils/moduleAccess";
 
 const PROJECT_ACCENTS = [
   "bg-violet-500",
@@ -44,14 +52,36 @@ function accentForId(id: string) {
   return PROJECT_ACCENTS[Math.abs(h) % PROJECT_ACCENTS.length];
 }
 
-const mainNav = [
+type MainNavItem = {
+  path: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  end: boolean;
+  /** If set, only these roles see the item (matches backend salary / user list access). */
+  roles?: readonly AppRole[];
+};
+
+const mainNav: MainNavItem[] = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { path: "/tasks", label: "Tasks", icon: CheckSquare, end: false },
   { path: "/notes", label: "Notes", icon: NotepadText, end: false },
   { path: "/attendance", label: "Attendance", icon: Clock, end: false },
   { path: "/leave", label: "Leave", icon: Calendar, end: false },
-  { path: "/salary", label: "Salary", icon: Banknote, end: false },
-  { path: "/employee", label: "Employee", icon: UserPlus, end: false },
+  {
+    path: "/salary",
+    label: "Salary",
+    icon: Banknote,
+    end: false,
+    roles: ["admin", "hr", "super-admin"],
+  },
+  {
+    path: "/employee",
+    label: "Employee",
+    icon: UserPlus,
+    end: false,
+    roles: ["admin", "hr", "super-admin"],
+  },
+  { path: "/calendar", label: "Calendar", icon: Calendar1Icon, end: false },
 ];
 
 type SidebarProps = {
@@ -73,8 +103,15 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     description: "",
   });
 
-  const canCreateProjects = (user?.role ?? []).some((r) =>
+  const effectiveRoles =
+    (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
+
+  const canCreateProjects = effectiveRoles.some((r) =>
     ["admin", "manager", "super-admin"].includes(r)
+  );
+
+  const visibleMainNav = mainNav.filter((item) =>
+    userHasAnyRole(effectiveRoles, item.roles)
   );
 
   const selectedProjectId = useMemo(() => {
@@ -90,6 +127,11 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const sidebarProfileUrl = useMemo(
+    () => resolveProfileImageUrl(user?.profileImage),
+    [user?.profileImage]
+  );
 
   const roleLabel = user?.role?.[0] ?? "Member";
 
@@ -143,7 +185,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {mainNav
+        {visibleMainNav
           .filter((item) => item.path !== "/tasks")
           .map(({ path, label, icon: Icon, end }) => (
             <NavLink
@@ -215,7 +257,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
           {projectsOpen ? (
             <div className="mt-1 space-y-0.5 border-l border-gray-200/80 ml-4 pl-2">
               {projectsLoading ? (
-                <p className="px-2 py-2 text-xs text-gray-500">Loading projects…</p>
+                <SidebarProjectsSkeleton />
               ) : projects.length === 0 ? (
                 <p className="px-2 py-2 text-xs text-gray-500">No projects yet</p>
               ) : (
@@ -252,11 +294,11 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
           className="flex w-full items-center gap-3 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white to-gray-50 p-3 text-left shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition hover:shadow-[0_12px_36px_rgba(15,23,42,0.08)]"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-sm font-semibold text-white shadow-inner">
-            {user?.profileImage ? (
+            {sidebarProfileUrl ? (
               <img
-                src={user.profileImage}
+                src={sidebarProfileUrl}
                 alt=""
-                className="h-full w-full rounded-full object-cover"
+                className="h-full w-full rounded-full object-cover object-center"
               />
             ) : (
               <span className="select-none">{initials ?? "—"}</span>

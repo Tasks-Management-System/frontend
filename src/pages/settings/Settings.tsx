@@ -20,6 +20,7 @@ import Button from "../../components/UI/Button";
 import Modal from "../../components/UI/Model";
 import Input from "../../components/UI/Input";
 import { PillTabBar } from "../../components/UI/PillTabBar";
+import { SettingsTableSkeleton } from "../../components/UI/Skeleton";
 
 const tabs = [
   { key: "user-management", label: "User Management" },
@@ -363,7 +364,7 @@ const Settings = () => {
           {activeTab === "user-management" && (
             <div className="rounded-xl p-4 text-sm text-gray-600">
               {isLoading ? (
-                <p className="text-gray-500">Loading users...</p>
+                <SettingsTableSkeleton rows={8} />
               ) : (
                 <Table columns={columns} data={users} />
               )}
@@ -377,7 +378,7 @@ const Settings = () => {
           {activeTab === "projects" && (
             <div className="rounded-xl p-4 text-sm text-gray-600">
               {projectsLoading ? (
-                <p className="text-gray-500">Loading projects...</p>
+                <SettingsTableSkeleton rows={5} />
               ) : projectsForTable.length === 0 ? (
                 <p className="text-gray-500">
                   No projects yet. Use &quot;Add project&quot; to create one.

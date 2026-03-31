@@ -6,6 +6,7 @@ import { FcGoogle } from "react-icons/fc"
 import { useEffect, useState } from "react"
 import { ApiError } from "../../apis/apiService"
 import { login } from "../../apis/api/auth"
+import { setStoredUserRoles } from "../../utils/moduleAccess"
 import toast from "react-hot-toast"
 
 const Login = () => {
@@ -33,6 +34,7 @@ const Login = () => {
             const res = await loginMutation.mutateAsync({ email: formData.email, password: formData.password })
             if (res?.token) localStorage.setItem("token", res.token)
             if (res?.user?._id) localStorage.setItem("userId", res.user._id)
+            setStoredUserRoles(res?.user?.role)
             toast.success("Login successful")
             navigate("/")
         } catch (error) {

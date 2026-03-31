@@ -29,6 +29,7 @@ import Modal from "../../components/UI/Model";
 import Input from "../../components/UI/Input";
 import Dropdown from "../../components/UI/Dropdown";
 import { PillTabBar, type PillTabItem } from "../../components/UI/PillTabBar";
+import { TasksPageSkeleton } from "../../components/UI/Skeleton";
 
 type TabKey = "all" | "my" | "archived";
 type ViewMode = "cards" | "kanban";
@@ -457,10 +458,7 @@ export default function Tasks() {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-white/60 py-20 text-sm text-gray-500">
-          <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
-          Loading tasks…
-        </div>
+        <TasksPageSkeleton />
       ) : isError ? (
         <div className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-800">
           {(error as Error)?.message ?? "Failed to load tasks."}
@@ -488,14 +486,14 @@ export default function Tasks() {
       ) : view === "cards" ? (
         <div className="space-y-10">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {tasks.map((task) => (
+            {/* {tasks.map((task) => (
               <TaskCard
                 key={task._id}
                 task={task}
                 onStatusChange={handleStatusChange}
                 updating={updatingId === task._id}
               />
-            ))}
+            ))} */}
           </div>
 
           <section

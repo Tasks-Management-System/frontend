@@ -26,6 +26,8 @@ export interface LeaveRecord {
   reason: string;
   status: LeaveStatus;
   adminComment?: string;
+  deductedFromPaid?: number;
+  deductedFromAnnual?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,6 +51,18 @@ export interface LeaveHistoryResponse {
   success: boolean;
   message: string;
   leaves: LeaveRecord[];
+}
+
+/** Present when GET /leave is called with `page` or `limit`. */
+export interface LeaveHistoryPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface LeaveHistoryPaginatedResponse extends LeaveHistoryResponse {
+  pagination: LeaveHistoryPagination;
 }
 
 export interface PendingLeavesResponse {

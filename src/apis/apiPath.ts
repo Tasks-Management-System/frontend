@@ -48,6 +48,11 @@ export const apiPath = {
         create: "/notes/create",
         byId: "/notes/",
     },
+    events: {
+        list: "/events",
+        team: "/events/team",
+        byId: "/events/",
+    },
 }
 
 /**

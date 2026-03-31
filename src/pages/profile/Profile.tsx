@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   User,
   Mail,
@@ -20,6 +20,9 @@ import toast from "react-hot-toast";
 import Modal from "../../components/UI/Model";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import type { User as UserType } from "../../types/user.types";
+import { resolveProfileImageUrl } from "../../utils/mediaUrl";
+import { ProfilePageSkeleton } from "../../components/UI/Skeleton";
+import { ProfileLeaveDashboard } from "../../components/leave/MyLeaveSection";
 
 const tabs = [
   { key: "Profile", label: "Profile" },
@@ -28,6 +31,95 @@ const tabs = [
   { key: "Payroll", label: "Payroll" },
   { key: "Documents", label: "Documents" },
 ];
+
+function ProfileCover({ url }: { url: string | null }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+  const showPhoto = Boolean(url) && !failed;
+  return (
+    <div className="relative h-32 overflow-hidden rounded-t-2xl sm:h-40 md:h-44">
+      {showPhoto && url ? (
+        <>
+          <img
+            src={url}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            loading="eager"
+            decoding="async"
+            onError={() => setFailed(true)}
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+            aria-hidden
+          />
+        </>
+      ) : (
+        <div
+          className="h-full w-full bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600"
+          aria-hidden
+        />
+      )}
+    </div>
+  );
+}
+
+/** Avatar with graceful fallback when URL is missing or fails to load (CORS, 404, etc.). */
+function ProfileAvatarFace({
+  url,
+  alt,
+  initials,
+}: {
+  url: string | null;
+  alt: string;
+  initials: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+  if (!url || failed) {
+    return <span className="select-none">{initials}</span>;
+  }
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className="h-full w-full object-cover object-center"
+      onError={() => setFailed(true)}
+      loading="lazy"
+    />
+  );
+}
+
+function PreviewModalImage({
+  url,
+  alt,
+}: {
+  url: string | null;
+  alt: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+  if (!url || failed) {
+    return (
+      <p className="py-8 text-center text-sm text-gray-500">
+        No preview available or image failed to load.
+      </p>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className="max-h-[70vh] w-full max-w-full rounded-xl object-contain"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("Profile");
@@ -108,11 +200,14 @@ const Profile = () => {
   };
 
   const initials = user?.name
-    ?.split(" ")
+    ?.split(/\s+/)
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const profileImageUrl = resolveProfileImageUrl(user?.profileImage);
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "—";
@@ -124,39 +219,34 @@ const Profile = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <ProfilePageSkeleton />;
   }
 
   return (
-    <div className="p-3 sm:p-6 bg-gray-50 min-h-screen space-y-4 sm:space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div className="min-h-screen space-y-4 bg-gray-50 p-3 sm:space-y-6 sm:p-6">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <ProfileCover url={profileImageUrl} />
 
-        <div
-        style={{ background: "linear-gradient(to right, #6366f1, #8b5cf6)", backgroundImage: `url(${user?.profileImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
-        className="h-28 sm:h-36" />
-
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-10 sm:-mt-14">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-5">
-              <div className="relative group shrink-0">
-                <div
-                  onClick={() => user?.profileImage && setIsPreviewOpen(true)}
-                  className={`w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-2 border-white shadow-lg bg-linear-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white text-xl sm:text-2xl font-bold overflow-hidden ${user?.profileImage ? "cursor-pointer" : ""}`}
+        <div className="px-4 pb-5 sm:px-6 sm:pb-6">
+          <div className="-mt-14 flex flex-col items-center gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+            <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-end sm:gap-5">
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => profileImageUrl && setIsPreviewOpen(true)}
+                  disabled={!profileImageUrl}
+                  className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-gradient-to-br from-sky-500 to-indigo-600 text-2xl font-bold text-white shadow-lg ring-1 ring-black/5 sm:h-28 sm:w-28 sm:text-3xl md:h-32 md:w-32 ${
+                    profileImageUrl
+                      ? "cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      : "cursor-default"
+                  }`}
                 >
-                  {user?.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="select-none">{initials}</span>
-                  )}
-                </div>
+                  <ProfileAvatarFace
+                    url={profileImageUrl}
+                    alt={user?.name ?? "Profile"}
+                    initials={initials ?? "?"}
+                  />
+                </button>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -165,53 +255,59 @@ const Profile = () => {
                   onChange={handleImageChange}
                 />
                 <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={updateImage.isPending}
-                  className="absolute bottom-0.5 right-0.5 sm:-bottom-1 sm:-right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-indigo-600 text-white shadow-md transition-colors hover:bg-indigo-700 disabled:opacity-50 sm:h-9 sm:w-9"
+                  aria-label="Change profile photo"
                 >
                   {updateImage.isPending ? (
-                    <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5 cursor-pointer" />
+                    <Camera className="h-4 w-4" />
                   )}
                 </button>
               </div>
 
-              <div className="pb-1">
-                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1 pb-0.5 text-center sm:pb-1 sm:text-left">
+                <div className="flex flex-col items-center gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                  <h1 className="text-balance text-xl font-bold uppercase tracking-tight text-gray-900 sm:text-2xl md:text-3xl">
                     {user?.name ?? "—"}
                   </h1>
                   {user?.isActive && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       ACTIVE
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="mt-1 text-sm capitalize text-gray-500">
                   {user?.role?.[0] ?? "—"}
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-0 w-full sm:w-auto">
-              <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                <MessageSquare className="w-4 h-4" />
+            <div className="flex w-full max-w-md flex-col gap-2 sm:max-w-none sm:w-auto sm:flex-row sm:justify-end sm:gap-3">
+              <button
+                type="button"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:flex-none sm:py-2.5"
+              >
+                <MessageSquare className="h-4 w-4 shrink-0" />
                 Message
               </button>
               <button
+                type="button"
                 onClick={startEditing}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 sm:flex-none sm:py-2.5"
               >
-                <Pencil className="w-4 h-4" />
+                <Pencil className="h-4 w-4 shrink-0" />
                 Edit Profile
               </button>
             </div>
           </div>
         </div>
 
-        <div className="px-4 sm:px-6 border-t border-gray-100 py-4 sm:py-5 overflow-x-auto scrollbar-hide">
+        <div className="scrollbar-hide overflow-x-auto border-t border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
           <PillTabBar
             items={tabs.map((t) => ({ key: t.key, label: t.label }))}
             activeKey={activeTab}
@@ -417,8 +513,14 @@ const Profile = () => {
                 />
                 <StatRow
                   icon={<TreePalm className="w-4 h-4" />}
-                  label="Leave Balance"
-                  value={`${user?.leaves?.length ?? 0} Days`}
+                  label="Annual leave (pool)"
+                  value={
+                    user?.leaves?.[0] &&
+                    typeof user.leaves[0] === "object" &&
+                    "totalBalance" in user.leaves[0]
+                      ? `${String((user.leaves[0] as { totalBalance?: number }).totalBalance ?? "—")} days`
+                      : "—"
+                  }
                   iconBg="bg-amber-500/20"
                   iconColor="text-amber-400"
                 />
@@ -452,11 +554,13 @@ const Profile = () => {
         </div>
       )}
 
-      {activeTab !== "Profile" && (
-        <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-          <p className="text-gray-400 text-sm">
-            {activeTab} section coming soon.
-          </p>
+      {activeTab === "Leave History" && user && (
+        <ProfileLeaveDashboard user={user} userLoading={false} />
+      )}
+
+      {activeTab !== "Profile" && activeTab !== "Leave History" && (
+        <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
+          <p className="text-sm text-gray-400">{activeTab} section coming soon.</p>
         </div>
       )}
 
@@ -465,14 +569,10 @@ const Profile = () => {
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         title={user?.name ?? "Profile Image"}
-        
+        panelClassName="max-w-2xl"
       >
-        <div className="flex items-center justify-center">
-          <img
-            src={user?.profileImage ?? ""}
-            alt={user?.name}
-            className="max-w-full max-h-[70vh] rounded-xl object-contain"
-          />
+        <div className="flex justify-center">
+          <PreviewModalImage url={profileImageUrl} alt={user?.name ?? "Profile"} />
         </div>
       </Modal>
     </div>
