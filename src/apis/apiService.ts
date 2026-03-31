@@ -1,4 +1,23 @@
 import { API_BASE_URL } from "./apiPath";
+import { clearClientAuthSession } from "../utils/moduleAccess";
+
+export const ACCOUNT_INACTIVE_CODE = "ACCOUNT_INACTIVE";
+
+function handleInactiveAccountIfNeeded(
+    status: number,
+    data: unknown,
+    auth: boolean
+) {
+    if (!auth || status !== 403) return;
+    const code = (data as { code?: string })?.code;
+    if (code !== ACCOUNT_INACTIVE_CODE) return;
+    clearClientAuthSession();
+    const msg = encodeURIComponent(
+        (data as { message?: string })?.message ||
+            "Your account has been deactivated."
+    );
+    window.location.replace(`/login?reason=account_inactive&message=${msg}`);
+}
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -100,6 +119,7 @@ export async function request<T = unknown>(
     const data = await parseMaybeJson(res);
 
     if (!res.ok) {
+        handleInactiveAccountIfNeeded(res.status, data, auth);
         const message =
             (data as any)?.message ||
             (typeof data === "string" && data) ||
@@ -136,6 +156,7 @@ export async function uploadFormData<T = unknown>(
     const data = await parseMaybeJson(res);
 
     if (!res.ok) {
+        handleInactiveAccountIfNeeded(res.status, data, auth);
         const message =
             (data as any)?.message ||
             (typeof data === "string" && data) ||

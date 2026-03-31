@@ -16,6 +16,24 @@ export const login = () => {
     })
 }
 
+export const useLogout = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationKey: ["logout"],
+        mutationFn: async () => {
+            const res = await api.post<{ success: boolean; message?: string }>(
+                apiPath.auth.logout,
+                {},
+                { auth: true }
+            )
+            return res
+        },
+        onSettled: () => {
+            queryClient.clear()
+        },
+    })
+}
+
 export const signup = () => {
     return useMutation({
         mutationKey: ["signup"],
@@ -68,7 +86,7 @@ export const useUpdateUser = () => {
     return useMutation({
         mutationKey: ["updateUser"],
         mutationFn: async ({ id, data }: { id: string; data: Partial<User> }) => {
-            const res = await api.put<{ user: User }>(
+            const res = await api.put<{ success?: boolean; user: User }>(
                 apiPath.auth.updateUser + id,
                 data,
                 { auth: true }
@@ -77,6 +95,7 @@ export const useUpdateUser = () => {
         },
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["user", variables.id] })
+            queryClient.invalidateQueries({ queryKey: ["users"] })
         },
     })
 }

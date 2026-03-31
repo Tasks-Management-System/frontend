@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, Settings, LogOut, ChevronDown, Menu, Coffee } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { getUserById } from "../../apis/api/auth";
+import { getUserById, useLogout } from "../../apis/api/auth";
 import {
   clientCurrentSessionWorkedMs,
   pickMyAttendanceRecord,
@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import {
-  clearStoredUserRoles,
+  clearClientAuthSession,
   getStoredUserRoles,
   userHasAnyRole,
   type AppRole,
@@ -76,12 +76,22 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
     userHasAnyRole(menuRoles, item.roles)
   );
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    clearStoredUserRoles();
+  const logoutMutation = useLogout();
+
+  const clearClientSession = () => {
+    clearClientAuthSession();
     setIsMenuOpen(false);
-    navigate("/login", { replace: true });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (e) {
+      toast.error((e as ApiError)?.message ?? "Could not reach server; signed out locally.");
+    } finally {
+      clearClientSession();
+      navigate("/login", { replace: true });
+    }
   };
   const { data: attendanceRes, isLoading: attendanceLoading } =
     useTodayAttendance(!!userId);
@@ -99,7 +109,8 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
     punchInMut.isPending ||
     punchOutMut.isPending ||
     startBreakMut.isPending ||
-    endBreakMut.isPending;
+    endBreakMut.isPending ||
+    logoutMutation.isPending;
 
   const status = todayRecord?.status ?? "not_started";
   const clockedIn = status === "working" || status === "on_break";
@@ -330,12 +341,13 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
                   <button
                     key="logout"
                     type="button"
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 hover:text-violet-700 transition-colors duration-150 last:rounded-b-xl"
+                    disabled={logoutMutation.isPending}
+                    onClick={() => void handleLogout()}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 hover:text-violet-700 transition-colors duration-150 last:rounded-b-xl disabled:opacity-50"
                     role="menuitem"
                   >
                     <Icon className="w-4 h-4 text-gray-400 shrink-0" />
-                    {label}
+                    {logoutMutation.isPending ? "Signing out…" : label}
                   </button>
                 ) : (
                   <Link

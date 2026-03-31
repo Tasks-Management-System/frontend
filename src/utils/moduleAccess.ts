@@ -33,6 +33,16 @@ export function clearStoredUserRoles() {
   localStorage.removeItem(USER_ROLES_LS);
 }
 
+/** Clears auth storage (token, user id, cached roles). */
+export function clearClientAuthSession() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("token");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("userId");
+  clearStoredUserRoles();
+}
+
 /**
  * If `allowed` is omitted or empty, any authenticated user passes.
  * User may have multiple roles in `role[]`; one match is enough.

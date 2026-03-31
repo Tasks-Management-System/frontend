@@ -38,8 +38,15 @@ const Login = () => {
             toast.success("Login successful")
             navigate("/")
         } catch (error) {
-            const message = (error as ApiError)?.message || "Invalid email or password"
-            toast.error(message)
+            const err = error as ApiError
+            const code = (err?.data as { code?: string })?.code
+            const message =
+                err?.message || "Invalid email or password"
+            if (code === "ACCOUNT_INACTIVE") {
+                toast.error(message, { duration: 6000 })
+            } else {
+                toast.error(message)
+            }
             setErrors({ email: message, password: "" })
         }
     }
@@ -54,6 +61,16 @@ const Login = () => {
         const params = new URLSearchParams(window.location.search)
         const verified = params.get("verified")
         const reason = params.get("reason")
+        const inactiveMsg = params.get("message")
+
+        if (reason === "account_inactive") {
+            const text =
+                inactiveMsg && inactiveMsg.trim()
+                    ? decodeURIComponent(inactiveMsg)
+                    : "Your account has been deactivated. Please contact an administrator to restore access."
+            toast.error(text, { duration: 6000 })
+            window.history.replaceState({}, "", window.location.pathname)
+        }
 
         if (verified === "true") {
             toast.success("Email verified successfully. You can now login.")
@@ -62,7 +79,7 @@ const Login = () => {
                 toast.error("Verification link is invalid.")
             } else if (reason === "invalid_or_expired") {
                 toast.error("Verification link is expired or invalid. Please register again.")
-            } else {
+            } else if (reason !== "account_inactive") {
                 toast.error("Email verification failed. Please try again.")
             }
         }
