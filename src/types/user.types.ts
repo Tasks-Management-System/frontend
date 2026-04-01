@@ -7,13 +7,33 @@ export interface User {
     /** Set by the backend when an admin manages this user (employee / hr / manager). */
     managedBy?: string | null;
     profileImage: string | null;
-    address: any[]; // you can refine later
+    address: Array<{ address?: string; city?: string }>;
     phone: string | null;
-    skills: any[];
-    education: any[];
-    experience: any[];
-    leaves: any[];
+    skills: Array<{ skill?: string; yearsOfExperience?: number }>;
+    education: Array<{
+      degree?: string;
+      institution?: string;
+      year?: number;
+      specialization?: string;
+    }>;
+    experience: Array<{
+      company?: string;
+      position?: string;
+      startDate?: string;
+      endDate?: string;
+    }>;
+    leaves: Array<{
+      totalBalance?: number;
+      paidLeave?: number;
+      leaveTaken?: number;
+    }>;
     dob: string | null;
+    aadharCardNumber?: string;
+    panCardNumber?: string;
+    bankAccountNo?: string;
+    bankName?: string;
+    bankIFSC?: string;
+    bankBranch?: string;
     gender: "male" | "female" | "other";
     isActive: boolean;
     isEmailVerified?: boolean;

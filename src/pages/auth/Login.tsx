@@ -8,6 +8,13 @@ import { ApiError } from "../../apis/apiService"
 import { login } from "../../apis/api/auth"
 import { setStoredUserRoles } from "../../utils/moduleAccess"
 import toast from "react-hot-toast"
+import { API_BASE_URL } from "../../apis/apiPath"
+import { jwtDecode } from "jwt-decode"
+
+type JwtPayload = {
+    id?: string
+    role?: string[] | string
+}
 
 const Login = () => {
     const navigate = useNavigate()
@@ -59,6 +66,27 @@ const Login = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
+        const token = params.get("token")
+        const provider = params.get("provider")
+        if (token) {
+            localStorage.setItem("token", token)
+            try {
+                const decoded = jwtDecode<JwtPayload>(token)
+                if (decoded?.id) localStorage.setItem("userId", decoded.id)
+                const rolesRaw = decoded?.role
+                const roles = Array.isArray(rolesRaw) ? rolesRaw : rolesRaw ? [rolesRaw] : undefined
+                setStoredUserRoles(roles)
+            } catch {
+                // ignore decode errors; token will still be used for API calls
+            }
+            toast.success(provider === "google" ? "Logged in with Google" : "Login successful")
+            window.history.replaceState({}, "", window.location.pathname)
+            navigate("/")
+        }
+    }, [navigate])
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
         const verified = params.get("verified")
         const reason = params.get("reason")
         const inactiveMsg = params.get("message")
@@ -84,6 +112,11 @@ const Login = () => {
             }
         }
     }, [])
+
+    const handleGoogleLogin = () => {
+        // full page redirect to backend OAuth start
+        window.location.href = `${API_BASE_URL.replace(/\/$/, "")}/auth/google`
+    }
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
             <h1 className="text-2xl font-bold">EMS Pro</h1>
@@ -134,7 +167,7 @@ const Login = () => {
                     </Button>
 
                     <div>
-                        <Button variant="outline" type="button" className="w-full" >
+                        <Button variant="outline" type="button" className="w-full" onClick={handleGoogleLogin}>
                             <FcGoogle size={24} /> Continue with Google
                         </Button>
                     </div>

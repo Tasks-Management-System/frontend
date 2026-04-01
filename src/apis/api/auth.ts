@@ -50,6 +50,21 @@ export type AdminCreateUserInput = {
     email: string
     password: string
     role: "admin" | "employee" | "hr" | "manager"
+    profileImage?: string
+    address?: Array<{ address?: string; city?: string }>
+    phone?: string
+    gender?: "male" | "female"
+    dob?: string
+    skills?: Array<{ skill?: string; yearsOfExperience?: number }>
+    education?: Array<{ degree?: string; institution?: string; year?: number; specialization?: string }>
+    experience?: Array<{ company?: string; position?: string; startDate?: string; endDate?: string }>
+    leaves?: Array<{ totalBalance?: number; paidLeave?: number; leaveTaken?: number }>
+    aadharCardNumber?: string
+    panCardNumber?: string
+    bankAccountNo?: string
+    bankName?: string
+    bankIFSC?: string
+    bankBranch?: string
 }
 
 export const useCreateUserByAdmin = () => {

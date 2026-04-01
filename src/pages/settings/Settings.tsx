@@ -83,6 +83,21 @@ const Settings = () => {
     email: "",
     password: "",
     role: "employee" as AdminCreateUserInput["role"],
+    phone: "",
+    gender: "" as "" | "male" | "female",
+    dob: "",
+    addressLine: "",
+    addressCity: "",
+    aadharCardNumber: "",
+    panCardNumber: "",
+    bankAccountNo: "",
+    bankName: "",
+    bankIFSC: "",
+    bankBranch: "",
+    skillsJson: "",
+    educationJson: "",
+    experienceJson: "",
+    leavesJson: "",
   });
   const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
   const { data: sessionUser } = getUserById(userId);
@@ -118,6 +133,21 @@ const Settings = () => {
       email: "",
       password: "",
       role: roleOptions[0],
+      phone: "",
+      gender: "",
+      dob: "",
+      addressLine: "",
+      addressCity: "",
+      aadharCardNumber: "",
+      panCardNumber: "",
+      bankAccountNo: "",
+      bankName: "",
+      bankIFSC: "",
+      bankBranch: "",
+      skillsJson: "",
+      educationJson: "",
+      experienceJson: "",
+      leavesJson: "",
     });
     setOpenModal("createUser");
   };
@@ -126,7 +156,69 @@ const Settings = () => {
     e.preventDefault();
     if (!canCreateUsers) return;
     try {
-      await createUserMutation.mutateAsync(employeeForm);
+      const parseFlexibleList = (raw: string): unknown[] | undefined => {
+        const txt = raw.trim();
+        if (!txt) return undefined;
+        if (txt.startsWith("[")) {
+          const parsed = JSON.parse(txt);
+          return Array.isArray(parsed) ? parsed : undefined;
+        }
+        return txt
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      };
+
+      const body: AdminCreateUserInput = {
+        name: employeeForm.name,
+        email: employeeForm.email,
+        password: employeeForm.password,
+        role: employeeForm.role,
+        phone: employeeForm.phone.trim() ? employeeForm.phone.trim() : undefined,
+        gender: employeeForm.gender ? (employeeForm.gender as "male" | "female") : undefined,
+        dob: employeeForm.dob.trim() ? employeeForm.dob.trim() : undefined,
+        address:
+          employeeForm.addressLine.trim() || employeeForm.addressCity.trim()
+            ? [{ address: employeeForm.addressLine.trim() || undefined, city: employeeForm.addressCity.trim() || undefined }]
+            : undefined,
+        aadharCardNumber: employeeForm.aadharCardNumber.trim() || undefined,
+        panCardNumber: employeeForm.panCardNumber.trim() || undefined,
+        bankAccountNo: employeeForm.bankAccountNo.trim() || undefined,
+        bankName: employeeForm.bankName.trim() || undefined,
+        bankIFSC: employeeForm.bankIFSC.trim() || undefined,
+        bankBranch: employeeForm.bankBranch.trim() || undefined,
+        skills: (() => {
+          const list = parseFlexibleList(employeeForm.skillsJson);
+          if (!list) return undefined;
+          // If user pasted objects, keep as-is. If they typed "a, b", map to {skill}.
+          if (list.length && typeof list[0] === "object") return list as any;
+          return (list as string[]).map((skill) => ({ skill }));
+        })(),
+        education: (() => {
+          const list = parseFlexibleList(employeeForm.educationJson);
+          if (!list) return undefined;
+          if (list.length && typeof list[0] === "object") return list as any;
+          return (list as string[]).map((degree) => ({ degree }));
+        })(),
+        experience: (() => {
+          const list = parseFlexibleList(employeeForm.experienceJson);
+          if (!list) return undefined;
+          if (list.length && typeof list[0] === "object") return list as any;
+          return (list as string[]).map((company) => ({ company }));
+        })(),
+        leaves: (() => {
+          const list = parseFlexibleList(employeeForm.leavesJson);
+          if (!list) return undefined;
+          if (list.length && typeof list[0] === "object") return list as any;
+          // allow "24, 12" -> [{totalBalance:24},{totalBalance:12}]
+          return (list as string[])
+            .map((v) => Number(v))
+            .filter((n) => Number.isFinite(n))
+            .map((totalBalance) => ({ totalBalance }));
+        })(),
+      };
+
+      await createUserMutation.mutateAsync(body);
       toast.success("User created with the selected role.");
       handleClose();
     } catch (err) {
@@ -465,6 +557,157 @@ const Settings = () => {
                 }
                 required
                 placeholder="At least 6 characters"
+              />
+              <Input
+                label="Phone"
+                name="phone"
+                type="tel"
+                value={employeeForm.phone}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, phone: e.target.value }))
+                }
+                placeholder="+91 9876543210"
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700" htmlFor="settings-create-user-gender">
+                    Gender
+                  </label>
+                  <select
+                    id="settings-create-user-gender"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                    value={employeeForm.gender}
+                    onChange={(e) =>
+                      setEmployeeForm((s) => ({
+                        ...s,
+                        gender: e.target.value as "" | "male" | "female",
+                      }))
+                    }
+                  >
+                    <option value="">—</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+                <Input
+                  label="Date of birth"
+                  name="dob"
+                  type="date"
+                  value={employeeForm.dob}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, dob: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Input
+                  label="Address"
+                  name="addressLine"
+                  type="text"
+                  value={employeeForm.addressLine}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, addressLine: e.target.value }))
+                  }
+                  placeholder="Street / apartment"
+                />
+                <Input
+                  label="City"
+                  name="addressCity"
+                  type="text"
+                  value={employeeForm.addressCity}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, addressCity: e.target.value }))
+                  }
+                  placeholder="City"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Input
+                  label="Aadhar card number"
+                  name="aadharCardNumber"
+                  type="text"
+                  value={employeeForm.aadharCardNumber}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, aadharCardNumber: e.target.value }))
+                  }
+                />
+                <Input
+                  label="PAN card number"
+                  name="panCardNumber"
+                  type="text"
+                  value={employeeForm.panCardNumber}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, panCardNumber: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Input
+                  label="Bank account no"
+                  name="bankAccountNo"
+                  type="text"
+                  value={employeeForm.bankAccountNo}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, bankAccountNo: e.target.value }))
+                  }
+                />
+                <Input
+                  label="Bank name"
+                  name="bankName"
+                  type="text"
+                  value={employeeForm.bankName}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, bankName: e.target.value }))
+                  }
+                />
+                <Input
+                  label="IFSC"
+                  name="bankIFSC"
+                  type="text"
+                  value={employeeForm.bankIFSC}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, bankIFSC: e.target.value }))
+                  }
+                />
+                <Input
+                  label="Branch"
+                  name="bankBranch"
+                  type="text"
+                  value={employeeForm.bankBranch}
+                  onChange={(e) =>
+                    setEmployeeForm((s) => ({ ...s, bankBranch: e.target.value }))
+                  }
+                />
+              </div>
+              <Input
+                label="Skills"
+                name="skillsJson"
+                type="textarea"
+                value={employeeForm.skillsJson}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, skillsJson: e.target.value }))
+                }
+                placeholder='e.g. React, Node, MongoDB'
+              />
+              <Input
+                label="Education"
+                name="educationJson"
+                type="textarea"
+                value={employeeForm.educationJson}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, educationJson: e.target.value }))
+                }
+                placeholder='e.g. BSc, MSc'
+              />
+              <Input
+                label="Experience"
+                name="experienceJson"
+                type="textarea"
+                value={employeeForm.experienceJson}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({ ...s, experienceJson: e.target.value }))
+                }
+                placeholder='e.g. Company A, Company B'
               />
               <div className="flex flex-col gap-1">
                 <label

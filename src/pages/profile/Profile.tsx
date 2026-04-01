@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   User,
   Mail,
@@ -33,31 +33,29 @@ const tabs = [
 ];
 
 function ProfileCover({ url }: { url: string | null }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setFailed(false);
-  }, [url]);
-  const showPhoto = Boolean(url) && !failed;
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const showPhoto = Boolean(url) && failedUrl !== url;
   return (
     <div className="relative h-32 overflow-hidden rounded-t-2xl sm:h-40 md:h-44">
       {showPhoto && url ? (
         <>
           <img
+            key={url}
             src={url}
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-center"
             loading="eager"
             decoding="async"
-            onError={() => setFailed(true)}
+            onError={() => setFailedUrl(url)}
           />
           <div
-            className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+            className="absolute inset-0 bg-linear-to-t from-black/55 via-black/20 to-transparent"
             aria-hidden
           />
         </>
       ) : (
         <div
-          className="h-full w-full bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600"
+          className="h-full w-full bg-linear-to-r from-indigo-600 via-violet-600 to-purple-600"
           aria-hidden
         />
       )}
@@ -75,19 +73,17 @@ function ProfileAvatarFace({
   alt: string;
   initials: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setFailed(false);
-  }, [url]);
-  if (!url || failed) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (!url || failedUrl === url) {
     return <span className="select-none">{initials}</span>;
   }
   return (
     <img
+      key={url}
       src={url}
       alt={alt}
       className="h-full w-full object-cover object-center"
-      onError={() => setFailed(true)}
+      onError={() => setFailedUrl(url)}
       loading="lazy"
     />
   );
@@ -100,11 +96,8 @@ function PreviewModalImage({
   url: string | null;
   alt: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setFailed(false);
-  }, [url]);
-  if (!url || failed) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (!url || failedUrl === url) {
     return (
       <p className="py-8 text-center text-sm text-gray-500">
         No preview available or image failed to load.
@@ -113,10 +106,11 @@ function PreviewModalImage({
   }
   return (
     <img
+      key={url}
       src={url}
       alt={alt}
       className="max-h-[70vh] w-full max-w-full rounded-xl object-contain"
-      onError={() => setFailed(true)}
+      onError={() => setFailedUrl(url)}
     />
   );
 }
@@ -131,6 +125,18 @@ const Profile = () => {
     phone: "",
     dob: "",
     gender: "" as "male" | "female" | "other" | "",
+    addressLine: "",
+    addressCity: "",
+    aadharCardNumber: "",
+    panCardNumber: "",
+    bankAccountNo: "",
+    bankName: "",
+    bankIFSC: "",
+    bankBranch: "",
+    skillsJson: "[]",
+    educationJson: "[]",
+    experienceJson: "[]",
+    leavesJson: "[]",
   });
   const userId = localStorage.getItem("userId") ?? "";
   const { data: user, isLoading } = getUserById(userId);
@@ -145,6 +151,21 @@ const Profile = () => {
       phone: user?.phone ?? "",
       dob: user?.dob?.slice(0, 10) ?? "",
       gender: user?.gender ?? "",
+      addressLine: user?.address?.[0]?.address ?? "",
+      addressCity: user?.address?.[0]?.city ?? "",
+      aadharCardNumber: user?.aadharCardNumber ?? "",
+      panCardNumber: user?.panCardNumber ?? "",
+      bankAccountNo: user?.bankAccountNo ?? "",
+      bankName: user?.bankName ?? "",
+      bankIFSC: user?.bankIFSC ?? "",
+      bankBranch: user?.bankBranch ?? "",
+      skillsJson: (user?.skills ?? []).map((s) => s.skill).filter(Boolean).join(", "),
+      educationJson: (user?.education ?? []).map((e) => e.degree).filter(Boolean).join(", "),
+      experienceJson: (user?.experience ?? []).map((e) => e.company).filter(Boolean).join(", "),
+      leavesJson: (user?.leaves ?? [])
+        .map((l) => (typeof l.totalBalance === "number" ? String(l.totalBalance) : ""))
+        .filter(Boolean)
+        .join(", "),
     });
     setIsEditing(true);
   };
@@ -168,6 +189,89 @@ const Profile = () => {
     if (formData.dob !== (user?.dob?.slice(0, 10) ?? "")) payload.dob = formData.dob || null;
     if (formData.gender && formData.gender !== user?.gender)
       payload.gender = formData.gender as UserType["gender"];
+
+    const nextAddress =
+      formData.addressLine.trim() || formData.addressCity.trim()
+        ? [
+            {
+              address: formData.addressLine.trim() || undefined,
+              city: formData.addressCity.trim() || undefined,
+            },
+          ]
+        : [];
+    const prevAddress = user?.address ?? [];
+    const prevA0 = prevAddress?.[0] ?? {};
+    const nextA0 = nextAddress?.[0] ?? {};
+    const addressChanged =
+      (prevA0?.address ?? "") !== (nextA0?.address ?? "") ||
+      (prevA0?.city ?? "") !== (nextA0?.city ?? "");
+    if (addressChanged) payload.address = nextAddress;
+
+    if ((formData.aadharCardNumber ?? "") !== (user?.aadharCardNumber ?? ""))
+      payload.aadharCardNumber = formData.aadharCardNumber || undefined;
+    if ((formData.panCardNumber ?? "") !== (user?.panCardNumber ?? ""))
+      payload.panCardNumber = formData.panCardNumber || undefined;
+    if ((formData.bankAccountNo ?? "") !== (user?.bankAccountNo ?? ""))
+      payload.bankAccountNo = formData.bankAccountNo || undefined;
+    if ((formData.bankName ?? "") !== (user?.bankName ?? ""))
+      payload.bankName = formData.bankName || undefined;
+    if ((formData.bankIFSC ?? "") !== (user?.bankIFSC ?? ""))
+      payload.bankIFSC = formData.bankIFSC || undefined;
+    if ((formData.bankBranch ?? "") !== (user?.bankBranch ?? ""))
+      payload.bankBranch = formData.bankBranch || undefined;
+
+    try {
+      const parseFlexibleList = (raw: string): unknown[] | undefined => {
+        const txt = raw.trim();
+        if (!txt) return undefined;
+        if (txt.startsWith("[")) {
+          const parsed = JSON.parse(txt);
+          return Array.isArray(parsed) ? parsed : undefined;
+        }
+        return txt
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      };
+
+      const skillsList = parseFlexibleList(formData.skillsJson);
+      if (skillsList) {
+        payload.skills =
+          skillsList.length && typeof skillsList[0] === "object"
+            ? (skillsList as UserType["skills"])
+            : (skillsList as string[]).map((skill) => ({ skill }));
+      }
+
+      const eduList = parseFlexibleList(formData.educationJson);
+      if (eduList) {
+        payload.education =
+          eduList.length && typeof eduList[0] === "object"
+            ? (eduList as UserType["education"])
+            : (eduList as string[]).map((degree) => ({ degree }));
+      }
+
+      const expList = parseFlexibleList(formData.experienceJson);
+      if (expList) {
+        payload.experience =
+          expList.length && typeof expList[0] === "object"
+            ? (expList as UserType["experience"])
+            : (expList as string[]).map((company) => ({ company }));
+      }
+
+      const leavesList = parseFlexibleList(formData.leavesJson);
+      if (leavesList) {
+        payload.leaves =
+          leavesList.length && typeof leavesList[0] === "object"
+            ? (leavesList as UserType["leaves"])
+            : (leavesList as string[])
+                .map((v) => Number(v))
+                .filter((n) => Number.isFinite(n))
+                .map((totalBalance) => ({ totalBalance }));
+      }
+    } catch {
+      toast.error("Invalid input for structured details. Use comma-separated text or a valid JSON array.");
+      return;
+    }
 
     if (Object.keys(payload).length === 0) {
       setIsEditing(false);
@@ -235,7 +339,7 @@ const Profile = () => {
                   type="button"
                   onClick={() => profileImageUrl && setIsPreviewOpen(true)}
                   disabled={!profileImageUrl}
-                  className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-gradient-to-br from-sky-500 to-indigo-600 text-2xl font-bold text-white shadow-lg ring-1 ring-black/5 sm:h-28 sm:w-28 sm:text-3xl md:h-32 md:w-32 ${
+                  className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-linear-to-br from-sky-500 to-indigo-600 text-2xl font-bold text-white shadow-lg ring-1 ring-black/5 sm:h-28 sm:w-28 sm:text-3xl md:h-32 md:w-32 ${
                     profileImageUrl
                       ? "cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       : "cursor-default"
@@ -394,7 +498,7 @@ const Profile = () => {
                       label="ADDRESS"
                       value={
                         user?.address?.length
-                          ? user.address.join(", ")
+                          ? `${user.address[0]?.address ?? ""}${user.address[0]?.city ? `, ${user.address[0].city}` : ""}`.trim() || "—"
                           : undefined
                       }
                     />
@@ -448,6 +552,20 @@ const Profile = () => {
                       <option value="other">Other</option>
                     </select>
                   </div>
+                  <EditField
+                    label="ADDRESS"
+                    name="addressLine"
+                    value={formData.addressLine}
+                    onChange={handleFormChange}
+                    placeholder="Street / apartment"
+                  />
+                  <EditField
+                    label="CITY"
+                    name="addressCity"
+                    value={formData.addressCity}
+                    onChange={handleFormChange}
+                    placeholder="City"
+                  />
                 </div>
               )}
             </div>
@@ -484,6 +602,114 @@ const Profile = () => {
                   value={formatDate(user?.createdAt)}
                 />
               </div>
+            </div>
+
+            {/* Identity & Banking */}
+            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                    Identity & Banking
+                  </h2>
+                </div>
+              </div>
+
+              {!isEditing ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <InfoField label="AADHAR" value={user?.aadharCardNumber} icon={<CheckCircle2 className="w-4 h-4" />} />
+                  <InfoField label="PAN" value={user?.panCardNumber} icon={<CheckCircle2 className="w-4 h-4" />} />
+                  <InfoField label="BANK ACCOUNT" value={user?.bankAccountNo} icon={<CheckCircle2 className="w-4 h-4" />} />
+                  <InfoField label="BANK NAME" value={user?.bankName} icon={<CheckCircle2 className="w-4 h-4" />} />
+                  <InfoField label="IFSC" value={user?.bankIFSC} icon={<CheckCircle2 className="w-4 h-4" />} />
+                  <InfoField label="BRANCH" value={user?.bankBranch} icon={<CheckCircle2 className="w-4 h-4" />} />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <EditField label="AADHAR" name="aadharCardNumber" value={formData.aadharCardNumber} onChange={handleFormChange} />
+                  <EditField label="PAN" name="panCardNumber" value={formData.panCardNumber} onChange={handleFormChange} />
+                  <EditField label="BANK ACCOUNT" name="bankAccountNo" value={formData.bankAccountNo} onChange={handleFormChange} />
+                  <EditField label="BANK NAME" name="bankName" value={formData.bankName} onChange={handleFormChange} />
+                  <EditField label="IFSC" name="bankIFSC" value={formData.bankIFSC} onChange={handleFormChange} />
+                  <EditField label="BRANCH" name="bankBranch" value={formData.bankBranch} onChange={handleFormChange} />
+                </div>
+              )}
+            </div>
+
+            {/* Skills / Education / Experience / Leaves */}
+            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <FolderKanban className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                    Structured Details
+                  </h2>
+                </div>
+              </div>
+              {!isEditing ? (
+                <div className="space-y-4">
+                  <InfoField
+                    icon={<FolderKanban className="w-4 h-4" />}
+                    label="SKILLS"
+                    value={user?.skills?.length ? user.skills.map((s) => s.skill).filter(Boolean).join(", ") : undefined}
+                    className="wrap-break-word"
+                  />
+                  <InfoField
+                    icon={<FolderKanban className="w-4 h-4" />}
+                    label="EDUCATION"
+                    value={user?.education?.length ? user.education.map((e) => e.degree).filter(Boolean).join(", ") : undefined}
+                    className="wrap-break-word"
+                  />
+                  <InfoField
+                    icon={<FolderKanban className="w-4 h-4" />}
+                    label="EXPERIENCE"
+                    value={user?.experience?.length ? user.experience.map((e) => e.company).filter(Boolean).join(", ") : undefined}
+                    className="wrap-break-word"
+                  />
+                  <InfoField
+                    icon={<FolderKanban className="w-4 h-4" />}
+                    label="LEAVES"
+                    value={
+                      user?.leaves?.length
+                        ? user.leaves
+                            .map((l) =>
+                              typeof l.totalBalance === "number" ? String(l.totalBalance) : ""
+                            )
+                            .filter(Boolean)
+                            .join(", ")
+                        : undefined
+                    }
+                    className="wrap-break-word"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <EditField
+                    label="SKILLS"
+                    name="skillsJson"
+                    value={formData.skillsJson}
+                    onChange={handleFormChange}
+                    placeholder="test, test1"
+                  />
+                  <EditField
+                    label="EDUCATION"
+                    name="educationJson"
+                    value={formData.educationJson}
+                    onChange={handleFormChange}
+                    placeholder="BSc, MSc"
+                  />
+                  <EditField
+                    label="EXPERIENCE"
+                    name="experienceJson"
+                    value={formData.experienceJson}
+                    onChange={handleFormChange}
+                    placeholder="Company A, Company B"
+                  />
+                  <p className="text-xs text-gray-500">
+                    You can type comma-separated values (like "test, test1") or paste a JSON array.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

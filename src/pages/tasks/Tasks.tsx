@@ -24,6 +24,11 @@ import { getUserById } from "../../apis/api/auth";
 import type { Task, TaskStatus } from "../../types/task.types";
 import { withoutStaleCompletedTasks } from "../../utils/taskStaleHide";
 import type { Project } from "../../types/project.types";
+import {
+  TASK_STATUS_OPTIONS,
+  TASK_STATUS_UI,
+  taskStatusSelectClass,
+} from "../../constants/taskStatus";
 import Button from "../../components/UI/Button";
 import Modal from "../../components/UI/Model";
 import Input from "../../components/UI/Input";
@@ -56,43 +61,10 @@ const VIEW_TOGGLE_ITEMS: PillTabItem[] = [
   },
 ];
 
-const STATUS_UI: Record<
-  TaskStatus,
-  { label: string; className: string }
-> = {
-  pending: {
-    label: "Todo",
-    className:
-      "bg-slate-100 text-slate-700 ring-1 ring-slate-200/80",
-  },
-  in_progress: {
-    label: "In Progress",
-    className:
-      "bg-violet-50 text-violet-800 ring-1 ring-violet-200/80",
-  },
-  review: {
-    label: "Review",
-    className:
-      "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80",
-  },
-  completed: {
-    label: "Done",
-    className:
-      "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80",
-  },
-};
-
 const PRIORITY_OPTIONS = [
   { label: "Low", value: "low" },
   { label: "Medium", value: "medium" },
   { label: "Urgent", value: "urgent" },
-];
-
-const STATUS_OPTIONS = [
-  { label: "Todo", value: "pending" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Review", value: "review" },
-  { label: "Done", value: "completed" },
 ];
 
 function isPopulatedProject(p: Task["project"]): p is Project {
@@ -103,12 +75,19 @@ function taskProjectName(task: Task): string {
   return isPopulatedProject(task.project) ? task.project.projectName : "Project";
 }
 
-function taskAssigneeName(task: Task): string {
+function taskAssigneeName(task: Task, currentUserId?: string): string {
   if (
     task.assignedTo &&
     typeof task.assignedTo === "object" &&
     "name" in task.assignedTo
   ) {
+    if (
+      currentUserId &&
+      "_id" in task.assignedTo &&
+      String((task.assignedTo as { _id?: string })._id) === String(currentUserId)
+    ) {
+      return "You";
+    }
     return task.assignedTo.name;
   }
   return "Unassigned";
@@ -131,12 +110,14 @@ function TaskCard({
   task,
   onStatusChange,
   updating,
+  currentUserId,
 }: {
   task: Task;
   onStatusChange: (id: string, status: TaskStatus) => void;
   updating: boolean;
+  currentUserId?: string;
 }) {
-  const assignee = taskAssigneeName(task);
+  const assignee = taskAssigneeName(task, currentUserId);
   const projectName = taskProjectName(task);
 
   return (
@@ -152,9 +133,9 @@ function TaskCard({
           </h3>
         </div>
         <span
-          className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_UI[task.status].className}`}
+          className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS_UI[task.status].badgeClassName}`}
         >
-          {STATUS_UI[task.status].label}
+          {TASK_STATUS_UI[task.status].label}
         </span>
       </div>
       {task.description ? (
@@ -185,9 +166,11 @@ function TaskCard({
           onChange={(e) =>
             onStatusChange(task._id, e.target.value as TaskStatus)
           }
-          className="w-full max-w-[200px] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+          className={`w-full max-w-[200px] rounded-lg border px-2 py-1.5 text-xs font-medium shadow-sm focus:outline-none focus:ring-2 disabled:opacity-50 ${taskStatusSelectClass(
+            task.status
+          )}`}
         >
-          {STATUS_OPTIONS.map((o) => (
+          {TASK_STATUS_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
@@ -206,11 +189,13 @@ function KanbanColumn({
   tasks,
   onStatusChange,
   updatingId,
+  currentUserId,
 }: {
   title: string;
   tasks: Task[];
   onStatusChange: (id: string, status: TaskStatus) => void;
   updatingId: string | null;
+  currentUserId?: string;
 }) {
   return (
     <div className="flex min-h-[320px] min-w-[280px] flex-1 flex-col rounded-2xl border border-gray-200/70 bg-gradient-to-b from-gray-50/80 to-white/40 p-3 shadow-inner">
@@ -230,6 +215,7 @@ function KanbanColumn({
               task={t}
               onStatusChange={onStatusChange}
               updating={updatingId === t._id}
+              currentUserId={currentUserId}
             />
           ))
         )}
@@ -354,6 +340,19 @@ export default function Tasks() {
     label: u.name,
     value: u._id,
   }));
+  const assigneeOptions = useMemo(() => {
+    const meId = me?._id || userId;
+    const others = users
+      .filter((u) => String(u._id) !== String(meId))
+      .slice()
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const meOpt = meId ? [{ label: "Me", value: meId }] : [];
+    return [
+      { label: "Unassigned", value: "" },
+      ...meOpt,
+      ...others.map((u) => ({ label: u.name, value: u._id })),
+    ];
+  }, [me?._id, userId, users]);
 
   const openCreate = () => {
     setFormProject(projectId ?? projects[0]?._id ?? "");
@@ -361,7 +360,7 @@ export default function Tasks() {
     setFormDescription("");
     setFormDue("");
     setFormPriority("medium");
-    setFormAssignee("");
+    setFormAssignee(me?._id ?? userId ?? "");
     setCreateOpen(true);
   };
 
@@ -566,7 +565,7 @@ export default function Tasks() {
                           </span>
                         </td>
                         <td className="px-4 py-3 align-top text-gray-700">
-                          {taskAssigneeName(task)}
+                          {taskAssigneeName(task, userId)}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 align-top text-gray-600">
                           {formatDue(task.dueDate)}
@@ -589,9 +588,11 @@ export default function Tasks() {
                                   e.target.value as TaskStatus
                                 )
                               }
-                              className="min-w-[8.5rem] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                              className={`min-w-[8.5rem] rounded-lg border px-2 py-1.5 text-xs font-medium shadow-sm focus:outline-none focus:ring-2 disabled:opacity-50 ${taskStatusSelectClass(
+                                task.status
+                              )}`}
                             >
-                              {STATUS_OPTIONS.map((o) => (
+                              {TASK_STATUS_OPTIONS.map((o) => (
                                 <option key={o.value} value={o.value}>
                                   {o.label}
                                 </option>
@@ -671,24 +672,28 @@ export default function Tasks() {
             tasks={grouped.pending}
             onStatusChange={handleStatusChange}
             updatingId={updatingId}
+            currentUserId={userId}
           />
           <KanbanColumn
             title="In Progress"
             tasks={grouped.in_progress}
             onStatusChange={handleStatusChange}
             updatingId={updatingId}
+            currentUserId={userId}
           />
           <KanbanColumn
             title="Review"
             tasks={grouped.review}
             onStatusChange={handleStatusChange}
             updatingId={updatingId}
+            currentUserId={userId}
           />
           <KanbanColumn
             title="Done"
             tasks={grouped.completed}
             onStatusChange={handleStatusChange}
             updatingId={updatingId}
+            currentUserId={userId}
           />
         </div>
       )}
@@ -718,8 +723,8 @@ export default function Tasks() {
           {canAssignOthers && userOptions.length > 0 ? (
             <Dropdown
               label="Assign to"
-              placeholder="Unassigned"
-              options={[{ label: "Unassigned", value: "" }, ...userOptions]}
+              placeholder="Select assignee"
+              options={assigneeOptions}
               value={formAssignee}
               onChange={setFormAssignee}
             />

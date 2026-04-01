@@ -7,6 +7,7 @@ import { FcGoogle } from "react-icons/fc";
 import { signup } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../../apis/apiPath";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -59,6 +60,10 @@ const SignUp = () => {
       const message = (error as ApiError)?.message || "Unable to create account";
       setErrors({ name: "", email: message, password: "", confirmPassword: "" })
     }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${API_BASE_URL.replace(/\/$/, "")}/auth/google`;
   };
 
   return (
@@ -217,7 +222,7 @@ const SignUp = () => {
             </div>
 
 
-            <Button variant="outline" type="button" className="w-full" >
+            <Button variant="outline" type="button" className="w-full" onClick={handleGoogleLogin}>
               <FcGoogle size={20} /> Continue with Google
             </Button>
 

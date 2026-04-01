@@ -113,6 +113,7 @@ export async function request<T = unknown>(
         ...init,
         method,
         headers: finalHeaders,
+        cache: "no-store",
         body: body === undefined ? undefined : JSON.stringify(body),
     });
 
@@ -150,6 +151,7 @@ export async function uploadFormData<T = unknown>(
         ...init,
         method,
         headers: finalHeaders,
+        cache: "no-store",
         body: formData,
     });
 
