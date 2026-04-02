@@ -6,7 +6,7 @@ import { FcGoogle } from "react-icons/fc"
 import { useEffect, useState } from "react"
 import { ApiError } from "../../apis/apiService"
 import { login } from "../../apis/api/auth"
-import { setStoredUserRoles } from "../../utils/moduleAccess"
+import { getClientAuthToken, setStoredUserRoles } from "../../utils/moduleAccess"
 import toast from "react-hot-toast"
 import { API_BASE_URL } from "../../apis/apiPath"
 import { jwtDecode } from "jwt-decode"
@@ -59,7 +59,7 @@ const Login = () => {
     }
 
     useEffect(() => {
-        if(localStorage.getItem("token")) {
+        if (getClientAuthToken()) {
             navigate("/")
         }
     }, [navigate])

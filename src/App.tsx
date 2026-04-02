@@ -12,6 +12,7 @@ import Attendance from './pages/attendance/Attendance'
 import StickyNotes from './pages/notes/StickyNotes'
 import Leave from './pages/leave/Leave'
 import CalendarPage from './pages/calendar/CalendarPage'
+import UserProfile from './pages/userProfile/UserProfile'
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/user/:id" element={<UserProfile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

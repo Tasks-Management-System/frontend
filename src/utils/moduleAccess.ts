@@ -43,6 +43,16 @@ export function clearClientAuthSession() {
   clearStoredUserRoles();
 }
 
+/** Same key order as `apiService` so guards match what requests send. */
+export function getClientAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const t =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken");
+  return t && t.trim() ? t : null;
+}
+
 /**
  * If `allowed` is omitted or empty, any authenticated user passes.
  * User may have multiple roles in `role[]`; one match is enough.

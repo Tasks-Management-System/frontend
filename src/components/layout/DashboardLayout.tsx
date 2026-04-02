@@ -1,24 +1,21 @@
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "../sidebar/Sidebar";
 import Header from "../header/Header";
 import RoleRouteGuard from "../auth/RoleRouteGuard";
 import { useEffect, useState } from "react";
 import { getUserById } from "../../apis/api/auth";
-import { setStoredUserRoles } from "../../utils/moduleAccess";
+import { getClientAuthToken, setStoredUserRoles } from "../../utils/moduleAccess";
 
 const DashboardLayout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isNotesFullscreen = location.pathname === "/notes";
   const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
   const { data: sessionUser } = getUserById(userId);
 
-  useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      navigate("/login");
-    }
-  }, [navigate]);
+  if (!getClientAuthToken()) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
 
   useEffect(() => {
     if (sessionUser?.role?.length) {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getUserById } from "../../apis/api/auth";
 import {
+  getClientAuthToken,
   getStoredUserRoles,
   routeAllowedRoles,
   userHasAnyRole,
@@ -21,7 +22,7 @@ const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
   const { data: user, isLoading, isError } = getUserById(userId);
 
-  if (!userId || isError) {
+  if (!getClientAuthToken() || !userId || isError) {
     return <Navigate to="/login" replace />;
   }
 

@@ -62,6 +62,7 @@ import Modal from "../../components/UI/Model";
 import Input from "../../components/UI/Input";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import { SettingsTableSkeleton } from "../../components/UI/Skeleton";
+import { useNavigate } from "react-router-dom";
 
 const tabs = [
   { key: "user-management", label: "User Management" },
@@ -70,6 +71,9 @@ const tabs = [
 ];
 
 const Settings = () => {
+
+  const navigate = useNavigate()
+
   const [activeTab, setActiveTab] = useState("user-management");
   const { data: users = [], isLoading } = getUsers();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
@@ -303,6 +307,23 @@ const Settings = () => {
       {
         key: "name",
         label: "Name",
+        render: (row: User) => {
+
+          return (
+            <div className="flex min-w-0 items-center gap-2 cursor-pointer hover:text-blue-500 hover:underline " onClick={() => navigate(`/user/${row._id}`)}>
+              <div className="flex items-center gap-2">
+                <img
+                  src={row.profileImage ?? ""}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded-full object-cover"
+                />
+                <span className="min-w-0 truncate" title={row.name}>
+                  {row.name}
+                </span>
+              </div>
+            </div>
+          );
+        },
       },
       {
         key: "email",
