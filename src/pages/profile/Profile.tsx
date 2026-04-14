@@ -1,3 +1,4 @@
+import { getUserId } from "../../utils/auth";
 import { useState, useRef } from "react";
 import {
   User,
@@ -138,7 +139,7 @@ const Profile = () => {
     experienceJson: "[]",
     leavesJson: "[]",
   });
-  const userId = localStorage.getItem("userId") ?? "";
+  const userId = getUserId();
   const { data: user, isLoading } = getUserById(userId);
   const updateImage = useUpdateProfileImage();
   const updateUser = useUpdateUser();

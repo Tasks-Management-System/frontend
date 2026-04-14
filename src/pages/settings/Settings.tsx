@@ -1,3 +1,4 @@
+import { getUserId } from "../../utils/auth";
 import { useCallback, useMemo, useState, type FormEvent } from "react";
 
 type AssignableRole =
@@ -103,7 +104,7 @@ const Settings = () => {
     experienceJson: "",
     leavesJson: "",
   });
-  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
+  const userId = getUserId();
   const { data: sessionUser } = getUserById(userId);
   const createUserMutation = useCreateUserByAdmin();
   const createProjectMutation = useCreateProject();

@@ -16,11 +16,11 @@ import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import {
-  clearClientAuthSession,
   getStoredUserRoles,
   userHasAnyRole,
   type AppRole,
 } from "../../utils/moduleAccess";
+import { clearAuth, getUserId } from "../../utils/auth";
 
 const routeTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -67,7 +67,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
-  const userId = localStorage.getItem("userId") ?? "";
+  const userId = getUserId();
 
   const { data: user } = getUserById(userId);
   const menuRoles =
@@ -79,7 +79,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
   const logoutMutation = useLogout();
 
   const clearClientSession = () => {
-    clearClientAuthSession();
+    clearAuth();
     setIsMenuOpen(false);
   };
 

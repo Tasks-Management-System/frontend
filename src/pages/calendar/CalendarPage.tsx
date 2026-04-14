@@ -1,3 +1,4 @@
+import { getUserId } from "../../utils/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { api, ApiError } from "../../apis/apiService";
@@ -43,7 +44,7 @@ function emptyFilters(): EventFilters {
 }
 
 const CalendarPage = () => {
-  const userId = localStorage.getItem("userId") ?? "";
+  const userId = getUserId();
   const { data: me } = getUserById(userId);
   const role = me?.role?.[0] ?? "";
 

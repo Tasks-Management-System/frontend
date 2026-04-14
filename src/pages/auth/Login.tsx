@@ -6,7 +6,7 @@ import { FcGoogle } from "react-icons/fc"
 import { useEffect, useState } from "react"
 import { ApiError } from "../../apis/apiService"
 import { login } from "../../apis/api/auth"
-import { getClientAuthToken, setStoredUserRoles } from "../../utils/moduleAccess"
+import { getToken, setToken, setUserId, setStoredRoles } from "../../utils/auth"
 import toast from "react-hot-toast"
 import { API_BASE_URL } from "../../apis/apiPath"
 import { jwtDecode } from "jwt-decode"
@@ -39,9 +39,9 @@ const Login = () => {
         setErrors({ email: "", password: "" })
         try {
             const res = await loginMutation.mutateAsync({ email: formData.email, password: formData.password })
-            if (res?.token) localStorage.setItem("token", res.token)
-            if (res?.user?._id) localStorage.setItem("userId", res.user._id)
-            setStoredUserRoles(res?.user?.role)
+            if (res?.token) setToken(res.token)
+            if (res?.user?._id) setUserId(res.user._id)
+            setStoredRoles(res?.user?.role)
             toast.success("Login successful")
             navigate("/")
         } catch (error) {
@@ -59,7 +59,7 @@ const Login = () => {
     }
 
     useEffect(() => {
-        if (getClientAuthToken()) {
+        if (getToken()) {
             navigate("/")
         }
     }, [navigate])
@@ -69,13 +69,13 @@ const Login = () => {
         const token = params.get("token")
         const provider = params.get("provider")
         if (token) {
-            localStorage.setItem("token", token)
+            setToken(token)
             try {
                 const decoded = jwtDecode<JwtPayload>(token)
-                if (decoded?.id) localStorage.setItem("userId", decoded.id)
+                if (decoded?.id) setUserId(decoded.id)
                 const rolesRaw = decoded?.role
                 const roles = Array.isArray(rolesRaw) ? rolesRaw : rolesRaw ? [rolesRaw] : undefined
-                setStoredUserRoles(roles)
+                setStoredRoles(roles)
             } catch {
                 // ignore decode errors; token will still be used for API calls
             }

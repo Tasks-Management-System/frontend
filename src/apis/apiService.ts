@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "./apiPath";
-import { clearClientAuthSession } from "../utils/moduleAccess";
+import { clearAuth, getToken } from "../utils/auth";
 
 export const ACCOUNT_INACTIVE_CODE = "ACCOUNT_INACTIVE";
 
@@ -11,7 +11,7 @@ function handleInactiveAccountIfNeeded(
     if (!auth || status !== 403) return;
     const code = (data as { code?: string })?.code;
     if (code !== ACCOUNT_INACTIVE_CODE) return;
-    clearClientAuthSession();
+    clearAuth();
     const msg = encodeURIComponent(
         (data as { message?: string })?.message ||
             "Your account has been deactivated."
@@ -71,12 +71,7 @@ function appendQuery(url: string, query?: QueryParams) {
 }
 
 function getStoredToken() {
-    // common keys; adjust later if your backend uses a different name
-    return (
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken")
-    );
+    return getToken();
 }
 
 async function parseMaybeJson(res: Response) {

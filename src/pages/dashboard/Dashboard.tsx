@@ -1,3 +1,4 @@
+import { getUserId } from "../../utils/auth";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";
 import { CircleCheckBig, Download, FolderPlus, NotebookPen, Presentation, User, UserPlus } from "lucide-react";
@@ -81,7 +82,7 @@ const projectData = [
 ];
 const Dashboard = () => {
   const [openModal, setOpenModal] = useState<string | null>(null);
-  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
+  const userId = getUserId();
   const { data: sessionUser } = getUserById(userId);
   const createUserMutation = useCreateUserByAdmin();
 

@@ -1,3 +1,4 @@
+import { getUserId } from "../../utils/auth";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -14,7 +15,6 @@ import {
 import { getUserById } from "../../apis/api/auth";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import { Skeleton } from "../../components/UI/Skeleton";
-import type { User as UserType } from "../../types/user.types";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 
 const tabs = [
@@ -137,7 +137,7 @@ const UserProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState("overview");
   const sessionUserId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
+    getUserId();
 
   const { data: user, isLoading, isError } = getUserById(id ?? "");
 

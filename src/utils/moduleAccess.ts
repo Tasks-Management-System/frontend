@@ -4,54 +4,13 @@
  */
 export type AppRole = "super-admin" | "admin" | "employee" | "hr" | "manager";
 
-const USER_ROLES_LS = "userRoles";
-
-/** Persist roles on login so guards can run before /user/:id finishes loading. */
-export function setStoredUserRoles(roles: string[] | undefined) {
-  if (typeof window === "undefined") return;
-  if (!roles?.length) {
-    localStorage.removeItem(USER_ROLES_LS);
-    return;
-  }
-  localStorage.setItem(USER_ROLES_LS, JSON.stringify(roles));
-}
-
-export function getStoredUserRoles(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(USER_ROLES_LS);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? parsed.map(String) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function clearStoredUserRoles() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(USER_ROLES_LS);
-}
-
-/** Clears auth storage (token, user id, cached roles). */
-export function clearClientAuthSession() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("token");
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("userId");
-  clearStoredUserRoles();
-}
-
-/** Same key order as `apiService` so guards match what requests send. */
-export function getClientAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const t =
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken");
-  return t && t.trim() ? t : null;
-}
+export {
+  getStoredRoles as getStoredUserRoles,
+  setStoredRoles as setStoredUserRoles,
+  clearAuth as clearStoredUserRoles,
+  clearAuth as clearClientAuthSession,
+  getToken as getClientAuthToken,
+} from "./auth";
 
 /**
  * If `allowed` is omitted or empty, any authenticated user passes.

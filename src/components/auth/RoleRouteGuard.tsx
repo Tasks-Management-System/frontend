@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getUserById } from "../../apis/api/auth";
 import {
-  getClientAuthToken,
   getStoredUserRoles,
   routeAllowedRoles,
   userHasAnyRole,
 } from "../../utils/moduleAccess";
+import { getToken, getUserId } from "../../utils/auth";
 
 type RoleRouteGuardProps = {
   children: ReactNode;
@@ -19,10 +19,10 @@ type RoleRouteGuardProps = {
 const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const { pathname } = useLocation();
   const allowed = routeAllowedRoles(pathname);
-  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
+  const userId = getUserId();
   const { data: user, isLoading, isError } = getUserById(userId);
 
-  if (!getClientAuthToken() || !userId || isError) {
+  if (!getToken() || !userId || isError) {
     return <Navigate to="/login" replace />;
   }
 

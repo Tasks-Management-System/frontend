@@ -1,3 +1,4 @@
+import { getUserId } from "../../utils/auth";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -94,7 +95,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const navigate = useNavigate();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
   const createProjectMutation = useCreateProject();
-  const userId = localStorage.getItem("userId") ?? "";
+  const userId = getUserId();
   const { data: user } = getUserById(userId);
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);

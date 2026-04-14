@@ -4,22 +4,22 @@ import Header from "../header/Header";
 import RoleRouteGuard from "../auth/RoleRouteGuard";
 import { useEffect, useState } from "react";
 import { getUserById } from "../../apis/api/auth";
-import { getClientAuthToken, setStoredUserRoles } from "../../utils/moduleAccess";
+import { getToken, getUserId, setStoredRoles } from "../../utils/auth";
 
 const DashboardLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isNotesFullscreen = location.pathname === "/notes";
-  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") ?? "" : "";
+  const userId = getUserId();
   const { data: sessionUser } = getUserById(userId);
 
-  if (!getClientAuthToken()) {
+  if (!getToken()) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   useEffect(() => {
     if (sessionUser?.role?.length) {
-      setStoredUserRoles(sessionUser.role);
+      setStoredRoles(sessionUser.role);
     }
   }, [sessionUser?.role]);
 
