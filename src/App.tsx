@@ -13,6 +13,7 @@ import StickyNotes from './pages/notes/StickyNotes'
 import Leave from './pages/leave/Leave'
 import CalendarPage from './pages/calendar/CalendarPage'
 import UserProfile from './pages/userProfile/UserProfile'
+import Salary from './pages/salary/Salary'
 
 function App() {
   return (
@@ -44,7 +45,7 @@ function App() {
         <Route path="/projects" element={<Dashboard />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/notes" element={<StickyNotes />} />
-        <Route path="/salary" element={<Dashboard />} />
+        <Route path="/salary" element={<Salary />} />
         <Route path="/employee" element={<Dashboard />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/settings" element={<Settings />} />

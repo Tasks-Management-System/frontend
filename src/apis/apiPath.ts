@@ -53,6 +53,12 @@ export const apiPath = {
         team: "/events/team",
         byId: "/events/",
     },
+    salary: {
+        list: "/salary",
+        create: "/salary/create",
+        byId: "/salary/",
+        pdf: "/salary/pdf/",
+    },
 }
 
 /**
