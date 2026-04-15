@@ -15,6 +15,7 @@ import { TasksPageSkeleton } from "../../components/UI/Skeleton";
 import { KanbanView } from "./KanbanView";
 import { ListView } from "./ListView";
 import { TaskCreateModal } from "./TaskCreateModal";
+import { TaskDetailModal } from "./TaskDetailModal";
 
 type TabKey = "all" | "my" | "archived";
 type ViewMode = "cards" | "kanban";
@@ -41,6 +42,8 @@ export default function Tasks() {
   const [taskListPage, setTaskListPage] = useState(1);
   const [taskListLimit, setTaskListLimit] = useState(10);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createStatus, setCreateStatus] = useState<TaskStatus>("pending");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const userId = getUserId();
@@ -120,6 +123,20 @@ export default function Tasks() {
       ...others.map((u) => ({ label: u.name, value: u._id })),
     ];
   }, [me?._id, userId, users]);
+
+  const handleAddTask = (status: TaskStatus) => {
+    setCreateStatus(status);
+    setCreateOpen(true);
+  };
+
+  const selectedTask = useMemo(
+    () => tasks.find((t) => t._id === selectedTaskId) ?? null,
+    [tasks, selectedTaskId]
+  );
+
+  const handleTaskClick = (task: { _id: string }) => {
+    setSelectedTaskId(task._id);
+  };
 
   const handleStatusChange = async (id: string, status: TaskStatus) => {
     setUpdatingId(id);
@@ -224,6 +241,7 @@ export default function Tasks() {
             setTaskListLimit(limit);
             setTaskListPage(1);
           }}
+          onTaskClick={handleTaskClick}
         />
       ) : (
         <KanbanView
@@ -231,6 +249,9 @@ export default function Tasks() {
           onStatusChange={handleStatusChange}
           updatingId={updatingId}
           currentUserId={userId}
+          canCreateTask={canCreateTask}
+          onAddTask={handleAddTask}
+          onTaskClick={handleTaskClick}
         />
       )}
 
@@ -242,6 +263,14 @@ export default function Tasks() {
         canAssignOthers={canAssignOthers}
         defaultProjectId={projectId ?? projects[0]?._id}
         defaultAssigneeId={me?._id ?? userId}
+        defaultStatus={createStatus}
+      />
+
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={selectedTaskId !== null}
+        onClose={() => setSelectedTaskId(null)}
+        currentUserId={userId}
       />
     </div>
   );

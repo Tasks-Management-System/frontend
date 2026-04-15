@@ -16,6 +16,7 @@ interface ListViewProps {
   onStatusChange: (id: string, status: TaskStatus) => void;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  onTaskClick?: (task: Task) => void;
 }
 
 export function ListView({
@@ -28,6 +29,7 @@ export function ListView({
   onStatusChange,
   onPageChange,
   onLimitChange,
+  onTaskClick,
 }: ListViewProps) {
   return (
     <div className="space-y-10">
@@ -62,7 +64,8 @@ export function ListView({
                 {tasks.map((task) => (
                   <tr
                     key={`row-${task._id}`}
-                    className="transition-colors hover:bg-violet-50/40"
+                    onClick={() => onTaskClick?.(task)}
+                    className="cursor-pointer transition-colors hover:bg-violet-50/40"
                   >
                     <td className="px-4 py-3 align-top">
                       <span className="font-medium text-gray-700">{taskProjectName(task)}</span>
@@ -81,7 +84,7 @@ export function ListView({
                     <td className="whitespace-nowrap px-4 py-3 align-top text-gray-600">
                       {formatDue(task.dueDate)}
                     </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-4 py-3 align-top" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         <label className="sr-only" htmlFor={`table-status-${task._id}`}>
                           Status for {task.taskName}

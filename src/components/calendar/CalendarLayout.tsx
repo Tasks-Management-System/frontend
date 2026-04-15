@@ -1,5 +1,7 @@
+import { Download } from "lucide-react";
 import type { CalendarEvent, CalendarViewMode, EventFilters } from "../../types/calendar.types";
 import { addDays, startOfWeekSunday } from "./calendarUtils";
+import { exportToIcs } from "./icsExport";
 import CalendarSidebar from "./CalendarSidebar";
 import MonthView from "./MonthView";
 import WeekView from "./WeekView";
@@ -29,6 +31,7 @@ type Props = {
   onWeekSlotClick: (d: Date, hour: number, minute: number) => void;
   onDaySlotClick: (d: Date, hour: number, minute: number) => void;
   onEventClick: (e: CalendarEvent) => void;
+  onEventDrop?: (event: CalendarEvent, newDate: Date) => void;
   isLoading?: boolean;
 };
 
@@ -88,6 +91,7 @@ const CalendarLayout = ({
   onWeekSlotClick,
   onDaySlotClick,
   onEventClick,
+  onEventDrop,
   isLoading,
 }: Props) => {
   const title = titleForView(view, currentDate, anchorMonth);
@@ -137,21 +141,32 @@ const CalendarLayout = ({
             </div>
             <h1 className="text-lg font-semibold text-gray-900 sm:ml-2">{title}</h1>
           </div>
-          <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => onViewChange(t.id)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                  view === t.id
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => onViewChange(t.id)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                    view === t.id
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => exportToIcs(filteredEvents)}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              title="Export to .ics (Google Calendar, Outlook)"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">.ics</span>
+            </button>
           </div>
         </div>
 
@@ -167,6 +182,7 @@ const CalendarLayout = ({
                 onDayClick={onMonthDayClick}
                 onMoreClick={onMonthMoreClick}
                 onEventClick={onEventClick}
+                onEventDrop={onEventDrop}
               />
             )}
             {view === "week" && (

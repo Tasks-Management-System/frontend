@@ -8,14 +8,37 @@ interface TaskCardProps {
   onStatusChange: (id: string, status: TaskStatus) => void;
   updating: boolean;
   currentUserId?: string;
+  isDragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  onTaskClick?: (task: Task) => void;
 }
 
-export function TaskCard({ task, onStatusChange, updating, currentUserId }: TaskCardProps) {
+export function TaskCard({
+  task,
+  onStatusChange,
+  updating,
+  currentUserId,
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  onTaskClick,
+}: TaskCardProps) {
   const assignee = taskAssigneeName(task, currentUserId);
   const projectName = taskProjectName(task);
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white/90 p-4 shadow-[0_8px_30px_rgba(15,23,42,0.05)] ring-1 ring-black/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
+    <article
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onClick={() => onTaskClick?.(task)}
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-gray-200/70 bg-white/90 p-4 shadow-[0_8px_30px_rgba(15,23,42,0.05)] ring-1 ring-black/[0.03] transition active:cursor-grabbing ${
+        isDragging
+          ? "opacity-40 shadow-none"
+          : "hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+      }`}
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-200/80 to-transparent opacity-0 transition group-hover:opacity-100" />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -47,7 +70,10 @@ export function TaskCard({ task, onStatusChange, updating, currentUserId }: Task
           {formatDue(task.dueDate)}
         </span>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+      {/* <div
+        className="mt-4 flex items-center justify-between gap-2 border-t border-gray-100 pt-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <label className="sr-only" htmlFor={`status-${task._id}`}>
           Change status
         </label>
@@ -65,7 +91,7 @@ export function TaskCard({ task, onStatusChange, updating, currentUserId }: Task
           ))}
         </select>
         {updating ? <Loader2 className="h-4 w-4 animate-spin text-violet-600" /> : null}
-      </div>
+      </div> */}
     </article>
   );
 }

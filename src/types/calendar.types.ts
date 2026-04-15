@@ -50,10 +50,13 @@ export const EVENT_COLORS: Record<CalendarEventType, string> = {
   deadline: "#dc2626",
   reminder: "#d97706",
   other: "#64748b",
-  leave: "#0ea5e9",
-  task: "#8b5cf6",
+  leave: "#f97316",      // orange for leave
+  task: "#ef4444",        // red for task deadlines
   attendance: "#14b8a6",
 };
+
+// Birthday events use purple
+export const BIRTHDAY_COLOR = "#a855f7";
 
 export const CALENDAR_TYPE_ORDER: CalendarEventType[] = [
   "meeting",

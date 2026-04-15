@@ -14,10 +14,20 @@ const EventPill = ({ event, onClick, className = "" }: Props) => {
         e.stopPropagation();
         onClick(event);
       }}
-      className={`flex w-full max-w-full items-center gap-1 rounded-sm border border-gray-100 border-l-2 bg-white px-1.5 py-0.5 text-left text-[11px] font-medium text-gray-800 shadow-sm hover:bg-gray-50 ${className}`}
-      style={{ borderLeftColor: event.color }}
+      className={`flex w-full max-w-full items-center gap-1.5 rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-[11px] font-medium shadow-sm hover:shadow-md transition-shadow ${className}`}
+      style={{
+        borderLeftColor: event.color,
+        backgroundColor: event.color + "15",
+        color: event.color,
+      }}
     >
-      <span className="min-w-0 flex-1 truncate">{event.title}</span>
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: event.color }}
+      />
+      <span className="min-w-0 flex-1 truncate" style={{ color: "#1f2937" }}>
+        {event.title}
+      </span>
     </button>
   );
 };

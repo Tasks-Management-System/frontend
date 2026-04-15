@@ -202,6 +202,36 @@ const CalendarPage = () => {
     onWeekSlotClick(d, hour, minute);
   };
 
+  const onEventDrop = async (ev: CalendarEvent, newDate: Date) => {
+    if (ev.source !== "calendar") return;
+    const id = getCalendarEventMongoId(ev);
+    if (!id) return;
+
+    // Calculate the time difference and apply to both start and end
+    const oldStart = new Date(ev.start);
+    const dayDiff = Math.round(
+      (newDate.getTime() - new Date(oldStart.getFullYear(), oldStart.getMonth(), oldStart.getDate()).getTime()) /
+        (24 * 60 * 60 * 1000)
+    );
+    if (dayDiff === 0) return;
+
+    const newStart = new Date(ev.start);
+    newStart.setDate(newStart.getDate() + dayDiff);
+    const newEnd = new Date(ev.end);
+    newEnd.setDate(newEnd.getDate() + dayDiff);
+
+    try {
+      await api.put(apiPath.events.byId + id, {
+        start: newStart.toISOString(),
+        end: newEnd.toISOString(),
+      });
+      toast.success("Event rescheduled");
+      invalidateCalendar();
+    } catch (err) {
+      toast.error((err as ApiError)?.message ?? "Could not reschedule event");
+    }
+  };
+
   const onDelete = async (ev: CalendarEvent) => {
     const id = getCalendarEventMongoId(ev);
     if (!id) {
@@ -258,6 +288,7 @@ const CalendarPage = () => {
         onWeekSlotClick={onWeekSlotClick}
         onDaySlotClick={onDaySlotClick}
         onEventClick={onEventClick}
+        onEventDrop={onEventDrop}
         isLoading={isLoading}
       />
 
