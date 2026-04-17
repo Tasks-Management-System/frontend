@@ -14,6 +14,9 @@ import Leave from './pages/leave/Leave'
 import CalendarPage from './pages/calendar/CalendarPage'
 import UserProfile from './pages/userProfile/UserProfile'
 import Salary from './pages/salary/Salary'
+import Announcements from './pages/announcements/Announcements'
+import Assets from './pages/assets/Assets'
+import Timesheets from './pages/timesheets/Timesheets'
 
 function App() {
   return (
@@ -51,6 +54,9 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/user/:id" element={<UserProfile />} />
+        <Route path="/announcements" element={<Announcements />} />
+        <Route path="/assets" element={<Assets />} />
+        <Route path="/timesheets" element={<Timesheets />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

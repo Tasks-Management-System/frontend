@@ -59,6 +59,26 @@ export const apiPath = {
         byId: "/salary/",
         pdf: "/salary/pdf/",
     },
+    announcements: {
+        list: "/announcements",
+        create: "/announcements/create",
+        byId: "/announcements/",
+        read: "/announcements/:id/read",
+        pin: "/announcements/:id/pin",
+    },
+    assets: {
+        list: "/assets",
+        create: "/assets/create",
+        byId: "/assets/",
+        assign: "/assets/:id/assign",
+        return: "/assets/:id/return",
+    },
+    timesheets: {
+        list: "/timesheets",
+        log: "/timesheets/log",
+        byId: "/timesheets/",
+        exportCsv: "/timesheets/export/csv",
+    },
 }
 
 /**

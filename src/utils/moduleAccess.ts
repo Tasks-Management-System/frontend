@@ -32,6 +32,7 @@ export const ROUTE_ROLE_ACCESS: Partial<
   "/salary": ["admin", "hr", "super-admin"],
   "/employee": ["admin", "hr", "super-admin"],
   "/settings": ["admin", "hr", "super-admin"],
+  "/assets": ["admin", "hr", "super-admin"],
 };
 
 export function routeAllowedRoles(pathname: string): readonly AppRole[] | undefined {

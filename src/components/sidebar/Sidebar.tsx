@@ -13,6 +13,9 @@ import {
   Plus,
   NotepadText,
   Calendar1Icon,
+  Megaphone,
+  Package,
+  Timer,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
 import { useMemo, useState, type FormEvent } from "react";
@@ -83,6 +86,15 @@ const mainNav: MainNavItem[] = [
     roles: ["admin", "hr", "super-admin"],
   },
   { path: "/calendar", label: "Calendar", icon: Calendar1Icon, end: false },
+  { path: "/announcements", label: "Announcements", icon: Megaphone, end: false },
+  { path: "/timesheets", label: "Timesheets", icon: Timer, end: false },
+  {
+    path: "/assets",
+    label: "Assets",
+    icon: Package,
+    end: false,
+    roles: ["admin", "hr", "super-admin"],
+  },
 ];
 
 type SidebarProps = {
