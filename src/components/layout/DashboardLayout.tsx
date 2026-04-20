@@ -5,6 +5,8 @@ import RoleRouteGuard from "../auth/RoleRouteGuard";
 import { useEffect, useState } from "react";
 import { getUserById } from "../../apis/api/auth";
 import { getToken, getUserId, setStoredRoles } from "../../utils/auth";
+import AnnouncementPopup from "../announcements/AnnouncementPopup";
+import BirthdayPopup from "../birthdays/BirthdayPopup";
 
 const DashboardLayout = () => {
   const location = useLocation();
@@ -40,6 +42,8 @@ const DashboardLayout = () => {
           </RoleRouteGuard>
         </main>
       </div>
+      <AnnouncementPopup />
+      <BirthdayPopup />
     </div>
   );
 };

@@ -146,6 +146,33 @@ export const getUsers = () => {
     })
 }
 
+export type TeamBirthdayUser = {
+    _id: string
+    name: string
+    profileImage?: string | null
+    role?: string[] | string
+    dob?: string | null
+}
+
+/** Available to every authenticated user. Returns lightweight user records (id, name, role, dob). */
+export const useTeamBirthdays = () => {
+    return useQuery<TeamBirthdayUser[]>({
+        queryKey: ["users", "teamBirthdays"],
+        queryFn: async (): Promise<TeamBirthdayUser[]> => {
+            try {
+                const res = await api.get<{ success: boolean; users: TeamBirthdayUser[] }>(
+                    apiPath.auth.teamBirthdays,
+                    { auth: true }
+                )
+                return res.users ?? []
+            } catch {
+                return []
+            }
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+}
+
 /** Returns [] when the current user cannot list users (e.g. not admin/hr). */
 export const useAssignableUsers = () => {
     return useQuery<User[]>({

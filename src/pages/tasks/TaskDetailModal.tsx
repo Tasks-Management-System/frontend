@@ -5,7 +5,12 @@ import {
   ArchiveRestore,
   CalendarDays,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   Clock,
+  Download,
+  ExternalLink,
+  FileText,
   FolderOpen,
   Loader2,
   MessageSquare,
@@ -73,6 +78,205 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+type PreviewKind = "image" | "video" | "pdf" | "other";
+
+function getPreviewKind(mimetype: string, filename: string): PreviewKind {
+  if (mimetype.startsWith("image/")) return "image";
+  if (mimetype.startsWith("video/")) return "video";
+  if (mimetype === "application/pdf") return "pdf";
+  const ext = filename.split(".").pop()?.toLowerCase();
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico"].includes(ext ?? "")) return "image";
+  if (["mp4", "webm", "ogg", "mov", "mkv"].includes(ext ?? "")) return "video";
+  if (ext === "pdf") return "pdf";
+  return "other";
+}
+
+function FilePreviewModal({
+  attachments,
+  startIndex,
+  onClose,
+}: {
+  attachments: TaskAttachment[];
+  startIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(startIndex);
+  const [visible, setVisible] = useState(false);
+  const total = attachments.length;
+  const a = attachments[index];
+  const kind = getPreviewKind(a.mimetype, a.filename);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setVisible(true));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") setIndex((i) => Math.min(i + 1, total - 1));
+      if (e.key === "ArrowLeft") setIndex((i) => Math.max(i - 1, 0));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return createPortal(
+    <div
+      className={`fixed inset-0 z-[400] flex flex-col transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden
+      />
+
+      {/* Toolbar */}
+      <div className="relative z-10 flex items-center gap-3 border-b border-white/10 bg-black/60 px-4 py-3">
+        <div className="flex-1 min-w-0">
+          <p className="truncate text-sm font-medium text-white">{a.filename}</p>
+          <p className="text-xs text-white/50">{formatFileSize(a.size)}</p>
+        </div>
+        <a
+          href={a.url}
+          download={a.filename}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+          title="Download"
+        >
+          <Download className="h-4 w-4" />
+        </a>
+        <a
+          href={a.url}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+          title="Open in new tab"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+          title="Close (Esc)"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Preview area */}
+      <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden p-4">
+        {kind === "image" && (
+          <img
+            key={a._id}
+            src={a.url}
+            alt={a.filename}
+            className="max-h-full max-w-full rounded-xl object-contain shadow-2xl transition-all duration-200"
+            style={{ animation: "previewPop 220ms cubic-bezier(0.22,1,0.36,1) both" }}
+          />
+        )}
+        {kind === "video" && (
+          <video
+            key={a._id}
+            src={a.url}
+            controls
+            autoPlay
+            className="max-h-full max-w-full rounded-xl shadow-2xl"
+            style={{ animation: "previewPop 220ms cubic-bezier(0.22,1,0.36,1) both" }}
+          />
+        )}
+        {kind === "pdf" && (
+          <iframe
+            key={a._id}
+            src={a.url}
+            title={a.filename}
+            className="h-[80vh] w-full max-w-4xl rounded-xl border-0 shadow-2xl"
+            style={{ animation: "previewPop 220ms cubic-bezier(0.22,1,0.36,1) both" }}
+          />
+        )}
+        {kind === "other" && (
+          <div
+            className="flex flex-col items-center gap-4 rounded-2xl bg-white/10 px-12 py-10 text-center backdrop-blur"
+            style={{ animation: "previewPop 220ms cubic-bezier(0.22,1,0.36,1) both" }}
+          >
+            <FileText className="h-16 w-16 text-white/40" />
+            <p className="text-base font-medium text-white">{a.filename}</p>
+            <p className="text-sm text-white/60">{formatFileSize(a.size)}</p>
+            <a
+              href={a.url}
+              download={a.filename}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 shadow hover:bg-gray-100 transition"
+            >
+              <Download className="h-4 w-4" />
+              Download file
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Prev / Next arrows */}
+      {total > 1 && (
+        <>
+          <button
+            type="button"
+            disabled={index === 0}
+            onClick={() => setIndex((i) => i - 1)}
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white/80 hover:bg-black/70 disabled:opacity-30 transition"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            disabled={index === total - 1}
+            onClick={() => setIndex((i) => i + 1)}
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white/80 hover:bg-black/70 disabled:opacity-30 transition"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+
+          {/* Thumbnail strip */}
+          <div className="relative z-10 flex items-center justify-center gap-2 border-t border-white/10 bg-black/60 px-4 py-2 overflow-x-auto">
+            {attachments.map((att, i) => {
+              const k = getPreviewKind(att.mimetype, att.filename);
+              return (
+                <button
+                  key={att._id}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  className={`shrink-0 rounded-lg overflow-hidden border-2 transition ${
+                    i === index ? "border-violet-400 opacity-100" : "border-transparent opacity-50 hover:opacity-80"
+                  }`}
+                >
+                  {k === "image" ? (
+                    <img src={att.url} alt={att.filename} className="h-10 w-14 object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-14 items-center justify-center bg-white/10">
+                      {k === "video" ? (
+                        <span className="text-[9px] font-bold text-white/70 uppercase">Video</span>
+                      ) : k === "pdf" ? (
+                        <span className="text-[9px] font-bold text-white/70 uppercase">PDF</span>
+                      ) : (
+                        <FileText className="h-4 w-4 text-white/50" />
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      <style>{`
+        @keyframes previewPop {
+          from { transform: scale(0.92); opacity: 0; }
+          to   { transform: scale(1);    opacity: 1; }
+        }
+      `}</style>
+    </div>,
+    document.body
+  );
+}
+
 interface TaskDetailModalProps {
   task: Task | null;
   isOpen: boolean;
@@ -118,6 +322,7 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
 
   // Tab
   const [activeTab, setActiveTab] = useState<"subtasks" | "comments" | "attachments">("subtasks");
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -313,7 +518,7 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
     ? users.filter((u) => u.name.toLowerCase().includes(mentionSearch)).slice(0, 6)
     : [];
 
-  return createPortal(
+  const modal = createPortal(
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-200 ${
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -666,22 +871,65 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                   {attachments.length === 0 && (
                     <p className="text-xs text-gray-400 italic">No files attached</p>
                   )}
-                  {attachments.map((a: TaskAttachment) => (
-                    <div key={a._id} className="flex items-center gap-3 group rounded-lg border border-gray-100 px-3 py-2 hover:bg-gray-50">
-                      <Paperclip className="h-4 w-4 shrink-0 text-gray-400" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 truncate">{a.filename}</p>
-                        <p className="text-[10px] text-gray-400">{formatFileSize(a.size)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteAttachment(a._id)}
-                        className="shrink-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition"
+                  {attachments.map((a: TaskAttachment, idx: number) => {
+                    const kind = getPreviewKind(a.mimetype, a.filename);
+                    return (
+                      <div
+                        key={a._id}
+                        className="flex items-center gap-3 group rounded-lg border border-gray-100 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setPreviewIndex(idx)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        {/* Thumbnail / icon */}
+                        <div className="shrink-0">
+                          {kind === "image" ? (
+                            <img
+                              src={a.url}
+                              alt={a.filename}
+                              className="h-9 w-12 rounded-md object-cover border border-gray-100"
+                            />
+                          ) : kind === "video" ? (
+                            <div className="flex h-9 w-12 items-center justify-center rounded-md bg-violet-50 border border-violet-100">
+                              <span className="text-[9px] font-bold text-violet-500 uppercase">Video</span>
+                            </div>
+                          ) : kind === "pdf" ? (
+                            <div className="flex h-9 w-12 items-center justify-center rounded-md bg-red-50 border border-red-100">
+                              <span className="text-[9px] font-bold text-red-500 uppercase">PDF</span>
+                            </div>
+                          ) : (
+                            <div className="flex h-9 w-12 items-center justify-center rounded-md bg-gray-50 border border-gray-100">
+                              <FileText className="h-4 w-4 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-700 truncate">{a.filename}</p>
+                          <p className="text-[10px] text-gray-400">{formatFileSize(a.size)}</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <a
+                            href={a.url}
+                            download={a.filename}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded p-1 text-gray-400 hover:text-gray-600"
+                            title="Download"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(a._id); }}
+                            className="rounded p-1 text-gray-400 hover:text-red-500 transition"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -891,5 +1139,18 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
       </div>
     </div>,
     document.body
+  );
+
+  return (
+    <>
+      {modal}
+      {previewIndex !== null && (attachments as TaskAttachment[]).length > 0 && (
+        <FilePreviewModal
+          attachments={attachments as TaskAttachment[]}
+          startIndex={previewIndex}
+          onClose={() => setPreviewIndex(null)}
+        />
+      )}
+    </>
   );
 }

@@ -8,6 +8,7 @@ import {
   RotateCcw,
   History,
   Laptop,
+  User,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -18,7 +19,7 @@ import {
   useReturnAsset,
   useDeleteAsset,
 } from "../../apis/api/assets";
-import { getUserById } from "../../apis/api/auth";
+import { getUserById, useAssignableUsers } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import type {
   Asset,
@@ -75,6 +76,7 @@ export default function Assets() {
   const canManage = roles.some((r: string) =>
     ["admin", "hr", "super-admin"].includes(r)
   );
+  const { data: employees = [] } = useAssignableUsers();
 
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "">("");
   const { data: assets = [], isLoading } = useAssets(
@@ -164,8 +166,8 @@ export default function Assets() {
   };
 
   const handleAssign = async () => {
-    if (!assignTarget || !assignForm.userId.trim()) {
-      toast.error("Employee ID is required");
+    if (!assignTarget || !assignForm.userId) {
+      toast.error("Please select an employee");
       return;
     }
     try {
@@ -280,8 +282,8 @@ export default function Assets() {
                         {STATUS_LABELS[asset.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {asset.assignedTo?.name ?? "—"}
+                    <td className="px-4 py-3 text-gray-700 flex items-center gap-2">
+                      {asset.assignedTo?.profileImage ? <img src={asset.assignedTo.profileImage} alt={asset.assignedTo.name} className="h-6 w-6 rounded-full" /> : <User className="h-6 w-6" />} {asset.assignedTo?.name ?? "—"}
                     </td>
                     <td className={`px-4 py-3 capitalize font-medium ${CONDITION_COLORS[asset.conditionOnHandover]}`}>
                       {asset.conditionOnHandover}
@@ -360,21 +362,41 @@ export default function Assets() {
 
       {/* Assign Modal */}
       <Modal isOpen={!!assignTarget} onClose={closeAll} title={`Assign "${assignTarget?.name}"`} panelClassName="max-w-md">
-        <div className="flex flex-col gap-3">
-          <Input
-            label="Employee User ID"
-            name="userId"
-            value={assignForm.userId}
-            onChange={(e) => setAssignForm((s) => ({ ...s, userId: e.target.value }))}
-            placeholder="Paste the employee's user ID"
-            required
-          />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Condition on handover</label>
+        <div className="flex flex-col gap-4">
+          {/* Employee dropdown */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700" htmlFor="assign-employee">
+              Employee <span className="text-red-500">*</span>
+            </label>
             <select
+              id="assign-employee"
+              value={assignForm.userId}
+              onChange={(e) => setAssignForm((s) => ({ ...s, userId: e.target.value }))}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="">— Select an employee —</option>
+              {employees.map((emp) => (
+                <option key={emp._id} value={emp._id}>
+                  {emp.name}
+                  {emp.email ? ` (${emp.email})` : ""}
+                </option>
+              ))}
+            </select>
+            {employees.length === 0 && (
+              <p className="text-xs text-gray-400">No employees found.</p>
+            )}
+          </div>
+
+          {/* Condition */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700" htmlFor="assign-condition">
+              Condition on handover
+            </label>
+            <select
+              id="assign-condition"
               value={assignForm.condition}
               onChange={(e) => setAssignForm((s) => ({ ...s, condition: e.target.value as AssetCondition }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="new">New</option>
               <option value="good">Good</option>
@@ -382,6 +404,8 @@ export default function Assets() {
               <option value="poor">Poor</option>
             </select>
           </div>
+
+          {/* Note */}
           <Input
             label="Note (optional)"
             name="note"
@@ -389,6 +413,7 @@ export default function Assets() {
             onChange={(e) => setAssignForm((s) => ({ ...s, note: e.target.value }))}
             placeholder="Any additional notes"
           />
+
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={closeAll}>Cancel</Button>
             <Button loading={assignMutation.isPending} onClick={handleAssign}>Assign</Button>

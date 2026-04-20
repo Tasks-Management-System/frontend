@@ -1,18 +1,21 @@
-import { getUserId } from "../../utils/auth";
-import Button from "../../components/UI/Button";
-import Input from "../../components/UI/Input";
+import React, { useMemo, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Activity,
   Cake,
   CalendarCheck,
+  CheckCircle2,
   CircleCheckBig,
+  Clock,
   Download,
   FolderPlus,
   ListTodo,
+  Megaphone,
   NotebookPen,
   Presentation,
   User,
   UserPlus,
+  Users,
 } from "lucide-react";
 import {
   LineChart,
@@ -26,197 +29,645 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  CartesianGrid,
 } from "recharts";
-import { useMemo, useState, type FormEvent } from "react";
 import toast from "react-hot-toast";
+
+import { getUserId } from "../../utils/auth";
+import Button from "../../components/UI/Button";
+import Input from "../../components/UI/Input";
 import Modal from "../../components/UI/Model";
-import { getUserById, useCreateUserByAdmin, type AdminCreateUserInput } from "../../apis/api/auth";
-import { useTasksList } from "../../apis/api/tasks";
 import { ApiError } from "../../apis/apiService";
+import {
+  getUserById,
+  useAssignableUsers,
+  useCreateUserByAdmin,
+  useTeamBirthdays,
+  type AdminCreateUserInput,
+  type TeamBirthdayUser,
+} from "../../apis/api/auth";
+import { useTasksList, useCreateTask } from "../../apis/api/tasks";
+import { useProjectsList, useCreateProject } from "../../apis/api/projects";
+import {
+  useTodayAttendance,
+  useAttendanceRange,
+  localYmd,
+  startOfWeekMonday,
+  addDays,
+} from "../../apis/api/attendance";
+import {
+  usePendingLeaveRequests,
+  useUpdateLeaveStatus,
+} from "../../apis/api/leave";
+import { useAnnouncements } from "../../apis/api/announcements";
+import type { Task } from "../../types/task.types";
+import type {
+  AttendanceListResponse,
+  AttendanceRecord,
+} from "../../types/attendance.types";
+import type { User as AppUser } from "../../types/user.types";
+import type { LeaveRecord } from "../../types/leave.types";
 
-type ChartRange = "today" | "week" | "month" | "custom";
+// ---------- helpers ----------
 
-const dashboardData = [
-  {
-    title: "Total Employees",
-    value: "1,248",
-    change: "+12%",
-    positive: true,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
-    icon: <User size={18} />,
-  },
-  {
-    title: "Present Today",
-    value: "1,180",
-    change: "+2%",
-    positive: true,
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
-    icon: <User size={18} />,
-  },
-  {
-    title: "Absent Today",
-    value: "68",
-    change: "-5%",
-    positive: false,
-    iconBg: "bg-red-100",
-    iconColor: "text-red-600",
-    icon: <User size={18} />,
-  },
-  {
-    title: "Active Projects",
-    value: "24",
-    change: "+4%",
-    positive: true,
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
-    icon: <Presentation size={18} />,
-  },
-];
-
-const attendanceDataSets: Record<string, { day: string; value: number }[]> = {
-  today: [
-    { day: "6AM", value: 10 },
-    { day: "8AM", value: 45 },
-    { day: "10AM", value: 80 },
-    { day: "12PM", value: 75 },
-    { day: "2PM", value: 70 },
-    { day: "4PM", value: 60 },
-    { day: "6PM", value: 30 },
-  ],
-  week: [
-    { day: "Mon", value: 30 },
-    { day: "Tue", value: 50 },
-    { day: "Wed", value: 40 },
-    { day: "Thu", value: 60 },
-    { day: "Fri", value: 30 },
-    { day: "Sat", value: 80 },
-    { day: "Sun", value: 50 },
-  ],
-  month: [
-    { day: "W1", value: 220 },
-    { day: "W2", value: 280 },
-    { day: "W3", value: 310 },
-    { day: "W4", value: 290 },
-  ],
-  custom: [
-    { day: "Mon", value: 30 },
-    { day: "Tue", value: 50 },
-    { day: "Wed", value: 40 },
-    { day: "Thu", value: 60 },
-    { day: "Fri", value: 30 },
-    { day: "Sat", value: 80 },
-    { day: "Sun", value: 50 },
-  ],
-};
-
-const taskDataSets: Record<string, { name: string; value: number }[]> = {
-  today: [
-    { name: "9AM", value: 5 },
-    { name: "12PM", value: 12 },
-    { name: "3PM", value: 8 },
-    { name: "6PM", value: 15 },
-  ],
-  week: [
-    { name: "W1", value: 20 },
-    { name: "W2", value: 40 },
-    { name: "W3", value: 30 },
-    { name: "W4", value: 50 },
-    { name: "W5", value: 35 },
-  ],
-  month: [
-    { name: "Week 1", value: 45 },
-    { name: "Week 2", value: 62 },
-    { name: "Week 3", value: 55 },
-    { name: "Week 4", value: 71 },
-  ],
-  custom: [
-    { name: "W1", value: 20 },
-    { name: "W2", value: 40 },
-    { name: "W3", value: 30 },
-    { name: "W4", value: 50 },
-    { name: "W5", value: 35 },
-  ],
-};
-
-const projectData = [
-  { name: "Active", value: 12, color: "#6366F1" },
-  { name: "Done", value: 8, color: "#10B981" },
-  { name: "On Hold", value: 4, color: "#F59E0B" },
-];
-
-// Mock birthdays data
-const birthdaysThisWeek = [
-  { name: "Sarah Johnson", date: "Apr 16", department: "Engineering" },
-  { name: "Mike Chen", date: "Apr 17", department: "Design" },
-  { name: "Emma Wilson", date: "Apr 19", department: "Marketing" },
-];
-
-// Mock activity feed
-const recentActivity = [
-  { action: "Task completed", detail: "API Integration - by John D.", time: "5m ago", type: "task" },
-  { action: "Leave approved", detail: "Sarah J. - 2 days sick leave", time: "15m ago", type: "leave" },
-  { action: "New employee", detail: "Alex Kim joined Engineering", time: "1h ago", type: "user" },
-  { action: "Project updated", detail: "Mobile App v2.0 - milestone reached", time: "2h ago", type: "project" },
-  { action: "Attendance alert", detail: "3 employees late today", time: "3h ago", type: "attendance" },
-  { action: "Task created", detail: "Design System Update - assigned to Design team", time: "3h ago", type: "task" },
-  { action: "Leave request", detail: "Mike C. requested 3 days vacation", time: "4h ago", type: "leave" },
-  { action: "Salary processed", detail: "March payroll completed", time: "5h ago", type: "salary" },
-  { action: "Event created", detail: "All-hands meeting scheduled for Friday", time: "6h ago", type: "event" },
-  { action: "Task review", detail: "Homepage redesign - sent for review", time: "7h ago", type: "task" },
-];
-
-const ACTIVITY_COLORS: Record<string, string> = {
-  task: "bg-violet-100 text-violet-600",
-  leave: "bg-orange-100 text-orange-600",
-  user: "bg-blue-100 text-blue-600",
-  project: "bg-emerald-100 text-emerald-600",
-  attendance: "bg-red-100 text-red-600",
-  salary: "bg-green-100 text-green-600",
-  event: "bg-purple-100 text-purple-600",
-};
+type ChartRange = "today" | "week" | "month";
 
 const RANGE_LABELS: Record<ChartRange, string> = {
   today: "Today",
   week: "This Week",
   month: "This Month",
-  custom: "Custom",
 };
 
-function formatDueDate(d?: string | null): string {
+const TASK_STATUS_COLORS: Record<string, string> = {
+  pending: "#94A3B8",
+  in_progress: "#6366F1",
+  review: "#A855F7",
+  completed: "#10B981",
+};
+
+const ACTIVITY_COLORS: Record<string, string> = {
+  task: "bg-violet-100 text-violet-600",
+  leave: "bg-orange-100 text-orange-600",
+  user: "bg-blue-100 text-blue-600",
+  announcement: "bg-emerald-100 text-emerald-600",
+};
+
+function formatDate(d?: string | null, opts?: Intl.DateTimeFormatOptions) {
   if (!d) return "";
   try {
-    const date = new Date(d);
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return new Date(d).toLocaleDateString(
+      undefined,
+      opts ?? { month: "short", day: "numeric" }
+    );
   } catch {
     return "";
   }
 }
 
+function formatTime(d?: string | null) {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
+function formatRelative(iso?: string): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 0) return "just now";
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function formatMs(ms: number): string {
+  if (!ms || ms <= 0) return "0h 0m";
+  const totalMin = Math.floor(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${h}h ${m}m`;
+}
+
+function firstSegment(r: AttendanceRecord | null | undefined): string {
+  if (!r?.punchInTime) return "";
+  return formatTime(r.punchInTime);
+}
+
+function getUserIdFromAttendance(a: AttendanceRecord): string | null {
+  const u = a.user;
+  if (typeof u === "object" && u !== null && "_id" in u) return String(u._id);
+  if (typeof u === "string") return u;
+  return null;
+}
+
+function pickMyRecord(
+  res: AttendanceListResponse | undefined,
+  myId: string
+): AttendanceRecord | null {
+  if (!res?.attendance?.length || !myId) return null;
+  return (
+    res.attendance.find((a) => getUserIdFromAttendance(a) === String(myId)) ??
+    null
+  );
+}
+
+/** Distinct users with a punchInTime in the given attendance list. */
+function countPresent(records: AttendanceRecord[] = []): number {
+  const s = new Set<string>();
+  for (const r of records) {
+    if (!r.punchInTime) continue;
+    const uid = getUserIdFromAttendance(r);
+    if (uid) s.add(uid);
+  }
+  return s.size;
+}
+
+/** Bucket a week of attendance data Mon..Sun. */
+function buildWeekAttendanceSeries(
+  records: AttendanceRecord[],
+  weekMonday: Date
+) {
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const buckets: Record<string, Set<string>> = {};
+  const ymds: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const ymd = localYmd(addDays(weekMonday, i));
+    ymds.push(ymd);
+    buckets[ymd] = new Set();
+  }
+  for (const r of records) {
+    if (!r.date || !r.punchInTime) continue;
+    const ymd = String(r.date).slice(0, 10);
+    if (!buckets[ymd]) continue;
+    const uid = getUserIdFromAttendance(r);
+    if (uid) buckets[ymd].add(uid);
+  }
+  return labels.map((day, i) => ({ day, value: buckets[ymds[i]].size }));
+}
+
+/** Bucket today's attendance by hour of punch-in. */
+function buildTodayAttendanceSeries(records: AttendanceRecord[]) {
+  const hours = [6, 8, 10, 12, 14, 16, 18];
+  const buckets = new Array(hours.length).fill(0);
+  for (const r of records) {
+    if (!r.punchInTime) continue;
+    const hr = new Date(r.punchInTime).getHours();
+    let idx = 0;
+    for (let i = 0; i < hours.length; i++) {
+      if (hr >= hours[i]) idx = i;
+    }
+    buckets[idx] += 1;
+  }
+  return hours.map((h, i) => ({
+    day: `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? "AM" : "PM"}`,
+    value: buckets[i],
+  }));
+}
+
+/** Bucket a month of attendance data into 4 weeks. */
+function buildMonthAttendanceSeries(
+  records: AttendanceRecord[],
+  monthStart: Date
+) {
+  const weeks = [0, 0, 0, 0];
+  const seen: Set<string>[] = [new Set(), new Set(), new Set(), new Set()];
+  for (const r of records) {
+    if (!r.date || !r.punchInTime) continue;
+    const dt = new Date(String(r.date));
+    const diffDays = Math.floor(
+      (dt.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const weekIdx = Math.min(3, Math.max(0, Math.floor(diffDays / 7)));
+    const uid = getUserIdFromAttendance(r);
+    if (uid && !seen[weekIdx].has(uid + dt.toDateString())) {
+      seen[weekIdx].add(uid + dt.toDateString());
+      weeks[weekIdx] += 1;
+    }
+  }
+  return weeks.map((v, i) => ({ day: `W${i + 1}`, value: v }));
+}
+
+/** Count tasks completed per weekday for the current week. */
+function buildTaskCompletionSeries(tasks: Task[], weekMonday: Date) {
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const counts = new Array(7).fill(0);
+  for (const t of tasks) {
+    if (t.status !== "completed" || !t.updatedAt) continue;
+    const d = new Date(t.updatedAt);
+    const diffDays = Math.floor(
+      (d.getTime() - weekMonday.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDays >= 0 && diffDays < 7) counts[diffDays] += 1;
+  }
+  return labels.map((name, i) => ({ name, value: counts[i] }));
+}
+
+function buildTaskStatusPie(tasks: Task[]) {
+  const counts: Record<string, number> = {
+    pending: 0,
+    in_progress: 0,
+    review: 0,
+    completed: 0,
+  };
+  for (const t of tasks) {
+    if (counts[t.status] !== undefined) counts[t.status] += 1;
+  }
+  return [
+    { name: "Pending", value: counts.pending, color: TASK_STATUS_COLORS.pending },
+    {
+      name: "In Progress",
+      value: counts.in_progress,
+      color: TASK_STATUS_COLORS.in_progress,
+    },
+    { name: "Review", value: counts.review, color: TASK_STATUS_COLORS.review },
+    {
+      name: "Completed",
+      value: counts.completed,
+      color: TASK_STATUS_COLORS.completed,
+    },
+  ];
+}
+
+/**
+ * All team members with a DOB, ordered by the next upcoming birthday (today first,
+ * then wrapping around the calendar). Today's birthdays are flagged with isToday.
+ */
+type BirthdayEntry = {
+  id: string;
+  name: string;
+  department: string;
+  profileImage?: string | null;
+  date: string;
+  isToday: boolean;
+  daysUntil: number;
+};
+
+function upcomingBirthdays(users: TeamBirthdayUser[]): BirthdayEntry[] {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const entries: BirthdayEntry[] = [];
+
+  for (const u of users) {
+    if (!u.dob) continue;
+    const dob = new Date(u.dob);
+    if (Number.isNaN(dob.getTime())) continue;
+
+    let next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+    if (next < today) {
+      next = new Date(today.getFullYear() + 1, dob.getMonth(), dob.getDate());
+    }
+    const daysUntil = Math.round(
+      (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    const roleLabel = Array.isArray(u.role) ? u.role[0] : u.role;
+
+    entries.push({
+      id: u._id,
+      name: u.name,
+      department: roleLabel ?? "Team",
+      profileImage: u.profileImage ?? null,
+      date: next.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      }),
+      isToday: daysUntil === 0,
+      daysUntil,
+    });
+  }
+
+  return entries.sort((a, b) => a.daysUntil - b.daysUntil);
+}
+
+type Activity = {
+  id: string;
+  type: "task" | "leave" | "user" | "announcement";
+  action: string;
+  detail: string;
+  time: string;
+  at: number;
+};
+
+function buildRecentActivity(args: {
+  tasks: Task[];
+  leaves: LeaveRecord[];
+  announcements: { _id: string; title: string; createdAt: string; postedBy?: { name?: string } | null }[];
+  newUsers: AppUser[];
+}): Activity[] {
+  const items: Activity[] = [];
+
+  for (const t of args.tasks) {
+    const at = new Date(t.updatedAt ?? t.createdAt ?? Date.now()).getTime();
+    items.push({
+      id: `t-${t._id}`,
+      type: "task",
+      action:
+        t.status === "completed"
+          ? "Task completed"
+          : t.status === "review"
+          ? "Task in review"
+          : "Task updated",
+      detail: t.taskName,
+      time: formatRelative(t.updatedAt ?? t.createdAt),
+      at,
+    });
+  }
+  for (const l of args.leaves) {
+    const userName =
+      typeof l.user === "object" && l.user ? l.user.name : "Someone";
+    items.push({
+      id: `l-${l._id}`,
+      type: "leave",
+      action: "Leave requested",
+      detail: `${userName} – ${formatDate(l.fromDate)} ${
+        l.toDate ? `to ${formatDate(l.toDate)}` : ""
+      }`.trim(),
+      time: formatRelative(l.createdAt),
+      at: new Date(l.createdAt).getTime(),
+    });
+  }
+  for (const a of args.announcements) {
+    items.push({
+      id: `a-${a._id}`,
+      type: "announcement",
+      action: "Announcement",
+      detail: a.title,
+      time: formatRelative(a.createdAt),
+      at: new Date(a.createdAt).getTime(),
+    });
+  }
+  for (const u of args.newUsers) {
+    items.push({
+      id: `u-${u._id}`,
+      type: "user",
+      action: "New teammate",
+      detail: `${u.name} joined ${u.role?.[0] ?? "team"}`,
+      time: formatRelative(u.createdAt),
+      at: new Date(u.createdAt).getTime(),
+    });
+  }
+
+  return items.sort((a, b) => b.at - a.at).slice(0, 10);
+}
+
+// ---------- component ----------
+
+type ModalKind = "employee" | "project" | "task" | null;
+
+function QuickAction({
+  icon,
+  bg,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  bg: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 rounded-xl border border-gray-100 p-3 text-center text-xs font-medium text-gray-700 transition hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm"
+    >
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>
+        {icon}
+      </span>
+      {label}
+    </button>
+  );
+}
+
 const Dashboard = () => {
-  const [openModal, setOpenModal] = useState<string | null>(null);
-  const [chartRange, setChartRange] = useState<ChartRange>("week");
+  const navigate = useNavigate();
   const userId = getUserId();
   const { data: sessionUser } = getUserById(userId);
-  const createUserMutation = useCreateUserByAdmin();
 
-  // Fetch tasks due today
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const roles = sessionUser?.role ?? [];
+  const isSuperAdmin = roles.includes("super-admin");
+  const isAdmin = roles.some((r) => ["admin", "super-admin"].includes(r));
+  const isHr = roles.includes("hr");
+  const isManager = isAdmin || isHr; // who sees admin-style dashboard
+
+  const [openModal, setOpenModal] = useState<ModalKind>(null);
+  const [chartRange, setChartRange] = useState<ChartRange>("week");
+
+  // ------ data ------
+  const { data: users = [] } = useAssignableUsers();
+  const { data: teamBirthdayUsers = [] } = useTeamBirthdays();
+  const { data: projects = [] } = useProjectsList();
+  const { data: announcements = [] } = useAnnouncements();
+  const { data: pendingLeaves = [] } = usePendingLeaveRequests(isManager);
+
   const { data: myTasksRes } = useTasksList({
     scope: "my",
-    limit: 10,
+    limit: 50,
+    archived: false,
+  });
+  const { data: orgTasksRes } = useTasksList({
+    scope: isManager ? "all" : "my",
+    limit: 200,
     archived: false,
   });
 
-  const tasksDueToday = useMemo(() => {
-    if (!myTasksRes?.tasks) return [];
-    return myTasksRes.tasks.filter((t) => {
-      if (!t.dueDate) return false;
-      return t.dueDate.slice(0, 10) === todayStr && t.status !== "completed";
-    });
-  }, [myTasksRes?.tasks, todayStr]);
+  const today = new Date();
+  const weekMonday = useMemo(() => startOfWeekMonday(today), [today.toDateString()]);
+  const monthStart = useMemo(() => {
+    const d = new Date(today.getFullYear(), today.getMonth(), 1);
+    return d;
+  }, [today.getMonth()]);
+
+  const { data: todayAttendance } = useTodayAttendance();
+  const weekFrom = localYmd(weekMonday);
+  const weekTo = localYmd(addDays(weekMonday, 6));
+  const { data: weekAttendance } = useAttendanceRange(weekFrom, weekTo);
+  const monthFrom = localYmd(monthStart);
+  const monthTo = localYmd(
+    new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  );
+  const { data: monthAttendance } = useAttendanceRange(monthFrom, monthTo);
+
+  const updateLeaveMutation = useUpdateLeaveStatus();
+  const createUserMutation = useCreateUserByAdmin();
+  const createProjectMutation = useCreateProject();
+  const createTaskMutation = useCreateTask();
+
+  // ------ computed stats ------
+  const totalEmployees = users.length;
+  const presentToday = countPresent(todayAttendance?.attendance ?? []);
+  const absentToday = Math.max(0, totalEmployees - presentToday);
+  const activeProjects = projects.length;
+
+  const orgTasks = orgTasksRes?.tasks ?? [];
+  const myTasks = myTasksRes?.tasks ?? [];
+
+  const myOpenTasks = myTasks.filter((t) => t.status !== "completed").length;
+  const myCompletedThisWeek = useMemo(
+    () =>
+      myTasks.filter(
+        (t) =>
+          t.status === "completed" &&
+          t.updatedAt &&
+          new Date(t.updatedAt) >= weekMonday
+      ).length,
+    [myTasks, weekMonday]
+  );
+
+  const todayStr = localYmd(today);
+  const tasksDueToday = useMemo(
+    () =>
+      myTasks.filter((t) => {
+        if (!t.dueDate) return false;
+        return (
+          String(t.dueDate).slice(0, 10) === todayStr &&
+          t.status !== "completed"
+        );
+      }),
+    [myTasks, todayStr]
+  );
+
+  // my attendance today
+  const myRecord = pickMyRecord(todayAttendance, userId);
+  const myHoursTodayMs = myRecord?.dayWorkedMs ?? myRecord?.dayTotalMs ?? 0;
+
+  // my leave balance
+  const myLeaveBalance = sessionUser?.leaves?.[0];
+  const leaveRemaining =
+    (myLeaveBalance?.totalBalance ?? 0) - (myLeaveBalance?.leaveTaken ?? 0);
+
+  // ------ chart data ------
+  const attendanceSeries = useMemo(() => {
+    if (chartRange === "today")
+      return buildTodayAttendanceSeries(todayAttendance?.attendance ?? []);
+    if (chartRange === "month")
+      return buildMonthAttendanceSeries(
+        monthAttendance?.attendance ?? [],
+        monthStart
+      );
+    return buildWeekAttendanceSeries(
+      weekAttendance?.attendance ?? [],
+      weekMonday
+    );
+  }, [
+    chartRange,
+    todayAttendance?.attendance,
+    weekAttendance?.attendance,
+    monthAttendance?.attendance,
+    weekMonday,
+    monthStart,
+  ]);
+
+  const taskCompletionSeries = useMemo(
+    () => buildTaskCompletionSeries(orgTasks, weekMonday),
+    [orgTasks, weekMonday]
+  );
+
+  const taskStatusPie = useMemo(
+    () => buildTaskStatusPie(orgTasks),
+    [orgTasks]
+  );
+
+  const newUsers = useMemo(
+    () =>
+      users
+        .filter((u) => u.createdAt)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, 3),
+    [users]
+  );
+
+  const recentTasks = useMemo(
+    () =>
+      [...orgTasks]
+        .filter((t) => t.updatedAt)
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt ?? "").getTime() -
+            new Date(a.updatedAt ?? "").getTime()
+        )
+        .slice(0, 5),
+    [orgTasks]
+  );
+
+  const activity = useMemo(
+    () =>
+      buildRecentActivity({
+        tasks: recentTasks,
+        leaves: pendingLeaves.slice(0, 5),
+        announcements: announcements.slice(0, 5),
+        newUsers,
+      }),
+    [recentTasks, pendingLeaves, announcements, newUsers]
+  );
+
+  const birthdays = useMemo(
+    () => upcomingBirthdays(teamBirthdayUsers),
+    [teamBirthdayUsers]
+  );
+
+  // ------ stat cards ------
+  const managerStats = [
+    {
+      title: "Total Employees",
+      value: String(totalEmployees),
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
+      icon: <Users size={18} />,
+    },
+    {
+      title: "Present Today",
+      value: String(presentToday),
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
+      icon: <User size={18} />,
+    },
+    {
+      title: "Absent Today",
+      value: String(absentToday),
+      iconBg: "bg-red-100",
+      iconColor: "text-red-600",
+      icon: <User size={18} />,
+    },
+    {
+      title: "Active Projects",
+      value: String(activeProjects),
+      iconBg: "bg-purple-100",
+      iconColor: "text-purple-600",
+      icon: <Presentation size={18} />,
+    },
+  ];
+
+  const personalStats = [
+    {
+      title: "Hours Today",
+      value: formatMs(myHoursTodayMs),
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
+      icon: <Clock size={18} />,
+    },
+    {
+      title: "Open Tasks",
+      value: String(myOpenTasks),
+      iconBg: "bg-indigo-100",
+      iconColor: "text-indigo-600",
+      icon: <ListTodo size={18} />,
+    },
+    {
+      title: "Done This Week",
+      value: String(myCompletedThisWeek),
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
+      icon: <CheckCircle2 size={18} />,
+    },
+    {
+      title: "Leave Balance",
+      value: String(Math.max(0, leaveRemaining)),
+      iconBg: "bg-purple-100",
+      iconColor: "text-purple-600",
+      icon: <CalendarCheck size={18} />,
+    },
+  ];
+
+  const statCards = isManager ? managerStats : personalStats;
+
+  // ------ forms ------
+  const canCreateUsers = isAdmin;
+  const roleOptions: AdminCreateUserInput["role"][] = isSuperAdmin
+    ? ["admin", "employee", "hr", "manager"]
+    : ["employee", "hr", "manager"];
 
   const [employeeForm, setEmployeeForm] = useState({
     name: "",
@@ -224,29 +675,43 @@ const Dashboard = () => {
     password: "",
     role: "employee" as AdminCreateUserInput["role"],
   });
+  const [projectForm, setProjectForm] = useState({
+    projectName: "",
+    description: "",
+  });
+  const [taskForm, setTaskForm] = useState({
+    taskName: "",
+    project: "",
+    assignedTo: "",
+    priority: "medium" as "low" | "medium" | "urgent",
+    dueDate: "",
+  });
 
-  const sessionRole = sessionUser?.role?.[0];
-  const canCreateUsers = sessionRole === "admin" || sessionRole === "super-admin";
-  const roleOptions: AdminCreateUserInput["role"][] =
-    sessionRole === "super-admin"
-      ? ["admin", "employee", "hr", "manager"]
-      : ["employee", "hr", "manager"];
-
-  const handleOpen = (modal: string) => {
-    setOpenModal(modal);
-    if (modal === "employee") {
-      setEmployeeForm((prev) => ({
-        ...prev,
+  const handleOpen = (kind: ModalKind) => {
+    if (kind === "employee") {
+      setEmployeeForm({
         name: "",
         email: "",
         password: "",
-        role: roleOptions.includes(prev.role) ? prev.role : roleOptions[0],
-      }));
+        role: roleOptions[0],
+      });
     }
+    if (kind === "project") {
+      setProjectForm({ projectName: "", description: "" });
+    }
+    if (kind === "task") {
+      setTaskForm({
+        taskName: "",
+        project: projects[0]?._id ?? "",
+        assignedTo: "",
+        priority: "medium",
+        dueDate: "",
+      });
+    }
+    setOpenModal(kind);
   };
-  const handleClose = () => {
-    setOpenModal(null);
-  };
+
+  const handleClose = () => setOpenModal(null);
 
   const handleCreateEmployee = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -256,445 +721,789 @@ const Dashboard = () => {
     }
     try {
       await createUserMutation.mutateAsync(employeeForm);
-      toast.success("User created with the selected role.");
+      toast.success("User created.");
       handleClose();
     } catch (err) {
-      const msg = (err as ApiError)?.message || "Could not create user";
-      toast.error(msg);
+      toast.error((err as ApiError)?.message || "Could not create user");
     }
   };
 
-  const attendanceData = attendanceDataSets[chartRange] || attendanceDataSets.week;
-  const taskData = taskDataSets[chartRange] || taskDataSets.week;
+  const handleCreateProject = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!projectForm.projectName.trim()) {
+      toast.error("Project name is required");
+      return;
+    }
+    try {
+      await createProjectMutation.mutateAsync(projectForm);
+      toast.success("Project created.");
+      handleClose();
+    } catch (err) {
+      toast.error((err as ApiError)?.message || "Could not create project");
+    }
+  };
 
+  const handleCreateTask = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!taskForm.taskName.trim() || !taskForm.project) {
+      toast.error("Task name and project are required");
+      return;
+    }
+    try {
+      await createTaskMutation.mutateAsync({
+        taskName: taskForm.taskName.trim(),
+        project: taskForm.project,
+        assignedTo: taskForm.assignedTo || undefined,
+        priority: taskForm.priority,
+        dueDate: taskForm.dueDate || undefined,
+      });
+      toast.success("Task assigned.");
+      handleClose();
+    } catch (err) {
+      toast.error((err as ApiError)?.message || "Could not assign task");
+    }
+  };
+
+  const handleLeaveDecision = async (
+    id: string,
+    status: "approved" | "rejected"
+  ) => {
+    try {
+      await updateLeaveMutation.mutateAsync({ id, body: { status } });
+      toast.success(`Leave ${status}.`);
+    } catch (err) {
+      toast.error((err as ApiError)?.message || "Could not update leave");
+    }
+  };
+
+  // ------ render ------
   return (
-    <div>
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Dashboard Overview</h1>
-          <p className="mt-2 text-gray-600">Welcome back! Here's what's happening today.</p>
+          <h1 className="text-xl font-semibold text-gray-900">
+            {isManager
+              ? "Dashboard Overview"
+              : `Welcome back, ${sessionUser?.name?.split(" ")[0] ?? ""} 👋`}
+          </h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            {today.toLocaleDateString(undefined, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
         </div>
-        <div>
-          <Button variant="primary" type="button">
-            <Download size={16} /> Export
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" type="button" onClick={() => window.print()}>
+          <Download size={15} />
+          Export
+        </Button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
-        {dashboardData.map((item, index) => (
+
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {statCards.map((item, i) => (
           <div
-            key={index}
-            className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
+            key={i}
+            className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm transition hover:shadow-md"
           >
-            <div className="flex items-center justify-between">
-              <div className={`p-2 rounded-lg ${item.iconBg}`}>
-                <span className={item.iconColor}>{item.icon}</span>
-              </div>
-              <span
-                className={`text-xs font-semibold ${
-                  item.positive ? "text-green-600" : "text-red-500"
-                }`}
-              >
-                {item.change}
-              </span>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}>
+              <span className={item.iconColor}>{item.icon}</span>
             </div>
-            <p className="mt-4 text-sm text-gray-500 uppercase tracking-wide">{item.title}</p>
-            <h2 className="mt-1 text-2xl font-bold text-gray-900">{item.value}</h2>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-gray-400">
+                {item.title}
+              </p>
+              <p className="mt-0.5 text-2xl font-bold text-gray-900 leading-none">
+                {item.value}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* LEFT SIDE */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Chart Range Selector */}
-          <div className="flex items-center gap-2">
-            {(Object.keys(RANGE_LABELS) as ChartRange[]).map((range) => (
-              <button
-                key={range}
-                type="button"
-                onClick={() => setChartRange(range)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  chartRange === range
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {RANGE_LABELS[range]}
-              </button>
-            ))}
-          </div>
+      {/* ── Main content grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Attendance Overview */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex justify-between mb-4">
+        {/* ── LEFT COLUMN (2/3) ── */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+
+          {/* Attendance chart — range tabs live inside the card header */}
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
               <h2 className="font-semibold text-gray-800">Attendance Overview</h2>
-              <span className="text-xs bg-gray-100 px-3 py-1 rounded-full">
-                {RANGE_LABELS[chartRange]}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {(Object.keys(RANGE_LABELS) as ChartRange[]).map((range) => (
+                  <button
+                    key={range}
+                    type="button"
+                    onClick={() => setChartRange(range)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                      chartRange === range
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                  >
+                    {RANGE_LABELS[range]}
+                  </button>
+                ))}
+              </div>
             </div>
-
-            <ResponsiveContainer className="w-full h-full" width="100%" height={250}>
-              <LineChart data={attendanceData}>
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={3} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="px-5 pt-4 pb-2">
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={attendanceSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 10, border: "none", boxShadow: "0 4px 20px #0001" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#6366F1"
+                    strokeWidth={2.5}
+                    dot={{ r: 4, fill: "#6366F1", stroke: "#fff", strokeWidth: 2 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              {attendanceSeries.every((p) => p.value === 0) && (
+                <p className="pb-3 text-center text-xs text-gray-400">
+                  No attendance data for this range yet.
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Bottom Charts */}
+          {/* Task charts — equal height via flex */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Task Completion */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="font-semibold text-gray-800 mb-4">Task Completion Rate</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={taskData}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#6366F1" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm">
+              <div className="border-b border-gray-100 px-5 py-4">
+                <h2 className="font-semibold text-gray-800">Tasks Completed</h2>
+                <p className="text-xs text-gray-400 mt-0.5">This week</p>
+              </div>
+              <div className="flex-1 px-4 py-4">
+                <ResponsiveContainer width="100%" height={190}>
+                  <BarChart data={taskCompletionSeries} barSize={24}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 10, border: "none", boxShadow: "0 4px 20px #0001" }}
+                    />
+                    <Bar dataKey="value" fill="#6366F1" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            {/* Project Status */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="font-semibold text-gray-800 mb-4">Project Status</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={projectData} dataKey="value" innerRadius={50} outerRadius={70}>
-                    {projectData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center mt-4 gap-4">
-                <span className="text-gray-500 gap-2 text-sm">
-                  <span className="text-blue-700 gap-2 space-x-2.5 mx-1 rounded-full px-2 bg-[#6366F1]"></span>
-                  Active
-                </span>
-                <span className="text-gray-500 gap-2 text-sm">
-                  <span className="text-green-700 gap-2 space-x-2.5 mx-1 rounded-full px-2 bg-[#10B981]"></span>
-                  Done
-                </span>
-                <span className="text-gray-500 gap-2 text-sm">
-                  <span className="text-yellow-700 gap-2 space-x-2.5 mx-1 rounded-full px-2 bg-[#F59E0B]"></span>
-                  On Hold
-                </span>
+            <div className="flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm">
+              <div className="border-b border-gray-100 px-5 py-4">
+                <h2 className="font-semibold text-gray-800">Task Status</h2>
+                <p className="text-xs text-gray-400 mt-0.5">All open tasks</p>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie
+                      data={taskStatusPie}
+                      dataKey="value"
+                      innerRadius={48}
+                      outerRadius={68}
+                      paddingAngle={3}
+                    >
+                      {taskStatusPie.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ borderRadius: 10, border: "none", boxShadow: "0 4px 20px #0001" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-2">
+                  {taskStatusPie.map((s) => (
+                    <span key={s.name} className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <span
+                        className="inline-block h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: s.color }}
+                      />
+                      {s.name}
+                      <span className="font-semibold text-gray-700">{s.value}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Recent Activity Feed */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity size={18} className="text-gray-500" />
+          {/* Recent Activity */}
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
+              <Activity size={16} className="text-gray-400" />
               <h2 className="font-semibold text-gray-800">Recent Activity</h2>
             </div>
-            <div className="space-y-3 max-h-[320px] overflow-y-auto">
-              {recentActivity.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <span
-                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                      ACTIVITY_COLORS[item.type] || "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {item.action.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{item.action}</p>
-                    <p className="text-xs text-gray-500 truncate">{item.detail}</p>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-gray-400">{item.time}</span>
-                </div>
-              ))}
-            </div>
+            {activity.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <Activity size={30} className="text-gray-200" />
+                <p className="text-sm text-gray-400">Nothing happening yet.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-gray-50 max-h-[340px] overflow-y-auto">
+                {activity.map((item) => (
+                  <li key={item.id} className="flex items-start gap-3 px-5 py-3">
+                    <span
+                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                        ACTIVITY_COLORS[item.type] ?? "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {item.action.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{item.action}</p>
+                      <p className="text-xs text-gray-500 truncate">{item.detail}</p>
+                    </div>
+                    <span className="shrink-0 text-[11px] text-gray-400 pt-0.5">{item.time}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="space-y-6">
+        {/* ── RIGHT COLUMN (1/3) ── */}
+        <div className="flex flex-col gap-6">
+
           {/* My Tasks Due Today */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-              <ListTodo size={18} className="text-indigo-600" />
-              <h2 className="font-semibold">My Tasks Due Today</h2>
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <ListTodo size={16} className="text-indigo-500" />
+                <h2 className="font-semibold text-gray-800">Due Today</h2>
+              </div>
+              <Link to="/tasks" className="text-xs font-medium text-indigo-600 hover:underline">
+                View all
+              </Link>
             </div>
             {tasksDueToday.length === 0 ? (
-              <div className="flex flex-col items-center py-6 text-center">
-                <CalendarCheck size={32} className="text-gray-300 mb-2" />
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <CalendarCheck size={28} className="text-gray-200" />
                 <p className="text-sm text-gray-500">No tasks due today</p>
-                <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
+                <p className="text-xs text-gray-400">You're all caught up!</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <ul className="divide-y divide-gray-50 max-h-56 overflow-y-auto">
                 {tasksDueToday.map((task) => (
-                  <div
-                    key={task._id}
-                    className="flex items-center gap-3 rounded-xl border border-gray-100 px-3 py-2.5 hover:bg-gray-50 transition"
-                  >
-                    <span
-                      className={`h-2 w-2 shrink-0 rounded-full ${
-                        task.priority === "urgent"
-                          ? "bg-red-500"
-                          : task.priority === "medium"
-                          ? "bg-amber-500"
-                          : "bg-emerald-500"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{task.taskName}</p>
-                      <p className="text-xs text-gray-400">{formatDueDate(task.dueDate)}</p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        task.status === "in_progress"
-                          ? "bg-blue-50 text-blue-700"
-                          : task.status === "review"
-                          ? "bg-purple-50 text-purple-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                  <li key={task._id}>
+                    <Link
+                      to="/tasks"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition"
                     >
-                      {task.status.replace("_", " ")}
-                    </span>
-                  </div>
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${
+                          task.priority === "urgent"
+                            ? "bg-red-500"
+                            : task.priority === "medium"
+                            ? "bg-amber-400"
+                            : "bg-emerald-400"
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-800">{task.taskName}</p>
+                        <p className="text-xs text-gray-400">{formatDate(task.dueDate)}</p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          task.status === "in_progress"
+                            ? "bg-blue-50 text-blue-700"
+                            : task.status === "review"
+                            ? "bg-purple-50 text-purple-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {task.status.replace("_", " ")}
+                      </span>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
 
-          {/* Birthdays This Week */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-              <Cake size={18} className="text-pink-500" />
-              <h2 className="font-semibold">Birthdays This Week</h2>
+          {/* Upcoming Birthdays */}
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm h-72">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Cake size={16} className="text-pink-500" />
+                <h2 className="font-semibold text-gray-800">Upcoming Birthdays</h2>
+              </div>
+              {birthdays.length > 0 && (
+                <span className="text-xs text-gray-400">
+                  {birthdays.length} {birthdays.length === 1 ? "person" : "people"}
+                </span>
+              )}
             </div>
-            {birthdaysThisWeek.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No birthdays this week</p>
+            {birthdays.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <Cake size={28} className="text-gray-200" />
+                <p className="text-sm text-gray-400">No birthdays on record yet</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {birthdaysThisWeek.map((b, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pink-100 text-sm font-semibold text-pink-600">
-                      {b.name.charAt(0)}
-                    </span>
+              <ul className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+                {birthdays.map((b) => (
+                  <li
+                    key={b.id}
+                    className={`flex items-center gap-3 px-5 py-3 transition ${
+                      b.isToday ? "bg-pink-50" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    {b.profileImage ? (
+                      <img
+                        src={b.profileImage}
+                        alt={b.name}
+                        className={`h-9 w-9 shrink-0 rounded-full object-cover ${
+                          b.isToday ? "ring-2 ring-pink-400" : ""
+                        }`}
+                      />
+                    ) : (
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                          b.isToday
+                            ? "bg-gradient-to-br from-pink-400 to-fuchsia-500 text-white ring-2 ring-pink-300"
+                            : "bg-pink-100 text-pink-600"
+                        }`}
+                      >
+                        {b.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800">{b.name}</p>
-                      <p className="text-xs text-gray-400">{b.department}</p>
+                      <p className="truncate text-sm font-medium text-gray-800">
+                        {b.name}
+                        {b.isToday && (
+                          <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wide text-pink-500">
+                            Today
+                          </span>
+                        )}
+                      </p>
+                      <p className="truncate text-xs capitalize text-gray-400">{b.department}</p>
                     </div>
-                    <span className="text-xs font-medium text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">
-                      {b.date}
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                        b.isToday
+                          ? "bg-pink-500 text-white"
+                          : b.daysUntil <= 7
+                          ? "bg-pink-50 text-pink-600"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {b.isToday
+                        ? "🎉 Today"
+                        : b.daysUntil === 1
+                        ? "Tomorrow"
+                        : b.daysUntil <= 14
+                        ? `In ${b.daysUntil}d`
+                        : b.date}
                     </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Leave Requests / My Leave Balance */}
+          {isManager ? (
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm h-62">
+              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                <h2 className="font-semibold text-gray-800">Leave Requests</h2>
+                <Link to="/leave" className="text-xs font-medium text-indigo-600 hover:underline">
+                  View all
+                </Link>
+              </div>
+              {pendingLeaves.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-8 text-center">
+                  <CircleCheckBig size={28} className="text-gray-200" />
+                  <p className="text-sm text-gray-400">No pending requests</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-50">
+                  {pendingLeaves.slice(0, 4).map((l) => {
+                    const uName =
+                      typeof l.user === "object" && l.user ? l.user.name : "Unknown";
+                    const pending = updateLeaveMutation.isPending;
+                    return (
+                      <li key={l._id} className="flex items-center gap-3 px-5 py-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-600">
+                          {uName.charAt(0).toUpperCase()}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-800">{uName}</p>
+                          <p className="truncate text-xs text-gray-400">
+                            {formatDate(l.fromDate)}
+                            {l.toDate ? ` → ${formatDate(l.toDate)}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                          <button
+                            disabled={pending}
+                            onClick={() => handleLeaveDecision(l._id, "approved")}
+                            className="rounded-lg bg-indigo-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-600 disabled:opacity-50 transition"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            disabled={pending}
+                            onClick={() => handleLeaveDecision(l._id, "rejected")}
+                            className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm h-62">
+              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                <h2 className="font-semibold text-gray-800">Leave Balance</h2>
+                <Link to="/leave" className="text-xs font-medium text-indigo-600 hover:underline">
+                  Apply
+                </Link>
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-gray-100 text-center py-4">
+                {[
+                  { label: "Balance", value: myLeaveBalance?.totalBalance ?? 0 },
+                  { label: "Taken", value: myLeaveBalance?.leaveTaken ?? 0 },
+                  { label: "Paid", value: myLeaveBalance?.paidLeave ?? 0 },
+                ].map((s) => (
+                  <div key={s.label} className="px-3">
+                    <p className="text-xs text-gray-400">{s.label}</p>
+                    <p className="mt-1 text-xl font-bold text-gray-900">{s.value}</p>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+
+          {/* Today's Summary */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 p-5 text-white shadow-lg">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Today</p>
+              <p className="mt-0.5 text-sm font-medium text-white/90">
+                {today.toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+              <div className="mt-4 space-y-2.5">
+                {[
+                  { label: "Punch in", value: firstSegment(myRecord) || "Not yet" },
+                  { label: "Hours worked", value: formatMs(myHoursTodayMs) },
+                  { label: "Tasks due today", value: String(tasksDueToday.length) },
+                  ...(isManager
+                    ? [{ label: "Pending leaves", value: String(pendingLeaves.length) }]
+                    : []),
+                ].map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between rounded-xl bg-white/15 px-4 py-2.5 backdrop-blur-sm"
+                  >
+                    <span className="text-sm text-white/80">{row.label}</span>
+                    <span className="text-sm font-semibold text-white">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="font-semibold mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleOpen("employee")}
-                className="p-2 flex flex-col items-center gap-2 border border-gray-100 rounded-xl text-sm hover:bg-gray-50 transition"
-              >
-                <div className="p-2 rounded-lg bg-indigo-100">
-                  <UserPlus size={22} className="text-indigo-600" />
-                </div>
-                <span className="text-gray-700 font-medium">Add Employee</span>
-              </button>
-
-              <button
-                onClick={() => handleOpen("project")}
-                className="p-2 flex flex-col items-center gap-2 border border-gray-100 rounded-xl text-sm hover:bg-gray-50 transition"
-              >
-                <div className="p-2 rounded-lg bg-purple-100">
-                  <FolderPlus size={22} className="text-purple-600" />
-                </div>
-                <span className="text-gray-700 font-medium">Create Project</span>
-              </button>
-
-              <button
-                onClick={() => handleOpen("task")}
-                className="p-2 flex flex-col items-center gap-2 border border-gray-100 rounded-xl text-sm hover:bg-gray-50 transition"
-              >
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <NotebookPen size={22} className="text-blue-600" />
-                </div>
-                <span className="text-gray-700 font-medium">Assign Task</span>
-              </button>
-
-              <button
-                onClick={() => handleOpen("leave")}
-                className="p-2 flex flex-col items-center gap-2 border border-gray-100 rounded-xl text-sm hover:bg-gray-50 transition"
-              >
-                <div className="p-2 rounded-lg bg-green-100">
-                  <CircleCheckBig size={22} className="text-green-600" />
-                </div>
-                <span className="text-gray-700 font-medium">Approve Leave</span>
-              </button>
+          {/* <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="border-b border-gray-100 px-5 py-4">
+              <h2 className="font-semibold text-gray-800">Quick Actions</h2>
             </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex justify-between mb-4">
-              <h2 className="font-semibold">Leave Requests</h2>
-              <span className="text-xs text-indigo-600 cursor-pointer">View All</span>
+            <div className="grid grid-cols-2 gap-2 p-4">
+              {canCreateUsers && (
+                <QuickAction
+                  icon={<UserPlus size={20} className="text-indigo-600" />}
+                  bg="bg-indigo-50"
+                  label="Add Employee"
+                  onClick={() => handleOpen("employee")}
+                />
+              )}
+              {isManager && (
+                <QuickAction
+                  icon={<FolderPlus size={20} className="text-purple-600" />}
+                  bg="bg-purple-50"
+                  label="New Project"
+                  onClick={() => handleOpen("project")}
+                />
+              )}
+              {isManager && (
+                <QuickAction
+                  icon={<NotebookPen size={20} className="text-blue-600" />}
+                  bg="bg-blue-50"
+                  label="Assign Task"
+                  onClick={() => handleOpen("task")}
+                />
+              )}
+              <QuickAction
+                icon={<CircleCheckBig size={20} className="text-green-600" />}
+                bg="bg-green-50"
+                label={isManager ? "Approve Leave" : "Request Leave"}
+                onClick={() => navigate("/leave")}
+              />
+              <QuickAction
+                icon={<Megaphone size={20} className="text-emerald-600" />}
+                bg="bg-emerald-50"
+                label="Announcements"
+                onClick={() => navigate("/announcements")}
+              />
+              <QuickAction
+                icon={<Clock size={20} className="text-amber-600" />}
+                bg="bg-amber-50"
+                label="Attendance"
+                onClick={() => navigate("/attendance")}
+              />
             </div>
-
-            <div className="space-y-4 text-sm">
-              <div className="flex justify-between items-center">
-                <span>Sarah Jenkins</span>
-                <div className="flex gap-2">
-                  <button className="px-2 py-1 bg-indigo-500 text-white rounded">Approve</button>
-                  <button className="px-2 py-1 bg-gray-200 rounded">Decline</button>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span>Michael Chen</span>
-                <div className="flex gap-2">
-                  <button className="px-2 py-1 bg-indigo-500 text-white rounded">Approve</button>
-                  <button className="px-2 py-1 bg-gray-200 rounded">Decline</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-5 rounded-2xl shadow-lg">
-            <h2 className="font-semibold mb-2">Today's Summary</h2>
-            <p className="text-sm opacity-80 mb-4">
-              {new Date().toLocaleDateString(undefined, {
-                weekday: "long",
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-
-            <div className="space-y-3">
-              <div className="flex justify-between bg-white/20 px-3 py-2 rounded-lg">
-                <span>Meeting with UX Team</span>
-                <span>10:00 AM</span>
-              </div>
-              <div className="flex justify-between bg-white/20 px-3 py-2 rounded-lg">
-                <span>HR Policy Review</span>
-                <span>02:30 PM</span>
-              </div>
-              <div className="flex justify-between bg-white/20 px-3 py-2 rounded-lg">
-                <span>System Maintenance</span>
-                <span>06:00 PM</span>
-              </div>
-            </div>
-          </div>
+          </div> */}
         </div>
       </div>
-      <Modal
-        isOpen={!!openModal}
-        onClose={handleClose}
-        title={
-          openModal === "employee"
-            ? "Add Employee"
-            : openModal === "project"
-              ? "Create Project"
-              : openModal === "task"
-                ? "Assign Task"
-                : openModal === "leave"
-                  ? "Approve Leave"
-                  : ""
-        }
-      >
-        {/* Dynamic Content */}
-        {openModal === "employee" &&
-          (canCreateUsers ? (
-            <form onSubmit={handleCreateEmployee} className="flex flex-col gap-3 mt-1">
-              <Input
-                label="Full name"
-                name="name"
-                value={employeeForm.name}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, name: e.target.value }))
-                }
-                required
-                placeholder="Jane Doe"
-              />
-              <Input
-                label="Email"
-                name="email"
-                type="email"
-                value={employeeForm.email}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, email: e.target.value }))
-                }
-                required
-                placeholder="jane@company.com"
-              />
-              <Input
-                label="Temporary password"
-                name="password"
-                type="password"
-                value={employeeForm.password}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, password: e.target.value }))
-                }
-                required
-                placeholder="At least 6 characters"
-              />
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700" htmlFor="create-user-role">
-                  Role
-                </label>
-                <select
-                  id="create-user-role"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-                  value={employeeForm.role}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({
-                      ...s,
-                      role: e.target.value as AdminCreateUserInput["role"],
-                    }))
-                  }
-                >
-                  {roleOptions.map((r) => (
-                    <option key={r} value={r}>
-                      {r.charAt(0).toUpperCase() + r.slice(1)}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500">
-                  This role is saved on the new account and controls what they can access.
-                </p>
-              </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <Button variant="outline" type="button" onClick={handleClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createUserMutation.isPending}>
-                  {createUserMutation.isPending ? "Creating..." : "Create user"}
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <p className="text-sm text-gray-600">
-              Only an admin or super-admin can add users and assign roles.
-            </p>
-          ))}
-        {openModal === "project" && <p>Create Project Form Here</p>}
-        {openModal === "task" && <p>Assign Task Form Here</p>}
-        {openModal === "leave" && <p>Approve Leave UI Here</p>}
 
-        {openModal !== "employee" ? (
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={handleClose}>
+      {/* Modals */}
+      <Modal
+        isOpen={openModal === "employee"}
+        onClose={handleClose}
+        title="Add Employee"
+      >
+        {canCreateUsers ? (
+          <form
+            onSubmit={handleCreateEmployee}
+            className="flex flex-col gap-3 mt-1"
+          >
+            <Input
+              label="Full name"
+              name="name"
+              value={employeeForm.name}
+              onChange={(e) =>
+                setEmployeeForm((s) => ({ ...s, name: e.target.value }))
+              }
+              required
+              placeholder="Jane Doe"
+            />
+            <Input
+              label="Email"
+              name="email"
+              type="email"
+              value={employeeForm.email}
+              onChange={(e) =>
+                setEmployeeForm((s) => ({ ...s, email: e.target.value }))
+              }
+              required
+              placeholder="jane@company.com"
+            />
+            <Input
+              label="Temporary password"
+              name="password"
+              type="password"
+              value={employeeForm.password}
+              onChange={(e) =>
+                setEmployeeForm((s) => ({ ...s, password: e.target.value }))
+              }
+              required
+              placeholder="At least 6 characters"
+            />
+            <div className="flex flex-col gap-1">
+              <label
+                className="text-sm font-medium text-gray-700"
+                htmlFor="create-user-role"
+              >
+                Role
+              </label>
+              <select
+                id="create-user-role"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                value={employeeForm.role}
+                onChange={(e) =>
+                  setEmployeeForm((s) => ({
+                    ...s,
+                    role: e.target.value as AdminCreateUserInput["role"],
+                  }))
+                }
+              >
+                {roleOptions.map((r) => (
+                  <option key={r} value={r}>
+                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2 mt-2">
+              <Button variant="outline" type="button" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={createUserMutation.isPending}>
+                Create user
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <p className="text-sm text-gray-600">
+            Only an admin or super-admin can add users and assign roles.
+          </p>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={openModal === "project"}
+        onClose={handleClose}
+        title="Create Project"
+      >
+        <form onSubmit={handleCreateProject} className="flex flex-col gap-3 mt-1">
+          <Input
+            label="Project name"
+            name="projectName"
+            value={projectForm.projectName}
+            onChange={(e) =>
+              setProjectForm((s) => ({ ...s, projectName: e.target.value }))
+            }
+            required
+            placeholder="e.g. Website redesign"
+          />
+          <Input
+            label="Description"
+            name="description"
+            type="textarea"
+            value={projectForm.description}
+            onChange={(e) =>
+              setProjectForm((s) => ({ ...s, description: e.target.value }))
+            }
+            placeholder="Brief description of the project…"
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <Button variant="outline" type="button" onClick={handleClose}>
               Cancel
             </Button>
-            <Button>Save</Button>
+            <Button type="submit" loading={createProjectMutation.isPending}>
+              Create
+            </Button>
           </div>
-        ) : null}
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={openModal === "task"}
+        onClose={handleClose}
+        title="Assign Task"
+      >
+        <form onSubmit={handleCreateTask} className="flex flex-col gap-3 mt-1">
+          <Input
+            label="Task name"
+            name="taskName"
+            value={taskForm.taskName}
+            onChange={(e) =>
+              setTaskForm((s) => ({ ...s, taskName: e.target.value }))
+            }
+            required
+            placeholder="e.g. Prepare Q3 report"
+          />
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-sm font-medium text-gray-700"
+              htmlFor="task-project"
+            >
+              Project
+            </label>
+            <select
+              id="task-project"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              value={taskForm.project}
+              onChange={(e) =>
+                setTaskForm((s) => ({ ...s, project: e.target.value }))
+              }
+              required
+            >
+              <option value="">Select a project</option>
+              {projects.map((p) => (
+                <option key={p._id} value={p._id}>
+                  {p.projectName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-sm font-medium text-gray-700"
+              htmlFor="task-assignee"
+            >
+              Assign to
+            </label>
+            <select
+              id="task-assignee"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              value={taskForm.assignedTo}
+              onChange={(e) =>
+                setTaskForm((s) => ({ ...s, assignedTo: e.target.value }))
+              }
+            >
+              <option value="">Unassigned</option>
+              {users.map((u) => (
+                <option key={u._id} value={u._id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label
+                className="text-sm font-medium text-gray-700"
+                htmlFor="task-priority"
+              >
+                Priority
+              </label>
+              <select
+                id="task-priority"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                value={taskForm.priority}
+                onChange={(e) =>
+                  setTaskForm((s) => ({
+                    ...s,
+                    priority: e.target.value as "low" | "medium" | "urgent",
+                  }))
+                }
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+            <Input
+              label="Due date"
+              name="dueDate"
+              type="date"
+              value={taskForm.dueDate}
+              onChange={(e) =>
+                setTaskForm((s) => ({ ...s, dueDate: e.target.value }))
+              }
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button variant="outline" type="button" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={createTaskMutation.isPending}>
+              Assign
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

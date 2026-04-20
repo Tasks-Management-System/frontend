@@ -9,6 +9,7 @@ export const apiPath = {
         deleteUser: "/auth/",
         logout: "/auth/logout",
         refreshToken: "/auth/refresh-token",
+        teamBirthdays: "/auth/team/birthdays",
     },
     projects: {
         list: "/project",

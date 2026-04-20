@@ -87,7 +87,7 @@ const mainNav: MainNavItem[] = [
   },
   { path: "/calendar", label: "Calendar", icon: Calendar1Icon, end: false },
   { path: "/announcements", label: "Announcements", icon: Megaphone, end: false },
-  { path: "/timesheets", label: "Timesheets", icon: Timer, end: false },
+  // { path: "/timesheets", label: "Timesheets", icon: Timer, end: false },
   {
     path: "/assets",
     label: "Assets",

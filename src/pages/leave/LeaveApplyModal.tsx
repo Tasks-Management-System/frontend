@@ -6,7 +6,6 @@ import { useApplyLeave } from "../../apis/api/leave";
 import { localYmd } from "../../apis/api/attendance";
 import { ApiError } from "../../apis/apiService";
 import Button from "../../components/UI/Button";
-import Input from "../../components/UI/Input";
 import Modal from "../../components/UI/Model";
 import type { LeaveDaysMode, LeaveSubType } from "../../types/leave.types";
 
@@ -183,13 +182,26 @@ export function LeaveApplyModal({ isOpen, onClose }: LeaveApplyModalProps) {
           )}
         </div>
 
-        <Input
-          label="Reason"
-          type="textarea"
-          {...register("reason")}
-          placeholder="e.g. Medical appointment, family event…"
-          error={errors.reason?.message}
-        />
+        <div>
+          <label
+            htmlFor="leave-reason"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Reason
+          </label>
+          <textarea
+            id="leave-reason"
+            rows={4}
+            placeholder="e.g. Medical appointment, family event…"
+            {...register("reason")}
+            className={`w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-blue-500 ${
+              errors.reason ? "border-red-500" : "border-gray-300"
+            }`}
+          />
+          {errors.reason && (
+            <p className="mt-1 text-xs text-red-600">{errors.reason.message}</p>
+          )}
+        </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <Button
