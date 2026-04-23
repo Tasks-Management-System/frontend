@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Settings, LogOut, ChevronDown, Menu, Coffee } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, Menu, Coffee, Bell } from "lucide-react";
+import { useMyInvites } from "../../apis/api/organization";
 import { useLocation } from "react-router-dom";
 import { getUserById, useLogout } from "../../apis/api/auth";
 import {
@@ -21,6 +22,7 @@ import {
   type AppRole,
 } from "../../utils/moduleAccess";
 import { clearAuth, getUserId } from "../../utils/auth";
+import { disconnectSocket } from "../../utils/socket";
 
 const routeTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -33,6 +35,7 @@ const routeTitles: Record<string, string> = {
   "/employee": "Employees",
   "/calendar": "Calendar",
   "/settings": "Settings",
+  "/chat": "Chat",
 };
 
 const SETTINGS_ROLES: readonly AppRole[] = ["admin", "hr", "super-admin"];
@@ -77,8 +80,11 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
   );
 
   const logoutMutation = useLogout();
+  const { data: myInvites = [] } = useMyInvites();
+  const pendingInviteCount = myInvites.length;
 
   const clearClientSession = () => {
+    disconnectSocket();
     clearAuth();
     setIsMenuOpen(false);
   };
@@ -293,6 +299,19 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
               </div>
             </button>
           </div>
+
+          <Link
+            to="/invites"
+            title="Organization invites"
+            className="relative rounded-xl p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+          >
+            <Bell className="h-5 w-5" />
+            {pendingInviteCount > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                {pendingInviteCount > 9 ? "9+" : pendingInviteCount}
+              </span>
+            )}
+          </Link>
 
           <button
             type="button"

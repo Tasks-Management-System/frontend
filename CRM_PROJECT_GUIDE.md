@@ -1,6 +1,6 @@
 # CRM System — Project Guide & Improvement Roadmap
 
-> A modern HR & Project Management CRM built with React 19, TypeScript, TanStack Query, and Tailwind CSS.
+> A modern HR & Project Management CRM built with React 19, TypeScript, TanStack Query, Tailwind CSS, and Socket.io.
 
 ---
 
@@ -36,6 +36,10 @@ This is a **full-featured CRM (Customer Relationship Management) / HRMS (Human R
 - Salary records and PDF payslips
 - Calendar with multi-source events
 - Sticky notes workspace
+- Real-time internal chat (DMs via Socket.io)
+- Company-wide announcements with pin and read-receipt
+- Asset / equipment tracking and assignment
+- Timesheets — log hours per project/task with CSV export
 - User profiles
 
 **Target Users:** HR, Admin, Managers, Employees  
@@ -58,7 +62,11 @@ This is a **full-featured CRM (Customer Relationship Management) / HRMS (Human R
 | Icons | Lucide React + React Icons | latest |
 | Notifications | react-hot-toast | 2.6.0 |
 | Auth | Google OAuth (@react-oauth/google) | 0.13.4 |
-| JWT Decode | jwt-decode | latest |
+| JWT Decode | jwt-decode | 4.0.0 |
+| Real-time | Socket.io Client | 4.8.3 |
+| Forms | React Hook Form + Zod | 7.72.1 / 4.3.6 |
+| Linting | ESLint + Prettier | 9.x / 3.x |
+| Git Hooks | Husky + lint-staged | 9.x / 16.x |
 
 ---
 
@@ -68,20 +76,34 @@ This is a **full-featured CRM (Customer Relationship Management) / HRMS (Human R
 src/
 ├── apis/
 │   ├── api/
+│   │   ├── announcements.ts   # Announcements CRUD, pin, read-receipt
+│   │   ├── assets.ts          # Asset CRUD, assign, return
 │   │   ├── attendance.ts      # Punch in/out, breaks, history
-│   │   ├── auth.ts            # Login, signup, user CRUD, profile
+│   │   ├── auth.ts            # Login, signup, user CRUD, profile, birthdays
+│   │   ├── chat.ts            # Chat messages, users list, online status
 │   │   ├── leave.ts           # Apply, approve, reject leaves
 │   │   ├── notes.ts           # Sticky notes CRUD
 │   │   ├── projects.ts        # Project list and creation
 │   │   ├── salary.ts          # Salary records and PDF
-│   │   └── tasks.ts           # Task CRUD with filters
+│   │   ├── tasks.ts           # Task CRUD with filters
+│   │   └── timesheets.ts      # Time logging, weekly view, CSV export
 │   ├── apiPath.ts             # Centralized API route constants
 │   └── apiService.ts          # HTTP client with auth + error handling
 │
 ├── components/
-│   ├── UI/                    # Reusable primitives (Button, Input, Table, Modal…)
+│   ├── UI/                    # Reusable primitives
+│   │   ├── AnnouncementPopup.tsx  # Announcement notification popup
+│   │   ├── BirthdayPopup.tsx      # Team birthday notification popup
+│   │   ├── Button.tsx
+│   │   ├── Dropdown.tsx
+│   │   ├── Input.tsx
+│   │   ├── Model.tsx
+│   │   ├── PillTabBar.tsx         # Pill-style tab navigation
+│   │   ├── Skeleton.tsx           # Loading skeleton
+│   │   └── Table.tsx
+│   ├── ErrorBoundary.tsx          # Global React error boundary
 │   ├── auth/
-│   │   └── RoleRouteGuard.tsx # Role-based route enforcement
+│   │   └── RoleRouteGuard.tsx     # Role-based route enforcement
 │   ├── calendar/              # 12 calendar sub-components
 │   ├── header/                # Top navigation bar
 │   ├── layout/
@@ -90,9 +112,12 @@ src/
 │   └── sidebar/               # Navigation sidebar
 │
 ├── pages/
+│   ├── announcements/         # Company feed with pin + read-receipt
+│   ├── assets/                # Equipment tracking and assignment
 │   ├── attendance/
 │   ├── auth/                  # Login, SignUp
 │   ├── calendar/
+│   ├── chat/                  # Real-time direct messaging
 │   ├── dashboard/             # Admin overview with charts
 │   ├── leave/
 │   ├── notes/
@@ -100,10 +125,29 @@ src/
 │   ├── salary/
 │   ├── settings/
 │   ├── tasks/
+│   ├── timesheets/            # Weekly timesheet (built, route currently disabled)
 │   └── userProfile/           # Public user view
 │
 ├── types/                     # TypeScript interfaces for all entities
-├── utils/                     # Auth helpers, media URL, task utils
+│   ├── announcement.types.ts
+│   ├── api.types.ts
+│   ├── asset.types.ts
+│   ├── attendance.types.ts
+│   ├── calendar.types.ts
+│   ├── chat.types.ts
+│   ├── leave.types.ts
+│   ├── notes.types.ts
+│   ├── project.types.ts
+│   ├── task.types.ts
+│   ├── timesheet.types.ts
+│   └── user.types.ts
+├── utils/
+│   ├── auth.ts                # Centralized auth token management
+│   ├── mediaUrl.ts            # Profile image URL resolver
+│   ├── moduleAccess.ts        # Legacy role helpers
+│   ├── socket.ts              # Socket.io connection helpers
+│   ├── stickyNoteTheme.ts
+│   └── taskStaleHide.ts
 ├── hooks/                     # Custom React hooks
 ├── constants/                 # Task statuses, etc.
 ├── App.tsx                    # Route configuration
@@ -126,12 +170,16 @@ src/
 | `/attendance` | Attendance | All roles | Punch in/out, breaks, summaries |
 | `/leave` | Leave | All roles | Apply + approve leave requests |
 | `/calendar` | Calendar | All roles | Month/Week/Day/Agenda views |
+| `/chat` | Chat | All roles | Real-time direct messaging (Socket.io) |
+| `/announcements` | Announcements | All roles | Company feed, pin & read-receipt |
+| `/assets` | Assets | Admin, HR | Equipment tracking and assignment |
 | `/salary` | Salary | Admin, HR | Salary records + PDF download |
 | `/employee` | Employees | Admin, HR | Employee directory + management |
 | `/settings` | Settings | Admin, HR | App configuration |
 | `/profile` | My Profile | All roles | Edit personal information |
 | `/user/:id` | User Profile | All roles | View any employee's profile |
 | `/projects` | Projects | All roles | Project overview |
+| `/timesheets` | Timesheets | All roles | Weekly time log + CSV export *(route disabled — built, pending enable)* |
 
 ### Role System
 
@@ -139,9 +187,9 @@ src/
 |------|-------------|
 | `super-admin` | Full access to everything |
 | `admin` | All features except super-admin only areas |
-| `hr` | Salary, leave approval, employee management |
+| `hr` | Salary, leave approval, employee management, assets |
 | `manager` | Team tasks, leave approval for team |
-| `employee` | Own tasks, attendance, leave, notes |
+| `employee` | Own tasks, attendance, leave, notes, chat |
 
 ---
 
@@ -161,6 +209,7 @@ GET    /auth/{id}               # Get user by ID
 PUT    /auth/{id}               # Update user
 DELETE /auth/{id}               # Delete user
 POST   /auth/create-user        # Admin creates user
+GET    /auth/team/birthdays     # Upcoming team birthdays
 ```
 
 ### Tasks
@@ -230,6 +279,44 @@ PUT    /hiring/update/{id}      # Update hiring record
 DELETE /hiring/{id}             # Delete hiring record
 ```
 
+### Chat
+```
+GET    /chat/users              # List all users available to chat
+GET    /chat/online             # List currently online users
+GET    /chat/{receiverId}       # Get message history with a user (paginated)
+```
+> Real-time delivery uses **Socket.io** (connects to the server root, not `/api/v1`).
+
+### Announcements
+```
+GET    /announcements           # List all announcements
+POST   /announcements/create    # Create announcement (admin/HR)
+PUT    /announcements/{id}      # Edit announcement
+PATCH  /announcements/{id}/read # Mark announcement as read
+PATCH  /announcements/{id}/pin  # Pin or unpin announcement
+DELETE /announcements/{id}      # Delete announcement (admin/HR)
+```
+
+### Assets
+```
+GET    /assets                  # List assets (filterable by status, assignedTo)
+POST   /assets/create           # Create asset record (admin/HR)
+GET    /assets/{id}             # Get asset details
+PUT    /assets/{id}             # Update asset
+PATCH  /assets/{id}/assign      # Assign asset to employee
+PATCH  /assets/{id}/return      # Mark asset as returned
+DELETE /assets/{id}             # Delete asset record
+```
+
+### Timesheets
+```
+GET    /timesheets              # List entries (filterable by week, year, userId, project, billable)
+POST   /timesheets/log          # Log hours against a project/task
+PUT    /timesheets/{id}         # Update a timesheet entry
+DELETE /timesheets/{id}         # Delete a timesheet entry
+GET    /timesheets/export/csv   # Download timesheet as CSV
+```
+
 ---
 
 ## 6. Authentication & Role-Based Access
@@ -251,10 +338,11 @@ Google OAuth:
 
 ### Session Management
 
-- JWT stored in `localStorage` under key `token`
+- JWT stored in `localStorage` under key `token` (single canonical key — standardized)
 - All API requests send: `Authorization: Bearer <token>`
 - On `403 ACCOUNT_INACTIVE` → clear session → redirect `/login?reason=account_inactive`
 - Token refresh endpoint available at `/auth/refresh-token`
+- `utils/auth.ts` is the single source of truth for all auth storage operations. It also clears legacy keys (`accessToken`, `authToken`) on logout.
 
 ### Route Guard Flow
 
@@ -269,7 +357,7 @@ Navigate to /salary
 
 ## 7. State Management Architecture
 
-### Pattern: React Query + Local State
+### Pattern: React Query + Local State + Socket.io
 
 ```
 User Action
@@ -279,6 +367,11 @@ User Action
               └─► useQuery refetches automatically
                   └─► Component re-renders
                       └─► Toast notification
+
+Real-time Chat (Socket.io):
+  connectSocket() on login → socket emits/listens for message events
+  → Incoming message → queryClient.invalidateQueries(["chatMessages"])
+  → UI updates without polling
 ```
 
 ### Key Query Patterns
@@ -302,6 +395,13 @@ const { data } = useQuery({
 const mutation = useMutation({
   mutationFn: createTask,
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] })
+})
+
+// Online users — polled every 30 seconds
+const { data } = useQuery({
+  queryKey: ["onlineUsers"],
+  queryFn: fetchOnlineUsers,
+  refetchInterval: 30_000
 })
 ```
 
@@ -342,11 +442,15 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
 ### Available Scripts
 
 ```bash
-npm run dev        # Start dev server (port 5173)
-npm run build      # Production build
-npm run preview    # Preview production bundle
-npm run lint       # Run ESLint
+npm run dev            # Start dev server (port 5173)
+npm run build          # Production build
+npm run preview        # Preview production bundle
+npm run lint           # Run ESLint
+npm run format         # Format all src files with Prettier
+npm run format:check   # Check formatting without writing
 ```
+
+> **Husky** runs ESLint + Prettier automatically on every `git commit` via lint-staged.
 
 ---
 
@@ -354,19 +458,20 @@ npm run lint       # Run ESLint
 
 ### High Priority
 
-- [ ] **Token key inconsistency** — Code checks `accessToken`, `token`, and `authToken` in multiple places. Standardize to one key throughout the codebase.
+- [x] **Token key inconsistency** — Standardized. `utils/auth.ts` uses `"token"` as the single key and clears legacy keys (`accessToken`, `authToken`) on logout.
 - [ ] **No token refresh mechanism** — JWT expiry is not handled automatically. Users get silently logged out or see API errors. Implement auto-refresh using the `/auth/refresh-token` endpoint.
 - [ ] **Roles stored in localStorage** — User roles cached in `localStorage` can be tampered with client-side. Always re-validate roles from the server on sensitive operations.
 - [ ] **Missing `.env.example` file** — New developers don't know what environment variables are required.
-- [ ] **Large page files** — `Tasks.tsx` is 620+ lines. Split into sub-components for maintainability.
+- [ ] **Large page files** — `Tasks.tsx` is 600+ lines. Split into sub-components for maintainability.
 
 ### Medium Priority
 
-- [ ] **No error boundaries** — An uncaught error in one component crashes the entire app. Add React `ErrorBoundary` wrappers around major sections.
+- [x] **No error boundaries** — `components/ErrorBoundary.tsx` is now added and wraps major sections.
 - [ ] **No loading state on route transitions** — Navigation feels abrupt. Add a top-progress-bar (e.g., NProgress).
 - [ ] **Attendance elapsed time calculated client-side** — If user's device clock is wrong, worked hours will be incorrect. Move calculation to server or sync with server time.
-- [ ] **Notes have no delete functionality visible** — API has `PATCH` for notes but no `DELETE` endpoint documented. Verify and implement delete.
+- [x] **Notes have no delete functionality** — Confirmed and implemented.
 - [ ] **Hiring module has no frontend page** — API endpoints exist for hiring but there's no UI page for it.
+- [ ] **Timesheets route disabled** — `Timesheets.tsx` is built and fully functional but the route `/timesheets` is commented out in `App.tsx`. Re-enable once backend is confirmed ready.
 
 ### Low Priority
 
@@ -392,31 +497,25 @@ pages/tasks/
   └── TaskFilters.tsx        # Filter bar
 ```
 
-#### 2. Centralize Auth Token Management
+#### 2. Centralize Auth Token Management ✅ Done
+`utils/auth.ts` is the single source of truth:
 ```typescript
-// utils/auth.ts — one place for all auth operations
 export const getToken = () => localStorage.getItem("token")
 export const setToken = (t: string) => localStorage.setItem("token", t)
 export const clearAuth = () => {
   localStorage.removeItem("token")
   localStorage.removeItem("userId")
   localStorage.removeItem("userRoles")
+  localStorage.removeItem("accessToken")   // legacy cleanup
+  localStorage.removeItem("authToken")     // legacy cleanup
 }
 ```
 
-#### 3. Add a Global Error Boundary
-```tsx
-// components/ErrorBoundary.tsx
-class ErrorBoundary extends React.Component {
-  // Catch render errors, show fallback UI, log to error service
-}
-```
+#### 3. Global Error Boundary ✅ Done
+`components/ErrorBoundary.tsx` catches render errors and shows a fallback UI.
 
-#### 4. Form Validation Library
-Currently validation is done manually. Add **React Hook Form + Zod** for:
-- Type-safe validation schemas
-- Better error messages
-- Reduced boilerplate in form handlers
+#### 4. Form Validation Library ✅ Done
+**React Hook Form + Zod** are installed and available for all new forms.
 
 #### 5. Consistent API Response Typing
 Define a generic wrapper type for all API responses:
@@ -431,8 +530,8 @@ type ApiResponse<T> = {
 
 ### Developer Experience
 
-- [ ] Add **Prettier** configuration for consistent code formatting
-- [ ] Add **Husky + lint-staged** for pre-commit checks
+- [x] Add **Prettier** configuration for consistent code formatting
+- [x] Add **Husky + lint-staged** for pre-commit checks
 - [ ] Add **path aliases** in `tsconfig.json` (`@/components`, `@/utils`, etc.)
 - [ ] Add `README.md` with setup instructions (currently missing)
 - [ ] Document component props with JSDoc comments for complex components
@@ -458,14 +557,18 @@ Real-time or polling-based notifications for:
 
 ---
 
-#### 2. Chat / Messaging Module
-Internal messaging for team collaboration:
-- Direct messages between employees
+#### 2. Chat / Messaging Module ✅ Shipped
+Internal real-time direct messaging is live at `/chat`:
+- User list with online presence indicators
+- Real-time delivery via Socket.io
+- Message history with date separators
+- Read receipts (single ✓ / double ✓✓)
+- Avatar with initials fallback
+
+**Remaining enhancements:**
 - Group channels per project/team
 - Attach tasks or leave requests to messages
-- Unread message count badge
-
-**Routes:** `/messages`, `/messages/:userId`
+- Unread message count badge in sidebar
 
 ---
 
@@ -524,32 +627,31 @@ The API already supports hiring (`/hiring`). Add the UI:
 
 ---
 
-#### 7. Announcements / Company Feed
-Company-wide updates:
-- Admin posts announcements (text, image, attachments)
-- Employees see feed on dashboard
-- Mark as read / acknowledge
-- Pinned announcements at top
+#### 7. Announcements / Company Feed ✅ Shipped
+Live at `/announcements`:
+- Admin/HR can create, edit, pin, and delete announcements
+- All employees can view and mark as read
+- Pinned announcements shown at top
+- `BirthdayPopup` and `AnnouncementPopup` components surface alerts in the header
 
 ---
 
-#### 8. Asset / Equipment Management
-Track company assets assigned to employees:
-- Laptop, phone, access card, etc.
-- Assignment date, return date
-- Condition on handover
-- History of asset transfers
-
-**Routes:** `/assets`
+#### 8. Asset / Equipment Management ✅ Shipped
+Live at `/assets`:
+- Create and track company assets (laptop, phone, access card, etc.)
+- Assign to employees with condition and handover note
+- Return flow with condition tracking
+- Status badges: Available / Assigned / Under Repair / Retired
+- Assignment history per asset
 
 ---
 
-#### 9. Time Tracking Per Task / Project
-Currently attendance tracks clock-in/out for the day. Add:
-- Log hours against a specific task or project
-- Weekly timesheets view
-- Billable vs non-billable hours
-- Export timesheet to CSV/PDF
+#### 9. Time Tracking Per Task / Project ✅ Built (pending route enable)
+`Timesheets.tsx` is complete. Route `/timesheets` is disabled pending backend confirmation:
+- Log hours against a specific project/task
+- Weekly timesheets view with ISO week navigation
+- Billable vs non-billable hours toggle
+- Export timesheet to CSV
 
 ---
 
@@ -607,7 +709,7 @@ For new hires:
 
 ### Dashboard Improvements
 - Add a **"My Tasks Due Today"** widget
-- Add an **"Employee Birthdays This Week"** widget  
+- Add an **"Employee Birthdays This Week"** widget — birthday data available via `/auth/team/birthdays`
 - Add a **"Recent Activity Feed"** (last 10 actions in the system)
 - Make chart date range selectable (Today / This Week / This Month / Custom)
 
@@ -624,6 +726,12 @@ For new hires:
 - Time estimate and time logged fields
 - Task templates for common workflows
 
+### Chat Improvements
+- Unread message badge count in sidebar
+- Group / channel messaging
+- Message search
+- File/image sharing
+
 ---
 
 ## 13. Performance Optimizations
@@ -635,6 +743,7 @@ Currently all routes load together. Add lazy loading:
 // In App.tsx
 const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"))
 const Tasks = lazy(() => import("./pages/tasks/Tasks"))
+const Chat = lazy(() => import("./pages/chat/Chat"))
 // ... wrap in <Suspense fallback={<PageSkeleton />}>
 ```
 
@@ -665,7 +774,7 @@ npm run build -- --report
 - [ ] **Move JWT to HttpOnly cookie** — `localStorage` is vulnerable to XSS. Store tokens in `HttpOnly` cookies set by the backend.
 - [ ] **Never trust client-side roles** — Currently roles are cached in `localStorage`. Always verify permissions server-side on every API call.
 - [ ] **Add CSP headers** — Content Security Policy on the server to prevent XSS injection.
-- [ ] **Sanitize user-generated content** — Sticky note content and task descriptions should be sanitized before rendering (use DOMPurify if rendering HTML).
+- [ ] **Sanitize user-generated content** — Sticky note content, task descriptions, and chat messages should be sanitized before rendering (use DOMPurify if rendering HTML).
 
 ### Medium Priority
 
@@ -673,6 +782,7 @@ npm run build -- --report
 - [ ] **Add rate limiting awareness** — Handle `429 Too Many Requests` responses gracefully with retry logic.
 - [ ] **Audit Google OAuth redirect** — Ensure the redirect URL is validated server-side to prevent open redirect attacks.
 - [ ] **Add session timeout warning** — Warn user 5 minutes before session expires so they can save work.
+- [ ] **Socket.io authentication** — Verify token on the server before accepting the socket connection. Token is sent via `socket.auth = { token }` on connect.
 
 ### Low Priority
 
@@ -683,38 +793,37 @@ npm run build -- --report
 
 ## 15. Priority Roadmap
 
-### Phase 1 — Foundation (Now)
-Fix critical bugs and improve code quality before adding features.
+### Phase 1 — Foundation ✅ Mostly Done
+Critical bugs fixed and DX tooling in place.
 
-| # | Task | Effort |
+| # | Task | Status |
 |---|------|--------|
-| 1 | Standardize auth token key | 1 day |
-| 2 | Implement auto token refresh | 2 days |
-| 3 | Add `.env.example` and `README.md` | 0.5 day |
-| 4 | Add error boundaries | 1 day |
-| 5 | Add React Router lazy loading | 1 day |
-| 6 | Add form validation with Zod | 3 days |
-| 7 | Add confirmation dialogs for destructive actions | 1 day |
-| 8 | Build Hiring module UI | 3 days |
-
-**Phase 1 Total Estimate: ~12 days**
+| 1 | Standardize auth token key | ✅ Done — `utils/auth.ts` |
+| 2 | Add error boundaries | ✅ Done — `components/ErrorBoundary.tsx` |
+| 3 | Add form validation with Zod | ✅ Done — React Hook Form + Zod installed |
+| 4 | Add Prettier + Husky pre-commit | ✅ Done |
+| 5 | Implement auto token refresh | ⬜ Pending |
+| 6 | Add `.env.example` | ⬜ Pending |
+| 7 | Add confirmation dialogs for destructive actions | ⬜ Pending |
+| 8 | Build Hiring module UI | ⬜ Pending |
 
 ---
 
 ### Phase 2 — Core UX (Next Quarter)
 Improve the experience for existing features.
 
-| # | Task | Effort |
+| # | Task | Status |
 |---|------|--------|
-| 1 | Mobile responsive layout + hamburger menu | 3 days |
-| 2 | Dark mode toggle | 2 days |
-| 3 | Global search (`Cmd+K`) | 3 days |
-| 4 | Notifications system (polling-based) | 5 days |
-| 5 | Announcements / company feed | 4 days |
-| 6 | Task subtasks + comments + file attachments | 5 days |
-| 7 | Reporting & analytics dashboard | 5 days |
-
-**Phase 2 Total Estimate: ~27 days**
+| 1 | Chat / Internal Messaging | ✅ Done — `/chat` with Socket.io |
+| 2 | Announcements / Company Feed | ✅ Done — `/announcements` |
+| 3 | Asset Management | ✅ Done — `/assets` |
+| 4 | Time Tracking (Timesheets) | ✅ Built — route pending enable |
+| 5 | Mobile responsive layout + hamburger menu | ⬜ Pending |
+| 6 | Dark mode toggle | ⬜ Pending |
+| 7 | Global search (`Cmd+K`) | ⬜ Pending |
+| 8 | Notifications system (polling-based) | ⬜ Pending |
+| 9 | Task subtasks + comments + file attachments | ⬜ Pending |
+| 10 | Reporting & analytics dashboard | ⬜ Pending |
 
 ---
 
@@ -725,13 +834,12 @@ Add major new capabilities.
 |---|------|--------|
 | 1 | Performance Appraisal module | 2 weeks |
 | 2 | Document Management module | 1.5 weeks |
-| 3 | Chat / Internal Messaging | 3 weeks |
-| 4 | Time Tracking per task/project | 1.5 weeks |
-| 5 | Employee Directory + Org Chart | 1 week |
-| 6 | Shift Management | 2 weeks |
-| 7 | Expense Claims | 1.5 weeks |
+| 3 | Hiring/Recruitment UI | 1 week |
+| 4 | Employee Directory + Org Chart | 1 week |
+| 5 | Shift Management | 2 weeks |
+| 6 | Expense Claims | 1.5 weeks |
 
-**Phase 3 Total Estimate: ~13 weeks**
+**Phase 3 Total Estimate: ~10 weeks**
 
 ---
 
@@ -757,11 +865,17 @@ Enterprise-grade features.
 | App entry + providers | `src/main.tsx` |
 | API route constants | `src/apis/apiPath.ts` |
 | HTTP client | `src/apis/apiService.ts` |
-| Auth token utilities | `src/utils/moduleAccess.ts` |
+| Auth token utilities | `src/utils/auth.ts` |
+| Socket.io connection | `src/utils/socket.ts` |
 | Role-based route guard | `src/components/auth/RoleRouteGuard.tsx` |
+| Global error boundary | `src/components/ErrorBoundary.tsx` |
 | Main layout wrapper | `src/components/layout/DashboardLayout.tsx` |
 | Dashboard page | `src/pages/dashboard/Dashboard.tsx` |
 | Tasks page | `src/pages/tasks/Tasks.tsx` |
+| Chat page | `src/pages/chat/Chat.tsx` |
+| Announcements page | `src/pages/announcements/Announcements.tsx` |
+| Assets page | `src/pages/assets/Assets.tsx` |
+| Timesheets page | `src/pages/timesheets/Timesheets.tsx` |
 | Attendance page | `src/pages/attendance/Attendance.tsx` |
 | Leave page | `src/pages/leave/Leave.tsx` |
 | Calendar page | `src/pages/calendar/CalendarPage.tsx` |
@@ -769,4 +883,4 @@ Enterprise-grade features.
 
 ---
 
-*Last updated: April 2026 — Generated from codebase analysis*
+*Last updated: April 2026 — Reflects Chat, Announcements, Assets, and Timesheets modules*

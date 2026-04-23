@@ -5,6 +5,7 @@ import RoleRouteGuard from "../auth/RoleRouteGuard";
 import { useEffect, useState } from "react";
 import { getUserById } from "../../apis/api/auth";
 import { getToken, getUserId, setStoredRoles } from "../../utils/auth";
+import { connectSocket, disconnectSocket } from "../../utils/socket";
 import AnnouncementPopup from "../announcements/AnnouncementPopup";
 import BirthdayPopup from "../birthdays/BirthdayPopup";
 
@@ -24,6 +25,14 @@ const DashboardLayout = () => {
       setStoredRoles(sessionUser.role);
     }
   }, [sessionUser?.role]);
+
+  // Connect socket when authenticated
+  useEffect(() => {
+    connectSocket();
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-[#f7f8fb]">

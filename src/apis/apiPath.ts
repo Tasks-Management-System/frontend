@@ -80,6 +80,22 @@ export const apiPath = {
         byId: "/timesheets/",
         exportCsv: "/timesheets/export/csv",
     },
+    organization: {
+        create: "/organization",
+        my: "/organization/my",
+        all: "/organization/all",
+        sendInvite: "/organization/invite",
+        adminInvites: "/organization/invites",
+        myInvites: "/organization/invites/my",
+        acceptInvite: "/organization/invites/:id/accept",
+        rejectInvite: "/organization/invites/:id/reject",
+        removeMember: "/organization/:orgId/members/:userId",
+        sendJoinRequest: "/organization/join-request",
+        joinRequests: "/organization/join-requests",
+        myJoinRequests: "/organization/join-requests/my",
+        acceptJoinRequest: "/organization/join-requests/:id/accept",
+        rejectJoinRequest: "/organization/join-requests/:id/reject",
+    },
 }
 
 /**

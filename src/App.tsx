@@ -17,6 +17,9 @@ import Salary from './pages/salary/Salary'
 import Announcements from './pages/announcements/Announcements'
 import Assets from './pages/assets/Assets'
 import Timesheets from './pages/timesheets/Timesheets'
+import Chat from './pages/chat/Chat'
+import OrganizationPage from './pages/organization/OrganizationPage'
+import InvitesPage from './pages/invites/InvitesPage'
 
 function App() {
   return (
@@ -57,6 +60,9 @@ function App() {
         <Route path="/announcements" element={<Announcements />} />
         <Route path="/assets" element={<Assets />} />
         {/* <Route path="/timesheets" element={<Timesheets />} /> */}
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/organization" element={<OrganizationPage />} />
+        <Route path="/invites" element={<InvitesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

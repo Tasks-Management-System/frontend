@@ -16,6 +16,8 @@ import {
   Megaphone,
   Package,
   Timer,
+  MessageCircle,
+  Building2,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
 import { useMemo, useState, type FormEvent } from "react";
@@ -25,6 +27,7 @@ import {
   useProjectsList,
   type CreateProjectInput,
 } from "../../apis/api/projects";
+import { useMyOrganization } from "../../apis/api/organization";
 import { getUserById } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
@@ -86,6 +89,7 @@ const mainNav: MainNavItem[] = [
     roles: ["admin", "hr", "super-admin"],
   },
   { path: "/calendar", label: "Calendar", icon: Calendar1Icon, end: false },
+  { path: "/chat", label: "Chat", icon: MessageCircle, end: false },
   { path: "/announcements", label: "Announcements", icon: Megaphone, end: false },
   // { path: "/timesheets", label: "Timesheets", icon: Timer, end: false },
   {
@@ -94,6 +98,13 @@ const mainNav: MainNavItem[] = [
     icon: Package,
     end: false,
     roles: ["admin", "hr", "super-admin"],
+  },
+  {
+    path: "/organization",
+    label: "Organization",
+    icon: Building2,
+    end: false,
+    roles: ["admin", "super-admin"],
   },
 ];
 
@@ -107,6 +118,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const navigate = useNavigate();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
   const createProjectMutation = useCreateProject();
+  const { data: myOrg } = useMyOrganization();
   const userId = getUserId();
   const { data: user } = getUserById(userId);
   const [projectsOpen, setProjectsOpen] = useState(true);
@@ -322,6 +334,12 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
               {user?.name ?? "Account"}
             </p>
             <p className="truncate text-xs capitalize text-gray-500">{roleLabel}</p>
+            {myOrg && (
+              <p className="truncate text-xs text-violet-500 flex items-center gap-1 mt-0.5">
+                <Building2 className="h-3 w-3 shrink-0" />
+                {myOrg.name}
+              </p>
+            )}
           </div>
         </button>
       </div>
