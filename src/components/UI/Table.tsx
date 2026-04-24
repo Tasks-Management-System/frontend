@@ -67,9 +67,7 @@ function Table<T = Record<string, unknown>>({
                 >
                   {columns.map((col) => (
                     <div key={col.key} className={cellClass}>
-                      {col.render
-                        ? col.render(row)
-                        : (r[col.key] as React.ReactNode)}
+                      {col.render ? col.render(row) : (r[col.key] as React.ReactNode)}
                     </div>
                   ))}
                 </div>
