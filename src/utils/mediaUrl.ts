@@ -4,9 +4,7 @@ import { API_BASE_URL } from "../apis/apiPath";
  * Returns a browser-loadable image URL, or null if missing/invalid.
  * Handles absolute http(s), protocol-relative, data URLs, and paths served from the API origin.
  */
-export function resolveProfileImageUrl(
-  raw: string | null | undefined
-): string | null {
+export function resolveProfileImageUrl(raw: string | null | undefined): string | null {
   if (raw == null) return null;
   const s = String(raw).trim();
   if (!s || s === "null" || s === "undefined") return null;

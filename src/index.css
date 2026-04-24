@@ -21,12 +21,7 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(255 255 255 / 0.6),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
@@ -50,12 +45,12 @@
 }
 
 * {
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE / Edge */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge */
 }
 
 *::-webkit-scrollbar {
-  display: none;               /* Chrome / Safari / Opera */
+  display: none; /* Chrome / Safari / Opera */
 }
 
 /* Sticky notes: smooth drag (DOM transform); disable transitions while dragging */

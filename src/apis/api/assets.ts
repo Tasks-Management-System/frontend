@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../apiService";
 import { apiPath } from "../apiPath";
-import type { Asset, AssetsListResponse, AssetCondition, AssetStatus } from "../../types/asset.types";
+import type {
+  Asset,
+  AssetsListResponse,
+  AssetCondition,
+  AssetStatus,
+} from "../../types/asset.types";
 
 export type AssetFilters = {
   status?: AssetStatus;
@@ -24,10 +29,7 @@ export function useAssetById(id: string | null) {
   return useQuery({
     queryKey: ["asset", id],
     queryFn: () =>
-      api.get<{ success: boolean; asset: Asset }>(
-        `${apiPath.assets.byId}${id}`,
-        { auth: true }
-      ),
+      api.get<{ success: boolean; asset: Asset }>(`${apiPath.assets.byId}${id}`, { auth: true }),
     enabled: !!id,
     select: (data) => data.asset,
   });
@@ -59,11 +61,9 @@ export function useUpdateAsset() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateAssetInput }) =>
-      api.put<{ success: boolean; asset: Asset }>(
-        `${apiPath.assets.byId}${id}`,
-        body,
-        { auth: true }
-      ),
+      api.put<{ success: boolean; asset: Asset }>(`${apiPath.assets.byId}${id}`, body, {
+        auth: true,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["assets"] });
       qc.invalidateQueries({ queryKey: ["asset"] });
@@ -100,15 +100,7 @@ export function useAssignAsset() {
 export function useReturnAsset() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      condition,
-      note,
-    }: {
-      id: string;
-      condition?: string;
-      note?: string;
-    }) =>
+    mutationFn: ({ id, condition, note }: { id: string; condition?: string; note?: string }) =>
       api.patch<{ success: boolean; asset: Asset }>(
         `${apiPath.assets.byId}${id}/return`,
         { condition, note },
@@ -124,8 +116,7 @@ export function useReturnAsset() {
 export function useDeleteAsset() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      api.del(`${apiPath.assets.byId}${id}`, { auth: true }),
+    mutationFn: (id: string) => api.del(`${apiPath.assets.byId}${id}`, { auth: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["assets"] }),
   });
 }

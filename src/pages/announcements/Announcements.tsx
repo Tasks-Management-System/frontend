@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Megaphone,
-  Pin,
-  PinOff,
-  Plus,
-  Trash2,
-  CheckCheck,
-  Pencil,
-} from "lucide-react";
+import { Megaphone, Pin, PinOff, Plus, Trash2, CheckCheck, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   useAnnouncements,
@@ -41,9 +33,7 @@ export default function Announcements() {
   const userId = getUserId();
   const { data: user } = getUserById(userId);
   const roles = user?.role ?? [];
-  const canManage = roles.some((r: string) =>
-    ["admin", "hr", "super-admin"].includes(r)
-  );
+  const canManage = roles.some((r: string) => ["admin", "hr", "super-admin"].includes(r));
 
   const { data: announcements = [], isLoading } = useAnnouncements();
   const createMutation = useCreateAnnouncement();
@@ -163,18 +153,13 @@ export default function Announcements() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-28 animate-pulse rounded-2xl bg-gray-100"
-              />
+              <div key={i} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
             ))}
           </div>
         ) : announcements.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
             <Megaphone className="h-10 w-10 text-gray-300" />
-            <p className="mt-3 text-sm font-medium text-gray-500">
-              No announcements yet
-            </p>
+            <p className="mt-3 text-sm font-medium text-gray-500">No announcements yet</p>
           </div>
         ) : (
           announcements.map((a) => (
@@ -229,18 +214,13 @@ export default function Announcements() {
       <Modal isOpen={!!deleteTarget} onClose={closeModals} title="Delete announcement">
         <p className="text-sm text-gray-600">
           Are you sure you want to delete{" "}
-          <span className="font-medium">"{deleteTarget?.title}"</span>? This
-          cannot be undone.
+          <span className="font-medium">"{deleteTarget?.title}"</span>? This cannot be undone.
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="outline" onClick={closeModals}>
             Cancel
           </Button>
-          <Button
-            variant="danger"
-            loading={deleteMutation.isPending}
-            onClick={handleDelete}
-          >
+          <Button variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>
             Delete
           </Button>
         </div>
@@ -268,9 +248,7 @@ function AnnouncementCard({
     <div
       className={[
         "relative rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md",
-        a.isPinned
-          ? "border-violet-300 ring-1 ring-violet-200"
-          : "border-gray-200",
+        a.isPinned ? "border-violet-300 ring-1 ring-violet-200" : "border-gray-200",
         !a.isRead ? "border-l-4 border-l-violet-500" : "",
       ].join(" ")}
     >
@@ -283,18 +261,14 @@ function AnnouncementCard({
 
       <div className="flex items-start justify-between gap-3 pr-16">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-gray-900">
-            {a.title}
-          </h3>
+          <h3 className="truncate text-base font-semibold text-gray-900">{a.title}</h3>
           <p className="mt-0.5 text-xs text-gray-400">
             {a.postedBy?.name ?? "Admin"} · {formatDate(a.createdAt)}
           </p>
         </div>
       </div>
 
-      <p className="mt-3 whitespace-pre-line text-sm text-gray-700 leading-relaxed">
-        {a.content}
-      </p>
+      <p className="mt-3 whitespace-pre-line text-sm text-gray-700 leading-relaxed">{a.content}</p>
 
       <div className="mt-4 flex items-center gap-2">
         {!a.isRead && (
@@ -320,11 +294,7 @@ function AnnouncementCard({
               title={a.isPinned ? "Unpin" : "Pin"}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
             >
-              {a.isPinned ? (
-                <PinOff className="h-4 w-4" />
-              ) : (
-                <Pin className="h-4 w-4" />
-              )}
+              {a.isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
             </button>
             <button
               onClick={onEdit}
@@ -383,9 +353,7 @@ function AnnouncementForm({
         <input
           type="checkbox"
           checked={form.isPinned}
-          onChange={(e) =>
-            setForm((s) => ({ ...s, isPinned: e.target.checked }))
-          }
+          onChange={(e) => setForm((s) => ({ ...s, isPinned: e.target.checked }))}
           className="h-4 w-4 rounded border-gray-300 text-violet-600"
         />
         Pin this announcement

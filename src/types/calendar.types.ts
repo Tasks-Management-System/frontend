@@ -50,8 +50,8 @@ export const EVENT_COLORS: Record<CalendarEventType, string> = {
   deadline: "#dc2626",
   reminder: "#d97706",
   other: "#64748b",
-  leave: "#f97316",      // orange for leave
-  task: "#ef4444",        // red for task deadlines
+  leave: "#f97316", // orange for leave
+  task: "#ef4444", // red for task deadlines
   attendance: "#14b8a6",
 };
 

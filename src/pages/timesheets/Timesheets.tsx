@@ -33,10 +33,7 @@ function getISOWeek(date: Date): { week: number; year: number } {
   d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
   const jan4 = new Date(d.getFullYear(), 0, 4);
   const week =
-    1 +
-    Math.round(
-      ((d.getTime() - jan4.getTime()) / 86400000 - 3 + ((jan4.getDay() + 6) % 7)) / 7
-    );
+    1 + Math.round(((d.getTime() - jan4.getTime()) / 86400000 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
   return { week, year: d.getFullYear() };
 }
 
@@ -247,9 +244,7 @@ export default function Timesheets() {
             <Clock className="h-6 w-6 text-violet-600" />
             Timesheets
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Log hours against tasks and projects.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Log hours against tasks and projects.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -279,7 +274,11 @@ export default function Timesheets() {
           </p>
           <p className="text-xs text-gray-500 mt-0.5">
             {weekDates.start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} —{" "}
-            {weekDates.end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            {weekDates.end.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
           </p>
         </div>
         <button
@@ -293,9 +292,24 @@ export default function Timesheets() {
       {/* Summary cards */}
       <div className="mt-4 grid grid-cols-3 gap-3">
         {[
-          { label: "Total Hours", value: summary.totalHours, color: "text-violet-700", bg: "bg-violet-50" },
-          { label: "Billable", value: summary.billableHours, color: "text-emerald-700", bg: "bg-emerald-50" },
-          { label: "Non-billable", value: summary.nonBillableHours, color: "text-amber-700", bg: "bg-amber-50" },
+          {
+            label: "Total Hours",
+            value: summary.totalHours,
+            color: "text-violet-700",
+            bg: "bg-violet-50",
+          },
+          {
+            label: "Billable",
+            value: summary.billableHours,
+            color: "text-emerald-700",
+            bg: "bg-emerald-50",
+          },
+          {
+            label: "Non-billable",
+            value: summary.nonBillableHours,
+            color: "text-amber-700",
+            bg: "bg-amber-50",
+          },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl ${bg} px-4 py-3 text-center`}>
             <p className={`text-2xl font-bold ${color}`}>{value.toFixed(1)}h</p>
@@ -315,10 +329,13 @@ export default function Timesheets() {
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-14 text-center">
             <Clock className="h-10 w-10 text-gray-300" />
-            <p className="mt-3 text-sm font-medium text-gray-500">
-              No time logged this week
-            </p>
-            <Button className="mt-4" size="sm" onClick={openLog} leftIcon={<Plus className="h-4 w-4" />}>
+            <p className="mt-3 text-sm font-medium text-gray-500">No time logged this week</p>
+            <Button
+              className="mt-4"
+              size="sm"
+              onClick={openLog}
+              leftIcon={<Plus className="h-4 w-4" />}
+            >
               Log time
             </Button>
           </div>
@@ -327,7 +344,11 @@ export default function Timesheets() {
             <div key={dateStr}>
               <div className="mb-2 flex items-center gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  {new Date(dateStr).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                  {new Date(dateStr).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
                 </p>
                 <div className="flex-1 h-px bg-gray-200" />
                 <p className="text-xs font-semibold text-gray-600">
@@ -386,8 +407,12 @@ export default function Timesheets() {
       <Modal isOpen={!!deleteTarget} onClose={closeAll} title="Delete entry">
         <p className="text-sm text-gray-600">Delete this time entry? This cannot be undone.</p>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={closeAll}>Cancel</Button>
-          <Button variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>Delete</Button>
+          <Button variant="outline" onClick={closeAll}>
+            Cancel
+          </Button>
+          <Button variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>
+            Delete
+          </Button>
         </div>
       </Modal>
     </div>
@@ -412,9 +437,7 @@ function EntryRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-gray-900">
-            {entry.project?.projectName ?? "—"}
-          </p>
+          <p className="text-sm font-medium text-gray-900">{entry.project?.projectName ?? "—"}</p>
           {entry.task && (
             <>
               <span className="text-gray-400">·</span>
@@ -425,24 +448,18 @@ function EntryRow({
         {entry.description && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.description}</p>
         )}
-        {entry.user && (
-          <p className="text-xs text-gray-400">{entry.user.name}</p>
-        )}
+        {entry.user && <p className="text-xs text-gray-400">{entry.user.name}</p>}
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-            entry.billable
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-gray-100 text-gray-500"
+            entry.billable ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"
           }`}
         >
           <DollarSign className="h-3 w-3" />
           {entry.billable ? "Billable" : "Non-billable"}
         </span>
-        <span className="text-sm font-semibold text-gray-900 w-10 text-right">
-          {entry.hours}h
-        </span>
+        <span className="text-sm font-semibold text-gray-900 w-10 text-right">{entry.hours}h</span>
         {canManage && (
           <div className="flex items-center gap-1">
             <button
@@ -566,8 +583,12 @@ function TimeForm({
       </label>
 
       <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" type="button" onClick={onCancel}>Cancel</Button>
-        <Button loading={loading} onClick={onSubmit}>{submitLabel}</Button>
+        <Button variant="outline" type="button" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button loading={loading} onClick={onSubmit}>
+          {submitLabel}
+        </Button>
       </div>
     </div>
   );

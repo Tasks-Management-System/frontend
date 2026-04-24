@@ -39,12 +39,8 @@ const WeekView = ({ weekAnchor, events, onSlotClick, onEventClick, onDayHeaderCl
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const hours = Array.from({ length: 24 }, (_, h) => h);
 
-  const allDayByDay = days.map((d) =>
-    eventsForDay(d, events).filter((ev) => ev.allDay)
-  );
-  const timedByDay = days.map((d) =>
-    eventsForDay(d, events).filter((ev) => !ev.allDay)
-  );
+  const allDayByDay = days.map((d) => eventsForDay(d, events).filter((ev) => ev.allDay));
+  const timedByDay = days.map((d) => eventsForDay(d, events).filter((ev) => !ev.allDay));
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">

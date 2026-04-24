@@ -1,8 +1,4 @@
-export type AttendanceStatus =
-  | "not_started"
-  | "working"
-  | "on_break"
-  | "completed";
+export type AttendanceStatus = "not_started" | "working" | "on_break" | "completed";
 
 export type AttendanceBreak = {
   breakStart?: string;

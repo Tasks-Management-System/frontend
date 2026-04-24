@@ -5,10 +5,7 @@ import { getUserById } from "../../apis/api/auth";
 import { usePendingLeaveRequests } from "../../apis/api/leave";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import Button from "../../components/UI/Button";
-import {
-  LeaveBalanceSummary,
-  MyLeaveHistoryPanel,
-} from "../../components/leave/MyLeaveSection";
+import { LeaveBalanceSummary, MyLeaveHistoryPanel } from "../../components/leave/MyLeaveSection";
 import type { LeaveRecord } from "../../types/leave.types";
 import { LeaveInboxSection } from "./LeaveInboxTable";
 import { LeaveApplyModal } from "./LeaveApplyModal";
@@ -21,8 +18,9 @@ export default function Leave() {
   const canReview = roles.some((r) => ["admin", "hr", "super-admin"].includes(r));
 
   const [tab, setTab] = useState<"mine" | "inbox">("inbox");
-  const { data: pending = [], isLoading: pendingLoading } =
-    usePendingLeaveRequests(!!userId && canReview && tab === "inbox");
+  const { data: pending = [], isLoading: pendingLoading } = usePendingLeaveRequests(
+    !!userId && canReview && tab === "inbox"
+  );
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [reviewLeave, setReviewLeave] = useState<LeaveRecord | null>(null);

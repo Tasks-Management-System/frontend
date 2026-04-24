@@ -21,11 +21,7 @@ import {
 } from "../../apis/api/assets";
 import { getUserById, useAssignableUsers } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
-import type {
-  Asset,
-  AssetCondition,
-  AssetStatus,
-} from "../../types/asset.types";
+import type { Asset, AssetCondition, AssetStatus } from "../../types/asset.types";
 import Modal from "../../components/UI/Model";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";
@@ -73,15 +69,11 @@ export default function Assets() {
   const userId = getUserId();
   const { data: user } = getUserById(userId);
   const roles = user?.role ?? [];
-  const canManage = roles.some((r: string) =>
-    ["admin", "hr", "super-admin"].includes(r)
-  );
+  const canManage = roles.some((r: string) => ["admin", "hr", "super-admin"].includes(r));
   const { data: employees = [] } = useAssignableUsers();
 
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "">("");
-  const { data: assets = [], isLoading } = useAssets(
-    statusFilter ? { status: statusFilter } : {}
-  );
+  const { data: assets = [], isLoading } = useAssets(statusFilter ? { status: statusFilter } : {});
 
   const createMutation = useCreateAsset();
   const updateMutation = useUpdateAsset();
@@ -268,9 +260,7 @@ export default function Assets() {
               <tbody className="divide-y divide-gray-100">
                 {assets.map((asset) => (
                   <tr key={asset._id} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {asset.name}
-                    </td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{asset.name}</td>
                     <td className="px-4 py-3 text-gray-600">{asset.type}</td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">
                       {asset.serialNumber || "—"}
@@ -283,14 +273,23 @@ export default function Assets() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-700 flex items-center gap-2">
-                      {asset.assignedTo?.profileImage ? <img src={asset.assignedTo.profileImage} alt={asset.assignedTo.name} className="h-6 w-6 rounded-full" /> : <User className="h-6 w-6" />} {asset.assignedTo?.name ?? "—"}
+                      {asset.assignedTo?.profileImage ? (
+                        <img
+                          src={asset.assignedTo.profileImage}
+                          alt={asset.assignedTo.name}
+                          className="h-6 w-6 rounded-full"
+                        />
+                      ) : (
+                        <User className="h-6 w-6" />
+                      )}{" "}
+                      {asset.assignedTo?.name ?? "—"}
                     </td>
-                    <td className={`px-4 py-3 capitalize font-medium ${CONDITION_COLORS[asset.conditionOnHandover]}`}>
+                    <td
+                      className={`px-4 py-3 capitalize font-medium ${CONDITION_COLORS[asset.conditionOnHandover]}`}
+                    >
                       {asset.conditionOnHandover}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {formatDate(asset.assignedDate)}
-                    </td>
+                    <td className="px-4 py-3 text-gray-500">{formatDate(asset.assignedDate)}</td>
                     {canManage && (
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
@@ -352,16 +351,35 @@ export default function Assets() {
 
       {/* Create Modal */}
       <Modal isOpen={createOpen} onClose={closeAll} title="Add asset" panelClassName="max-w-lg">
-        <AssetForm form={form} setForm={setForm} onSubmit={handleCreate} onCancel={closeAll} loading={createMutation.isPending} submitLabel="Create" />
+        <AssetForm
+          form={form}
+          setForm={setForm}
+          onSubmit={handleCreate}
+          onCancel={closeAll}
+          loading={createMutation.isPending}
+          submitLabel="Create"
+        />
       </Modal>
 
       {/* Edit Modal */}
       <Modal isOpen={!!editTarget} onClose={closeAll} title="Edit asset" panelClassName="max-w-lg">
-        <AssetForm form={form} setForm={setForm} onSubmit={handleUpdate} onCancel={closeAll} loading={updateMutation.isPending} submitLabel="Save" />
+        <AssetForm
+          form={form}
+          setForm={setForm}
+          onSubmit={handleUpdate}
+          onCancel={closeAll}
+          loading={updateMutation.isPending}
+          submitLabel="Save"
+        />
       </Modal>
 
       {/* Assign Modal */}
-      <Modal isOpen={!!assignTarget} onClose={closeAll} title={`Assign "${assignTarget?.name}"`} panelClassName="max-w-md">
+      <Modal
+        isOpen={!!assignTarget}
+        onClose={closeAll}
+        title={`Assign "${assignTarget?.name}"`}
+        panelClassName="max-w-md"
+      >
         <div className="flex flex-col gap-4">
           {/* Employee dropdown */}
           <div className="flex flex-col gap-1">
@@ -382,9 +400,7 @@ export default function Assets() {
                 </option>
               ))}
             </select>
-            {employees.length === 0 && (
-              <p className="text-xs text-gray-400">No employees found.</p>
-            )}
+            {employees.length === 0 && <p className="text-xs text-gray-400">No employees found.</p>}
           </div>
 
           {/* Condition */}
@@ -395,7 +411,9 @@ export default function Assets() {
             <select
               id="assign-condition"
               value={assignForm.condition}
-              onChange={(e) => setAssignForm((s) => ({ ...s, condition: e.target.value as AssetCondition }))}
+              onChange={(e) =>
+                setAssignForm((s) => ({ ...s, condition: e.target.value as AssetCondition }))
+              }
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="new">New</option>
@@ -415,20 +433,33 @@ export default function Assets() {
           />
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={closeAll}>Cancel</Button>
-            <Button loading={assignMutation.isPending} onClick={handleAssign}>Assign</Button>
+            <Button variant="outline" onClick={closeAll}>
+              Cancel
+            </Button>
+            <Button loading={assignMutation.isPending} onClick={handleAssign}>
+              Assign
+            </Button>
           </div>
         </div>
       </Modal>
 
       {/* Return Modal */}
-      <Modal isOpen={!!returnTarget} onClose={closeAll} title={`Return "${returnTarget?.name}"`} panelClassName="max-w-md">
+      <Modal
+        isOpen={!!returnTarget}
+        onClose={closeAll}
+        title={`Return "${returnTarget?.name}"`}
+        panelClassName="max-w-md"
+      >
         <div className="flex flex-col gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Condition on return</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Condition on return
+            </label>
             <select
               value={returnForm.condition}
-              onChange={(e) => setReturnForm((s) => ({ ...s, condition: e.target.value as AssetCondition }))}
+              onChange={(e) =>
+                setReturnForm((s) => ({ ...s, condition: e.target.value as AssetCondition }))
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="new">New</option>
@@ -445,14 +476,23 @@ export default function Assets() {
             placeholder="Condition notes on return"
           />
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={closeAll}>Cancel</Button>
-            <Button loading={returnMutation.isPending} onClick={handleReturn}>Confirm Return</Button>
+            <Button variant="outline" onClick={closeAll}>
+              Cancel
+            </Button>
+            <Button loading={returnMutation.isPending} onClick={handleReturn}>
+              Confirm Return
+            </Button>
           </div>
         </div>
       </Modal>
 
       {/* History Modal */}
-      <Modal isOpen={!!historyTarget} onClose={closeAll} title={`History: ${historyTarget?.name}`} panelClassName="max-w-lg">
+      <Modal
+        isOpen={!!historyTarget}
+        onClose={closeAll}
+        title={`History: ${historyTarget?.name}`}
+        panelClassName="max-w-lg"
+      >
         {historyTarget?.transferHistory.length === 0 ? (
           <p className="text-sm text-gray-500">No transfer history yet.</p>
         ) : (
@@ -472,7 +512,9 @@ export default function Assets() {
           </ol>
         )}
         <div className="mt-4 flex justify-end">
-          <Button variant="outline" onClick={closeAll}>Close</Button>
+          <Button variant="outline" onClick={closeAll}>
+            Close
+          </Button>
         </div>
       </Modal>
 
@@ -483,8 +525,12 @@ export default function Assets() {
           <span className="font-medium">"{deleteTarget?.name}"</span>?
         </p>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={closeAll}>Cancel</Button>
-          <Button variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>Delete</Button>
+          <Button variant="outline" onClick={closeAll}>
+            Cancel
+          </Button>
+          <Button variant="danger" loading={deleteMutation.isPending} onClick={handleDelete}>
+            Delete
+          </Button>
         </div>
       </Modal>
     </div>
@@ -555,8 +601,12 @@ function AssetForm({
         placeholder="Additional notes"
       />
       <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" type="button" onClick={onCancel}>Cancel</Button>
-        <Button loading={loading} onClick={onSubmit}>{submitLabel}</Button>
+        <Button variant="outline" type="button" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button loading={loading} onClick={onSubmit}>
+          {submitLabel}
+        </Button>
       </div>
     </div>
   );

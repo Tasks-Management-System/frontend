@@ -23,10 +23,7 @@ export function SkeletonText({
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className={`h-3 ${i === lines - 1 ? lastLineWidth : "w-full"}`}
-        />
+        <Skeleton key={i} className={`h-3 ${i === lines - 1 ? lastLineWidth : "w-full"}`} />
       ))}
     </div>
   );
@@ -102,13 +99,11 @@ export function TasksPageSkeleton() {
         <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50/90">
-              {["Project", "Task", "Description", "Assignee", "Due", "Status"].map(
-                (h) => (
-                  <th key={h} className="px-4 py-3.5">
-                    <Skeleton className="h-3 w-16" />
-                  </th>
-                )
-              )}
+              {["Project", "Task", "Description", "Assignee", "Due", "Status"].map((h) => (
+                <th key={h} className="px-4 py-3.5">
+                  <Skeleton className="h-3 w-16" />
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

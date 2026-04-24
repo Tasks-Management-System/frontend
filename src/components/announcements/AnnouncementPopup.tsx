@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Megaphone, Pin, Check, ChevronRight } from "lucide-react";
-import {
-  useAnnouncements,
-  useMarkAnnouncementRead,
-} from "../../apis/api/announcements";
+import { useAnnouncements, useMarkAnnouncementRead } from "../../apis/api/announcements";
 import { getUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import type { Announcement } from "../../types/announcement.types";
@@ -52,9 +49,7 @@ const AnnouncementPopup = () => {
         .filter((a) => !a.isRead)
         .sort((a, b) => {
           if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }),
     [announcements]
   );
@@ -146,8 +141,7 @@ const AnnouncementPopup = () => {
                 New announcement
               </p>
               <p className="truncate text-[13px] text-white/90">
-                From {current.postedBy?.name ?? "Admin"} ·{" "}
-                {formatDate(current.createdAt)}
+                From {current.postedBy?.name ?? "Admin"} · {formatDate(current.createdAt)}
               </p>
             </div>
             {current.isPinned && (

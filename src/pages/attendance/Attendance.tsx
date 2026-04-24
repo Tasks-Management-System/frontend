@@ -43,10 +43,7 @@ export default function Attendance() {
     return `${a} – ${b}, ${y}`;
   }, [weekFrom, weekTo, weekMonday]);
 
-  const { data, isLoading, isError, error } = useAttendanceList(
-    date,
-    !!userId && view === "day"
-  );
+  const { data, isLoading, isError, error } = useAttendanceList(date, !!userId && view === "day");
 
   const {
     data: weekData,
@@ -131,9 +128,7 @@ export default function Attendance() {
         />
       )}
 
-      {view === "day" && isLoading && (
-        <AttendanceDayTableSkeleton showUser={isAdmin} />
-      )}
+      {view === "day" && isLoading && <AttendanceDayTableSkeleton showUser={isAdmin} />}
 
       {view === "day" && isError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -171,9 +166,7 @@ export default function Attendance() {
                   record={record}
                   showUser={isAdmin}
                   expanded={expandedId === record._id}
-                  onToggle={() =>
-                    setExpandedId((id) => (id === record._id ? null : record._id))
-                  }
+                  onToggle={() => setExpandedId((id) => (id === record._id ? null : record._id))}
                 />
               ))}
             </tbody>

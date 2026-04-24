@@ -84,12 +84,10 @@ export default function Salary() {
 
   // Employee list for the create form
   const { data: users = [] } = getUsers();
-  const employeeOptions = (users as { _id: string; name: string }[]).map(
-    (u) => ({
-      label: u.name,
-      value: u._id,
-    })
-  );
+  const employeeOptions = (users as { _id: string; name: string }[]).map((u) => ({
+    label: u.name,
+    value: u._id,
+  }));
 
   // --- Create modal ---
   const [createOpen, setCreateOpen] = useState(false);
@@ -142,9 +140,7 @@ export default function Salary() {
       toast.success(res.message ?? "Salary slip created");
       setCreateOpen(false);
     } catch (err) {
-      toast.error(
-        (err as ApiError)?.message ?? "Could not create salary slip"
-      );
+      toast.error((err as ApiError)?.message ?? "Could not create salary slip");
     }
   };
 
@@ -207,19 +203,19 @@ export default function Salary() {
 
       // Create URL
       const url = window.URL.createObjectURL(blob);
-  
+
       // Create anchor
       const a = document.createElement("a");
       a.href = url;
       a.download = `salary-slip-${Date.now()}.pdf`;
-  
+
       document.body.appendChild(a);
       a.click();
-  
+
       // Cleanup
       a.remove();
       window.URL.revokeObjectURL(url);
-  
+
       toast.success("PDF downloaded successfully");
     } catch (err) {
       toast.error("Failed to download PDF");
@@ -240,18 +236,12 @@ export default function Salary() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Salary Slips
-          </h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Salary Slips</h1>
           <p className="mt-1 text-sm text-slate-600">
             Create, manage, and download employee salary slips.
           </p>
         </div>
-        <Button
-          type="button"
-          leftIcon={<Plus className="h-4 w-4" />}
-          onClick={openCreate}
-        >
+        <Button type="button" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreate}>
           Create Salary
         </Button>
       </div>
@@ -277,9 +267,7 @@ export default function Salary() {
             <div>
               <p className="text-sm text-slate-500">Total Net Salary</p>
               <p className="text-xl font-semibold text-slate-900">
-                {currencyFmt.format(
-                  salaryList.reduce((sum, s) => sum + s.netSalary, 0)
-                )}
+                {currencyFmt.format(salaryList.reduce((sum, s) => sum + s.netSalary, 0))}
               </p>
             </div>
           </div>
@@ -318,10 +306,7 @@ export default function Salary() {
             <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr
-                    key={i}
-                    className="border-b border-slate-100 animate-pulse"
-                  >
+                  <tr key={i} className="border-b border-slate-100 animate-pulse">
                     {Array.from({ length: 8 }).map((_, j) => (
                       <td key={j} className="px-4 py-4">
                         <div className="h-4 w-3/4 rounded bg-slate-200" />
@@ -331,10 +316,7 @@ export default function Salary() {
                 ))
               ) : salaryList.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-12 text-center text-slate-500"
-                  >
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
                     <Inbox className="mx-auto mb-2 h-10 w-10 text-slate-300" />
                     No salary slips found. Create one to get started.
                   </td>
@@ -346,9 +328,7 @@ export default function Salary() {
                     className="border-b border-slate-100 text-slate-800 hover:bg-slate-50/50 transition"
                   >
                     <td className="px-4 py-3">
-                      <span className="font-medium text-slate-900">
-                        {employeeName(row)}
-                      </span>
+                      <span className="font-medium text-slate-900">{employeeName(row)}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
@@ -369,9 +349,7 @@ export default function Salary() {
                         {currencyFmt.format(row.netSalary)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {formatDate(row.payDate)}
-                    </td>
+                    <td className="px-4 py-3 text-slate-600">{formatDate(row.payDate)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap justify-end gap-1.5">
                         <button
@@ -415,8 +393,7 @@ export default function Salary() {
               <span className="font-medium text-slate-900">
                 {sliceStart + 1}–{Math.min(sliceStart + PAGE_SIZE, total)}
               </span>{" "}
-              of{" "}
-              <span className="font-medium text-slate-900">{total}</span>
+              of <span className="font-medium text-slate-900">{total}</span>
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -516,18 +493,14 @@ export default function Salary() {
               <span className="text-slate-500">Net Salary: </span>
               <span className="font-semibold text-slate-900">
                 {currencyFmt.format(
-                  (Number(basicSalary) || 0) +
-                    (Number(bonus) || 0) -
-                    (Number(deductions) || 0)
+                  (Number(basicSalary) || 0) + (Number(bonus) || 0) - (Number(deductions) || 0)
                 )}
               </span>
             </div>
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Pay Date
-            </label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Pay Date</label>
             <input
               type="date"
               value={payDate}
@@ -569,9 +542,7 @@ export default function Salary() {
         {editRecord && (
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-              <p className="font-medium text-slate-900">
-                {employeeName(editRecord)}
-              </p>
+              <p className="font-medium text-slate-900">{employeeName(editRecord)}</p>
               <p className="mt-1 text-slate-500">
                 {editRecord.month} {editRecord.year}
               </p>
@@ -644,11 +615,8 @@ export default function Salary() {
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
               Are you sure you want to delete the salary slip for{" "}
-              <span className="font-semibold text-slate-900">
-                {employeeName(deleteTarget)}
-              </span>{" "}
-              ({deleteTarget.month} {deleteTarget.year})? This action cannot be
-              undone.
+              <span className="font-semibold text-slate-900">{employeeName(deleteTarget)}</span> (
+              {deleteTarget.month} {deleteTarget.year})? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
               <Button

@@ -21,7 +21,7 @@ const SignUp = () => {
     email: "",
     password: "",
     confirmPassword: "",
-  })
+  });
   const [isChecked, setIsChecked] = useState(false);
   const isFormValid =
     formData.name.trim() !== "" &&
@@ -30,8 +30,8 @@ const SignUp = () => {
     formData.confirmPassword.trim() !== "" &&
     formData.password === formData.confirmPassword &&
     isChecked;
-  const navigate = useNavigate()
-  const signupMutation = signup()
+  const navigate = useNavigate();
+  const signupMutation = signup();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,24 +41,24 @@ const SignUp = () => {
     e.preventDefault();
     setErrors({ name: "", email: "", password: "", confirmPassword: "" });
     try {
-      await signupMutation.mutateAsync({ name: formData.name, email: formData.email, password: formData.password },
+      await signupMutation.mutateAsync(
+        { name: formData.name, email: formData.email, password: formData.password },
 
         {
           onSuccess: () => {
-            toast.success("Account created. Please verify your email before login.")
-            navigate("/login")
+            toast.success("Account created. Please verify your email before login.");
+            navigate("/login");
           },
           onError: (error) => {
             const message = (error as ApiError)?.message || "Unable to create account";
             toast.error(message);
-            setErrors({ name: "", email: message, password: "", confirmPassword: "" })
+            setErrors({ name: "", email: message, password: "", confirmPassword: "" });
           },
         }
-      )
-
+      );
     } catch (error) {
       const message = (error as ApiError)?.message || "Unable to create account";
-      setErrors({ name: "", email: message, password: "", confirmPassword: "" })
+      setErrors({ name: "", email: message, password: "", confirmPassword: "" });
     }
   };
 
@@ -68,10 +68,7 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen flex bg-[#f8fafc]">
-
-
       <div className="hidden lg:flex w-full lg:w-1/2 px-20 lg:px-16 py-20 flex-col justify-center bg-[#f9fafb]">
-
         <span className="bg-indigo-100 text-indigo-600 text-xs px-4 py-1 rounded-full w-fit mb-6">
           Version 2.0 is live
         </span>
@@ -82,8 +79,8 @@ const SignUp = () => {
         </h1>
 
         <p className="text-gray-500 mt-6 max-w-lg text-lg">
-          Join over 2,000+ companies managing their workforce with EMS Cloud.
-          Automated payroll, performance tracking, and HR simplified.
+          Join over 2,000+ companies managing their workforce with EMS Cloud. Automated payroll,
+          performance tracking, and HR simplified.
         </p>
 
         <div className="mt-10 space-y-6">
@@ -93,9 +90,7 @@ const SignUp = () => {
             </div>
             <div>
               <p className="font-semibold text-gray-900">Enterprise Security</p>
-              <p className="text-sm text-gray-500">
-                SOC2 Type II compliant data management.
-              </p>
+              <p className="text-sm text-gray-500">SOC2 Type II compliant data management.</p>
             </div>
           </div>
 
@@ -105,38 +100,38 @@ const SignUp = () => {
             </div>
             <div>
               <p className="font-semibold text-gray-900">Instant Onboarding</p>
-              <p className="text-sm text-gray-500">
-                Import your data and go live in minutes.
-              </p>
+              <p className="text-sm text-gray-500">Import your data and go live in minutes.</p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center mt-12 gap-4">
           <div className="flex -space-x-2">
-            <img src="https://i.pravatar.cc/40?img=1" className="w-9 h-9 rounded-full border-2 border-white" />
-            <img src="https://i.pravatar.cc/40?img=2" className="w-9 h-9 rounded-full border-2 border-white" />
-            <img src="https://i.pravatar.cc/40?img=3" className="w-9 h-9 rounded-full border-2 border-white" />
+            <img
+              src="https://i.pravatar.cc/40?img=1"
+              className="w-9 h-9 rounded-full border-2 border-white"
+            />
+            <img
+              src="https://i.pravatar.cc/40?img=2"
+              className="w-9 h-9 rounded-full border-2 border-white"
+            />
+            <img
+              src="https://i.pravatar.cc/40?img=3"
+              className="w-9 h-9 rounded-full border-2 border-white"
+            />
           </div>
-          <p className="text-sm text-gray-500">
-            Trusted by founders and HR teams worldwide.
-          </p>
+          <p className="text-sm text-gray-500">Trusted by founders and HR teams worldwide.</p>
         </div>
       </div>
 
       <div className="flex w-full lg:w-1/2 items-center justify-center px-6">
-
         <div className="bg-white w-full max-w-md p-10 rounded-2xl shadow-xl border border-gray-100">
-
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-gray-500 text-sm mt-1">
-              Join the community of modern leaders.
-            </p>
+            <p className="text-gray-500 text-sm mt-1">Join the community of modern leaders.</p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
-
             <Input
               label="Full Name"
               name="name"
@@ -179,17 +174,19 @@ const SignUp = () => {
                 onChange={handleChange}
                 error={errors.confirmPassword}
               />
-              {formData.confirmPassword &&
-                formData.password !== formData.confirmPassword && (
-                  <p className="text-red-500 text-sm">
-                    Passwords do not match
-                  </p>
-                )}
+              {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <p className="text-red-500 text-sm">Passwords do not match</p>
+              )}
             </div>
 
-
             <div className="flex items-start gap-2 text-sm text-gray-500">
-              <input type="checkbox" id="terms" className="mt-1 accent-indigo-600" checked={isChecked} onChange={(e) => setIsChecked(e.target.checked)} />
+              <input
+                type="checkbox"
+                id="terms"
+                className="mt-1 accent-indigo-600"
+                checked={isChecked}
+                onChange={(e) => setIsChecked(e.target.checked)}
+              />
               <label htmlFor="terms" className="text-sm text-gray-500">
                 I agree to the{" "}
                 <Link to="/terms" className="text-indigo-600 hover:underline">
@@ -201,7 +198,6 @@ const SignUp = () => {
                 </Link>
               </label>
             </div>
-
 
             <button
               type="submit"
@@ -215,17 +211,13 @@ const SignUp = () => {
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-200"></div>
-              <p className="text-xs text-gray-400 uppercase">
-                Or sign up with
-              </p>
+              <p className="text-xs text-gray-400 uppercase">Or sign up with</p>
               <div className="flex-1 h-px bg-gray-200"></div>
             </div>
-
 
             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleLogin}>
               <FcGoogle size={20} /> Continue with Google
             </Button>
-
 
             <p className="text-center text-sm text-gray-500 mt-4">
               Already have an account?{" "}
@@ -233,7 +225,6 @@ const SignUp = () => {
                 Sign in
               </Link>
             </p>
-
           </form>
         </div>
       </div>

@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  Building2,
-  CheckCircle2,
-  XCircle,
-  Mail,
-  Search,
-  Send,
-  Clock,
-  Users,
-} from "lucide-react";
+import { Building2, CheckCircle2, XCircle, Mail, Search, Send, Clock, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   useMyInvites,
@@ -100,11 +91,7 @@ function InviteCard({ invite }: { invite: OrgInvite }) {
             <div className="flex items-center gap-1">
               <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-[10px] font-semibold text-white">
                 {adminAvatarUrl ? (
-                  <img
-                    src={adminAvatarUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={adminAvatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <span>{adminInitials}</span>
                 )}
@@ -114,9 +101,7 @@ function InviteCard({ invite }: { invite: OrgInvite }) {
             <span>&bull;</span>
             <span>{formatDate(invite.createdAt)}</span>
             <span>&bull;</span>
-            <span className="text-amber-600">
-              Expires {formatDate(invite.expiresAt)}
-            </span>
+            <span className="text-amber-600">Expires {formatDate(invite.expiresAt)}</span>
           </div>
         </div>
       </div>
@@ -161,11 +146,7 @@ export default function InvitesPage() {
   const browsableOrgs = allOrgs.filter((org) => {
     if (myOrg && org._id === myOrg._id) return false;
     if (pendingRequestOrgIds.has(org._id)) return false;
-    if (
-      orgSearch &&
-      !org.name.toLowerCase().includes(orgSearch.toLowerCase())
-    )
-      return false;
+    if (orgSearch && !org.name.toLowerCase().includes(orgSearch.toLowerCase())) return false;
     return true;
   });
 
@@ -203,7 +184,8 @@ export default function InvitesPage() {
               <p className="text-xs font-medium text-violet-600">Your Organization</p>
               <h3 className="text-lg font-bold text-gray-900">{myOrg.name}</h3>
               <p className="text-xs text-gray-500">
-                {myOrg.members.length} member{myOrg.members.length !== 1 ? "s" : ""} &bull; Joined {formatDate(myOrg.createdAt)}
+                {myOrg.members.length} member{myOrg.members.length !== 1 ? "s" : ""} &bull; Joined{" "}
+                {formatDate(myOrg.createdAt)}
               </p>
             </div>
           </div>
@@ -256,9 +238,7 @@ export default function InvitesPage() {
                     <Building2 className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {jr.organization?.name}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">{jr.organization?.name}</p>
                     <p className="text-xs text-gray-400">
                       Requested {formatDate(jr.createdAt)}
                       {jr.message && <span> &bull; "{jr.message}"</span>}
@@ -295,7 +275,9 @@ export default function InvitesPage() {
           </div>
         ) : browsableOrgs.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
-            {orgSearch ? "No organizations match your search" : "No organizations available to join"}
+            {orgSearch
+              ? "No organizations match your search"
+              : "No organizations available to join"}
           </div>
         ) : (
           <div className="space-y-3">
@@ -310,12 +292,11 @@ export default function InvitesPage() {
                       <Building2 className="h-6 w-6 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900">
-                        {org.name}
-                      </h3>
+                      <h3 className="text-base font-semibold text-gray-900">{org.name}</h3>
                       <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
                         <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" /> {org.memberCount} member{org.memberCount !== 1 ? "s" : ""}
+                          <Users className="h-3 w-3" /> {org.memberCount} member
+                          {org.memberCount !== 1 ? "s" : ""}
                         </span>
                         <span>&bull;</span>
                         <span>Created by {org.createdBy?.name}</span>

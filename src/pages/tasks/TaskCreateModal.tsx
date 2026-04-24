@@ -153,9 +153,7 @@ export function TaskCreateModal({
         {/* Template selector */}
         {templates.length > 0 && (
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Template
-            </label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Template</label>
             <select
               {...register("templateName")}
               onChange={(e) => {
@@ -247,7 +245,9 @@ export function TaskCreateModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Time estimate (min)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Time estimate (min)
+            </label>
             <input
               type="number"
               {...register("timeEstimate")}

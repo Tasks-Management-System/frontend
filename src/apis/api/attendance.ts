@@ -8,9 +8,7 @@ import type {
 } from "../../types/attendance.types";
 
 /** Worked ms in the open session only (matches server break rules for live UI). */
-export function clientCurrentSessionWorkedMs(
-  record: AttendanceRecord | null | undefined
-): number {
+export function clientCurrentSessionWorkedMs(record: AttendanceRecord | null | undefined): number {
   if (!record?.punchInTime) return 0;
   if (record.status !== "working" && record.status !== "on_break") return 0;
   const start = new Date(record.punchInTime).getTime();
@@ -18,8 +16,7 @@ export function clientCurrentSessionWorkedMs(
   let breakMs = 0;
   for (const b of record.breaks ?? []) {
     if (b.breakStart && b.breakEnd) {
-      breakMs +=
-        new Date(b.breakEnd).getTime() - new Date(b.breakStart).getTime();
+      breakMs += new Date(b.breakEnd).getTime() - new Date(b.breakStart).getTime();
     } else if (b.breakStart && record.status === "on_break") {
       breakMs += Date.now() - new Date(b.breakStart).getTime();
     }
@@ -63,11 +60,7 @@ export function weekDayYmds(weekMonday: Date): string[] {
   return Array.from({ length: 7 }, (_, i) => localYmd(addDays(weekMonday, i)));
 }
 
-export function useAttendanceRange(
-  from: string,
-  to: string,
-  enabled = true
-) {
+export function useAttendanceRange(from: string, to: string, enabled = true) {
   return useQuery({
     queryKey: attendanceRangeQueryKey(from, to),
     enabled: enabled && !!from && !!to,
@@ -125,11 +118,7 @@ export function usePunchIn() {
   return useMutation({
     mutationKey: ["attendance", "punchIn"],
     mutationFn: () =>
-      api.post<AttendanceMutationResponse>(
-        apiPath.attendance.punchIn,
-        {},
-        { auth: true }
-      ),
+      api.post<AttendanceMutationResponse>(apiPath.attendance.punchIn, {}, { auth: true }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["attendance"] });
     },
@@ -141,11 +130,7 @@ export function usePunchOut() {
   return useMutation({
     mutationKey: ["attendance", "punchOut"],
     mutationFn: () =>
-      api.post<AttendanceMutationResponse>(
-        apiPath.attendance.punchOut,
-        {},
-        { auth: true }
-      ),
+      api.post<AttendanceMutationResponse>(apiPath.attendance.punchOut, {}, { auth: true }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["attendance"] });
     },
@@ -157,11 +142,7 @@ export function useStartBreak() {
   return useMutation({
     mutationKey: ["attendance", "startBreak"],
     mutationFn: () =>
-      api.post<AttendanceMutationResponse>(
-        apiPath.attendance.startBreak,
-        {},
-        { auth: true }
-      ),
+      api.post<AttendanceMutationResponse>(apiPath.attendance.startBreak, {}, { auth: true }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["attendance"] });
     },
@@ -173,11 +154,7 @@ export function useEndBreak() {
   return useMutation({
     mutationKey: ["attendance", "endBreak"],
     mutationFn: () =>
-      api.post<AttendanceMutationResponse>(
-        apiPath.attendance.endBreak,
-        {},
-        { auth: true }
-      ),
+      api.post<AttendanceMutationResponse>(apiPath.attendance.endBreak, {}, { auth: true }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["attendance"] });
     },

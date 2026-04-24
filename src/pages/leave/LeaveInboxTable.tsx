@@ -92,11 +92,9 @@ export function LeaveInboxSection({
                   </td>
                   <td className="px-4 py-3 align-top">
                     <div className="font-medium">{formatDate(row.fromDate)}</div>
-                    {row.days === "multiple" &&
-                      row.toDate &&
-                      row.toDate !== row.fromDate && (
-                        <div className="text-xs text-slate-500">→ {formatDate(row.toDate)}</div>
-                      )}
+                    {row.days === "multiple" && row.toDate && row.toDate !== row.fromDate && (
+                      <div className="text-xs text-slate-500">→ {formatDate(row.toDate)}</div>
+                    )}
                   </td>
                   <td className="px-4 py-3 tabular-nums">{leaveDurationLabel(row)}</td>
                   <td className="px-4 py-3">
@@ -137,8 +135,7 @@ export function LeaveInboxSection({
           <p className="text-sm tabular-nums">
             Showing{" "}
             <span className="font-medium text-slate-900">
-              {inboxSliceStart + 1}–
-              {Math.min(inboxSliceStart + INBOX_PAGE_SIZE, pending.length)}
+              {inboxSliceStart + 1}–{Math.min(inboxSliceStart + INBOX_PAGE_SIZE, pending.length)}
             </span>{" "}
             of <span className="font-medium text-slate-900">{pending.length}</span>
           </p>

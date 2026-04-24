@@ -11,23 +11,11 @@ function defaultBalance(): LeaveBalanceSnapshot {
   return { totalBalance: 24, paidLeave: 12, leaveTaken: 0 };
 }
 
-function StatCard({
-  title,
-  value,
-  hint,
-}: {
-  title: string;
-  value: ReactNode;
-  hint?: string;
-}) {
+function StatCard({ title, value, hint }: { title: string; value: ReactNode; hint?: string }) {
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        {title}
-      </p>
-      <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
-        {value}
-      </div>
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
+      <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{value}</div>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
   );
@@ -98,13 +86,12 @@ export function LeaveBalanceSummary({
       <div className="mt-4 flex gap-2 rounded-xl border border-sky-100 bg-sky-50/60 p-3 text-sm text-sky-950">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
         <p>
-          <span className="font-medium">How it works:</span> Each calendar month,
-          your first pending or approved request can draw from paid leave when you
-          have paid days left. Additional days in that month use your annual
-          balance or are marked unpaid if the pool is insufficient. Balances are
-          reserved when you submit; if HR rejects, those days are returned.
-          &quot;Taken&quot; increases only after approval. HR is notified by email
-          when you submit; you receive email when a decision is made.
+          <span className="font-medium">How it works:</span> Each calendar month, your first pending
+          or approved request can draw from paid leave when you have paid days left. Additional days
+          in that month use your annual balance or are marked unpaid if the pool is insufficient.
+          Balances are reserved when you submit; if HR rejects, those days are returned.
+          &quot;Taken&quot; increases only after approval. HR is notified by email when you submit;
+          you receive email when a decision is made.
         </p>
       </div>
     </div>
@@ -236,10 +223,7 @@ export function ProfileLeaveDashboard({
 
       <LeaveBalanceSummary user={user} userLoading={userLoading} />
 
-      <MyLeaveHistoryPanel
-        filtersClassName="mt-8"
-        tableClassName="mt-4"
-      />
+      <MyLeaveHistoryPanel filtersClassName="mt-8" tableClassName="mt-4" />
     </div>
   );
 }

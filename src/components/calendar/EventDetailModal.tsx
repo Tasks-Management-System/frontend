@@ -22,14 +22,7 @@ function initials(name: string) {
     .slice(0, 2);
 }
 
-const EventDetailModal = ({
-  open,
-  event,
-  onClose,
-  onEdit,
-  onDelete,
-  canModify,
-}: Props) => {
+const EventDetailModal = ({ open, event, onClose, onEdit, onDelete, canModify }: Props) => {
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -48,11 +41,7 @@ const EventDetailModal = ({
       })} – ${event.end.toLocaleString(undefined, { timeStyle: "short" })}`;
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        `Delete “${event.title}”? This cannot be undone for calendar events.`
-      )
-    ) {
+    if (window.confirm(`Delete “${event.title}”? This cannot be undone for calendar events.`)) {
       onDelete(event);
     }
   };
@@ -91,9 +80,7 @@ const EventDetailModal = ({
         </div>
         <div className="space-y-4 px-6 py-4 text-sm text-gray-700">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              When
-            </div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">When</div>
             <p className="mt-1">{timeRange}</p>
           </div>
           {event.location && (
@@ -124,12 +111,8 @@ const EventDetailModal = ({
                       {initials(a.name || a.email || "?")}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate font-medium text-gray-900">
-                        {a.name || "Guest"}
-                      </div>
-                      {a.email && (
-                        <div className="truncate text-xs text-gray-500">{a.email}</div>
-                      )}
+                      <div className="truncate font-medium text-gray-900">{a.name || "Guest"}</div>
+                      {a.email && <div className="truncate text-xs text-gray-500">{a.email}</div>}
                     </div>
                   </li>
                 ))}

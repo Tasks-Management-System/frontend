@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getUserById } from "../../apis/api/auth";
-import {
-  getStoredUserRoles,
-  routeAllowedRoles,
-  userHasAnyRole,
-} from "../../utils/moduleAccess";
+import { getStoredUserRoles, routeAllowedRoles, userHasAnyRole } from "../../utils/moduleAccess";
 import { getToken, getUserId } from "../../utils/auth";
 
 type RoleRouteGuardProps = {

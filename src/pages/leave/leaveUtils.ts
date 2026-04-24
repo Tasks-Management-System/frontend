@@ -17,8 +17,7 @@ export function leaveDurationLabel(l: LeaveRecord): string {
   const from = new Date(l.fromDate);
   const to = new Date(l.toDate || l.fromDate);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return "—";
-  const diff =
-    Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const diff = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   return `${diff} days`;
 }
 

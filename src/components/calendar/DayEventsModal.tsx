@@ -13,14 +13,7 @@ type Props = {
   onEventOpen: (e: CalendarEvent) => void;
 };
 
-const DayEventsModal = ({
-  open,
-  date,
-  events,
-  onClose,
-  onAddEvent,
-  onEventOpen,
-}: Props) => {
+const DayEventsModal = ({ open, date, events, onClose, onAddEvent, onEventOpen }: Props) => {
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

@@ -36,11 +36,7 @@ import type { Project } from "../../types/project.types";
 import Modal from "../UI/Model";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
-import {
-  getStoredUserRoles,
-  userHasAnyRole,
-  type AppRole,
-} from "../../utils/moduleAccess";
+import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
 
 const PROJECT_ACCENTS = [
   "bg-violet-500",
@@ -128,16 +124,13 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     description: "",
   });
 
-  const effectiveRoles =
-    (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
+  const effectiveRoles = (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
 
   const canCreateProjects = effectiveRoles.some((r) =>
     ["admin", "manager", "super-admin"].includes(r)
   );
 
-  const visibleMainNav = mainNav.filter((item) =>
-    userHasAnyRole(effectiveRoles, item.roles)
-  );
+  const visibleMainNav = mainNav.filter((item) => userHasAnyRole(effectiveRoles, item.roles));
 
   const selectedProjectId = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -178,13 +171,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     }
   };
 
-  const linkClass = ({
-    isActive,
-    nested,
-  }: {
-    isActive: boolean;
-    nested?: boolean;
-  }) =>
+  const linkClass = ({ isActive, nested }: { isActive: boolean; nested?: boolean }) =>
     [
       "group relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden",
       nested ? "pl-9 pr-3 py-2" : "px-3 py-2.5",
@@ -202,9 +189,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       >
         <img src={logo} alt="TMS" className="h-9 w-auto object-contain" />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold tracking-tight text-gray-900">
-            TMS
-          </p>
+          <p className="truncate text-sm font-semibold tracking-tight text-gray-900">TMS</p>
           <p className="truncate text-xs text-gray-500">Task Management</p>
         </div>
       </div>
@@ -349,17 +334,12 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
         onClose={() => setCreateProjectOpen(false)}
         title="New project"
       >
-        <form
-          onSubmit={handleSubmitCreateProject}
-          className="mt-1 flex flex-col gap-3"
-        >
+        <form onSubmit={handleSubmitCreateProject} className="mt-1 flex flex-col gap-3">
           <Input
             label="Project name"
             name="projectName"
             value={projectForm.projectName}
-            onChange={(e) =>
-              setProjectForm((s) => ({ ...s, projectName: e.target.value }))
-            }
+            onChange={(e) => setProjectForm((s) => ({ ...s, projectName: e.target.value }))}
             required
             placeholder="e.g. Website redesign"
           />
@@ -368,18 +348,12 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
             name="description"
             type="textarea"
             value={projectForm.description}
-            onChange={(e) =>
-              setProjectForm((s) => ({ ...s, description: e.target.value }))
-            }
+            onChange={(e) => setProjectForm((s) => ({ ...s, description: e.target.value }))}
             required
             placeholder="Short summary"
           />
           <div className="mt-2 flex justify-end gap-2">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setCreateProjectOpen(false)}
-            >
+            <Button variant="outline" type="button" onClick={() => setCreateProjectOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={createProjectMutation.isPending}>

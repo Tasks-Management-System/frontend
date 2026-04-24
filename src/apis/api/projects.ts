@@ -19,11 +19,9 @@ export function useProjectsList(limit = 100) {
 export type CreateProjectInput = { projectName: string; description: string };
 
 export async function createProjectApi(body: CreateProjectInput) {
-  return api.post<{ success: boolean; project: Project }>(
-    apiPath.projects.create,
-    body,
-    { auth: true }
-  );
+  return api.post<{ success: boolean; project: Project }>(apiPath.projects.create, body, {
+    auth: true,
+  });
 }
 
 export function useCreateProject() {

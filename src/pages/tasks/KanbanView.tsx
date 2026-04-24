@@ -84,9 +84,7 @@ function KanbanColumn({
               isActive ? "border-violet-300 bg-violet-50/40" : "border-gray-200/70"
             }`}
           >
-            <p className="text-xs text-gray-400">
-              {isActive ? "Drop here" : "No tasks"}
-            </p>
+            <p className="text-xs text-gray-400">{isActive ? "Drop here" : "No tasks"}</p>
           </div>
         ) : (
           tasks.map((t) => (
@@ -148,11 +146,7 @@ export function KanbanView({
   };
 
   const handleDrop = (toStatus: TaskStatus) => {
-    if (
-      draggingTaskId &&
-      draggingFromStatus.current &&
-      draggingFromStatus.current !== toStatus
-    ) {
+    if (draggingTaskId && draggingFromStatus.current && draggingFromStatus.current !== toStatus) {
       onStatusChange(draggingTaskId, toStatus);
     }
     setDraggingTaskId(null);

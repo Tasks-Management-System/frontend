@@ -149,9 +149,7 @@ const CalendarLayout = ({
                   type="button"
                   onClick={() => onViewChange(t.id)}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                    view === t.id
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:text-gray-900"
+                    view === t.id ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   {t.label}

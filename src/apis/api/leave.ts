@@ -1,9 +1,4 @@
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../apiService";
 import { apiPath } from "../apiPath";
 import type {
@@ -54,10 +49,10 @@ export function usePaginatedLeaveHistory(options: {
     queryFn: async (): Promise<PaginatedLeaveHistoryResult> => {
       const query: Record<string, string | number> = { page, limit };
       if (status !== "all") query.status = status;
-      const res = await api.get<LeaveHistoryPaginatedResponse>(
-        apiPath.leave.history,
-        { auth: true, query }
-      );
+      const res = await api.get<LeaveHistoryPaginatedResponse>(apiPath.leave.history, {
+        auth: true,
+        query,
+      });
       if (!res.pagination) {
         throw new Error("Expected paginated leave response");
       }
@@ -103,18 +98,10 @@ export function useUpdateLeaveStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationKey: ["leave", "updateStatus"],
-    mutationFn: async ({
-      id,
-      body,
-    }: {
-      id: string;
-      body: UpdateLeaveStatusBody;
-    }) => {
-      return api.put<UpdateLeaveStatusResponse>(
-        apiPath.leave.updateStatus + id,
-        body,
-        { auth: true }
-      );
+    mutationFn: async ({ id, body }: { id: string; body: UpdateLeaveStatusBody }) => {
+      return api.put<UpdateLeaveStatusResponse>(apiPath.leave.updateStatus + id, body, {
+        auth: true,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["leave", "history"] });

@@ -10,11 +10,7 @@ export function taskProjectName(task: Task): string {
 }
 
 export function taskAssigneeName(task: Task, currentUserId?: string): string {
-  if (
-    task.assignedTo &&
-    typeof task.assignedTo === "object" &&
-    "name" in task.assignedTo
-  ) {
+  if (task.assignedTo && typeof task.assignedTo === "object" && "name" in task.assignedTo) {
     if (
       currentUserId &&
       "_id" in task.assignedTo &&

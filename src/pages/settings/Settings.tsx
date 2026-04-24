@@ -1,16 +1,9 @@
 import { getUserId } from "../../utils/auth";
 import { useCallback, useMemo, useState, type FormEvent } from "react";
 
-type AssignableRole =
-  | "super-admin"
-  | "admin"
-  | "employee"
-  | "hr"
-  | "manager";
+type AssignableRole = "super-admin" | "admin" | "employee" | "hr" | "manager";
 
-function roleOptionsForActor(
-  sessionRole: string | undefined
-): AssignableRole[] {
+function roleOptionsForActor(sessionRole: string | undefined): AssignableRole[] {
   if (sessionRole === "super-admin") {
     return ["super-admin", "admin", "employee", "hr", "manager"];
   }
@@ -29,13 +22,7 @@ function formatRoleLabel(role: string) {
 
 function primaryRole(user: User): AssignableRole {
   const r = user.role?.[0];
-  if (
-    r === "super-admin" ||
-    r === "admin" ||
-    r === "employee" ||
-    r === "hr" ||
-    r === "manager"
-  ) {
+  if (r === "super-admin" || r === "admin" || r === "employee" || r === "hr" || r === "manager") {
     return r;
   }
   return "employee";
@@ -72,8 +59,7 @@ const tabs = [
 ];
 
 const Settings = () => {
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("user-management");
   const { data: users = [], isLoading } = getUsers();
@@ -111,14 +97,10 @@ const Settings = () => {
   const updateUserMutation = useUpdateUser();
   const sessionRole = sessionUser?.role?.[0];
   const canCreateUsers = sessionRole === "admin" || sessionRole === "super-admin";
-  const canToggleUserActive =
-    sessionRole === "admin" || sessionRole === "super-admin";
-  const canManageRoles =
-    sessionRole === "admin" || sessionRole === "super-admin";
+  const canToggleUserActive = sessionRole === "admin" || sessionRole === "super-admin";
+  const canManageRoles = sessionRole === "admin" || sessionRole === "super-admin";
   const canCreateProjects =
-    sessionRole === "admin" ||
-    sessionRole === "manager" ||
-    sessionRole === "super-admin";
+    sessionRole === "admin" || sessionRole === "manager" || sessionRole === "super-admin";
   const roleOptions: AdminCreateUserInput["role"][] =
     sessionRole === "super-admin"
       ? ["admin", "employee", "hr", "manager"]
@@ -184,7 +166,12 @@ const Settings = () => {
         dob: employeeForm.dob.trim() ? employeeForm.dob.trim() : undefined,
         address:
           employeeForm.addressLine.trim() || employeeForm.addressCity.trim()
-            ? [{ address: employeeForm.addressLine.trim() || undefined, city: employeeForm.addressCity.trim() || undefined }]
+            ? [
+                {
+                  address: employeeForm.addressLine.trim() || undefined,
+                  city: employeeForm.addressCity.trim() || undefined,
+                },
+              ]
             : undefined,
         aadharCardNumber: employeeForm.aadharCardNumber.trim() || undefined,
         panCardNumber: employeeForm.panCardNumber.trim() || undefined,
@@ -309,9 +296,11 @@ const Settings = () => {
         key: "name",
         label: "Name",
         render: (row: User) => {
-
           return (
-            <div className="flex min-w-0 items-center gap-2 cursor-pointer hover:text-blue-500 hover:underline " onClick={() => navigate(`/user/${row._id}`)}>
+            <div
+              className="flex min-w-0 items-center gap-2 cursor-pointer hover:text-blue-500 hover:underline "
+              onClick={() => navigate(`/user/${row._id}`)}
+            >
               <div className="flex items-center gap-2">
                 <img
                   src={row.profileImage ?? ""}
@@ -342,8 +331,9 @@ const Settings = () => {
           const isVerified = Boolean((row as User & { isEmailVerified?: boolean }).isEmailVerified);
           return (
             <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${isVerified ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                }`}
+              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                isVerified ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+              }`}
             >
               {isVerified ? "Yes" : "No"}
             </span>
@@ -355,8 +345,9 @@ const Settings = () => {
         label: "Status",
         render: (row: User) => (
           <span
-            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${row.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-              }`}
+            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+              row.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+            }`}
           >
             {row.isActive ? "Active" : "Inactive"}
           </span>
@@ -387,12 +378,7 @@ const Settings = () => {
           ]
         : []),
     ],
-    [
-      canToggleUserActive,
-      sessionUser?._id,
-      handleToggleUserActive,
-      updateUserMutation.isPending,
-    ]
+    [canToggleUserActive, sessionUser?._id, handleToggleUserActive, updateUserMutation.isPending]
   );
 
   const roleManagementColumns = useMemo(
@@ -403,9 +389,7 @@ const Settings = () => {
         key: "roleDisplay",
         label: "Current role",
         render: (row: User) => (
-          <span className="font-medium text-gray-800">
-            {formatRoleLabel(primaryRole(row))}
-          </span>
+          <span className="font-medium text-gray-800">{formatRoleLabel(primaryRole(row))}</span>
         ),
       },
       ...(canManageRoles
@@ -415,9 +399,7 @@ const Settings = () => {
               label: "Change role",
               render: (row: User) => {
                 if (row._id === sessionUser?._id) {
-                  return (
-                    <span className="text-xs text-gray-400">Your account</span>
-                  );
+                  return <span className="text-xs text-gray-400">Your account</span>;
                 }
                 if (sessionRole === "admin" && row.role?.includes("super-admin")) {
                   return (
@@ -430,11 +412,8 @@ const Settings = () => {
                 const base = roleOptionsForActor(sessionRole);
                 const optionSet = new Set<AssignableRole>(base);
                 optionSet.add(current);
-                const options = Array.from(optionSet).sort((a, b) =>
-                  a.localeCompare(b)
-                );
-                const busy =
-                  savingRoleUserId === row._id || updateUserMutation.isPending;
+                const options = Array.from(optionSet).sort((a, b) => a.localeCompare(b));
+                const busy = savingRoleUserId === row._id || updateUserMutation.isPending;
                 return (
                   <select
                     className="w-full max-w-[220px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
@@ -442,10 +421,7 @@ const Settings = () => {
                     disabled={busy}
                     aria-label={`Role for ${row.name}`}
                     onChange={(e) =>
-                      void handleRoleAssignmentChange(
-                        row,
-                        e.target.value as AssignableRole
-                      )
+                      void handleRoleAssignmentChange(row, e.target.value as AssignableRole)
                     }
                   >
                     {options.map((r) => (
@@ -476,18 +452,14 @@ const Settings = () => {
       key: "description",
       label: "Description",
       render: (row: Project) => (
-        <span className="line-clamp-2 text-gray-700">
-          {row.description?.trim() || "—"}
-        </span>
+        <span className="line-clamp-2 text-gray-700">{row.description?.trim() || "—"}</span>
       ),
     },
     {
       key: "createdAt",
       label: "Created",
       render: (row: Project) =>
-        row.createdAt
-          ? new Date(row.createdAt).toLocaleDateString()
-          : "—",
+        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—",
     },
   ];
 
@@ -537,24 +509,15 @@ const Settings = () => {
           ) : null}
         </div>
 
-        <Modal
-          isOpen={openModal === "createUser"}
-          onClose={handleClose}
-          title="Create user"
-        >
+        <Modal isOpen={openModal === "createUser"} onClose={handleClose} title="Create user">
           {canCreateUsers ? (
-            <form
-              onSubmit={handleSubmitCreateUser}
-              className="mt-1 flex flex-col gap-3"
-            >
+            <form onSubmit={handleSubmitCreateUser} className="mt-1 flex flex-col gap-3">
               <Input
                 label="Name"
                 name="name"
                 type="text"
                 value={employeeForm.name}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, name: e.target.value }))
-                }
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, name: e.target.value }))}
                 required
                 placeholder="Full name"
               />
@@ -563,9 +526,7 @@ const Settings = () => {
                 name="email"
                 type="email"
                 value={employeeForm.email}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, email: e.target.value }))
-                }
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, email: e.target.value }))}
                 required
                 placeholder="email@company.com"
               />
@@ -574,9 +535,7 @@ const Settings = () => {
                 name="password"
                 type="password"
                 value={employeeForm.password}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, password: e.target.value }))
-                }
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, password: e.target.value }))}
                 required
                 placeholder="At least 6 characters"
               />
@@ -585,14 +544,15 @@ const Settings = () => {
                 name="phone"
                 type="tel"
                 value={employeeForm.phone}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, phone: e.target.value }))
-                }
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, phone: e.target.value }))}
                 placeholder="+91 9876543210"
               />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700" htmlFor="settings-create-user-gender">
+                  <label
+                    className="text-sm font-medium text-gray-700"
+                    htmlFor="settings-create-user-gender"
+                  >
                     Gender
                   </label>
                   <select
@@ -616,9 +576,7 @@ const Settings = () => {
                   name="dob"
                   type="date"
                   value={employeeForm.dob}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({ ...s, dob: e.target.value }))
-                  }
+                  onChange={(e) => setEmployeeForm((s) => ({ ...s, dob: e.target.value }))}
                 />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -627,9 +585,7 @@ const Settings = () => {
                   name="addressLine"
                   type="text"
                   value={employeeForm.addressLine}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({ ...s, addressLine: e.target.value }))
-                  }
+                  onChange={(e) => setEmployeeForm((s) => ({ ...s, addressLine: e.target.value }))}
                   placeholder="Street / apartment"
                 />
                 <Input
@@ -637,9 +593,7 @@ const Settings = () => {
                   name="addressCity"
                   type="text"
                   value={employeeForm.addressCity}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({ ...s, addressCity: e.target.value }))
-                  }
+                  onChange={(e) => setEmployeeForm((s) => ({ ...s, addressCity: e.target.value }))}
                   placeholder="City"
                 />
               </div>
@@ -678,27 +632,21 @@ const Settings = () => {
                   name="bankName"
                   type="text"
                   value={employeeForm.bankName}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({ ...s, bankName: e.target.value }))
-                  }
+                  onChange={(e) => setEmployeeForm((s) => ({ ...s, bankName: e.target.value }))}
                 />
                 <Input
                   label="IFSC"
                   name="bankIFSC"
                   type="text"
                   value={employeeForm.bankIFSC}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({ ...s, bankIFSC: e.target.value }))
-                  }
+                  onChange={(e) => setEmployeeForm((s) => ({ ...s, bankIFSC: e.target.value }))}
                 />
                 <Input
                   label="Branch"
                   name="bankBranch"
                   type="text"
                   value={employeeForm.bankBranch}
-                  onChange={(e) =>
-                    setEmployeeForm((s) => ({ ...s, bankBranch: e.target.value }))
-                  }
+                  onChange={(e) => setEmployeeForm((s) => ({ ...s, bankBranch: e.target.value }))}
                 />
               </div>
               <Input
@@ -706,30 +654,24 @@ const Settings = () => {
                 name="skillsJson"
                 type="textarea"
                 value={employeeForm.skillsJson}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, skillsJson: e.target.value }))
-                }
-                placeholder='e.g. React, Node, MongoDB'
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, skillsJson: e.target.value }))}
+                placeholder="e.g. React, Node, MongoDB"
               />
               <Input
                 label="Education"
                 name="educationJson"
                 type="textarea"
                 value={employeeForm.educationJson}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, educationJson: e.target.value }))
-                }
-                placeholder='e.g. BSc, MSc'
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, educationJson: e.target.value }))}
+                placeholder="e.g. BSc, MSc"
               />
               <Input
                 label="Experience"
                 name="experienceJson"
                 type="textarea"
                 value={employeeForm.experienceJson}
-                onChange={(e) =>
-                  setEmployeeForm((s) => ({ ...s, experienceJson: e.target.value }))
-                }
-                placeholder='e.g. Company A, Company B'
+                onChange={(e) => setEmployeeForm((s) => ({ ...s, experienceJson: e.target.value }))}
+                placeholder="e.g. Company A, Company B"
               />
               <div className="flex flex-col gap-1">
                 <label
@@ -756,8 +698,7 @@ const Settings = () => {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500">
-                  This role is saved on the new account and controls what they
-                  can access.
+                  This role is saved on the new account and controls what they can access.
                 </p>
               </div>
               <div className="mt-2 flex justify-end gap-2">
@@ -770,22 +711,13 @@ const Settings = () => {
               </div>
             </form>
           ) : (
-            <p className="text-sm text-gray-600">
-              Only an admin or super-admin can create users.
-            </p>
+            <p className="text-sm text-gray-600">Only an admin or super-admin can create users.</p>
           )}
         </Modal>
 
-        <Modal
-          isOpen={openModal === "createProject"}
-          onClose={handleClose}
-          title="Create project"
-        >
+        <Modal isOpen={openModal === "createProject"} onClose={handleClose} title="Create project">
           {canCreateProjects ? (
-            <form
-              onSubmit={handleSubmitCreateProject}
-              className="mt-1 flex flex-col gap-3"
-            >
+            <form onSubmit={handleSubmitCreateProject} className="mt-1 flex flex-col gap-3">
               <Input
                 label="Project name"
                 name="projectName"

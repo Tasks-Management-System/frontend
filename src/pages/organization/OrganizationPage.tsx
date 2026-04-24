@@ -85,9 +85,7 @@ export default function OrganizationPage() {
   const userId = getUserId();
   const { data: sessionUser } = getUserById(userId);
   const roles = sessionUser?.role ?? [];
-  const isAdmin = roles.some((r: string) =>
-    ["admin", "super-admin"].includes(r)
-  );
+  const isAdmin = roles.some((r: string) => ["admin", "super-admin"].includes(r));
 
   const { data: org, isLoading: orgLoading } = useMyOrganization();
   const { data: invites = [], isLoading: invitesLoading } = useAdminInvites();
@@ -197,9 +195,7 @@ export default function OrganizationPage() {
       {!orgLoading && !org && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-20 text-center">
           <Building2 className="mb-4 h-12 w-12 text-gray-300" />
-          <h3 className="mb-1 text-base font-semibold text-gray-700">
-            No organization yet
-          </h3>
+          <h3 className="mb-1 text-base font-semibold text-gray-700">No organization yet</h3>
           <p className="mb-6 text-sm text-gray-400">
             Create your organization to start inviting team members.
           </p>
@@ -209,9 +205,7 @@ export default function OrganizationPage() {
         </div>
       )}
 
-      {orgLoading && (
-        <div className="h-40 animate-pulse rounded-2xl bg-gray-100" />
-      )}
+      {orgLoading && <div className="h-40 animate-pulse rounded-2xl bg-gray-100" />}
 
       {/* Org Info */}
       {org && (
@@ -224,8 +218,7 @@ export default function OrganizationPage() {
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{org.name}</h2>
                 <p className="text-sm text-gray-500">
-                  Created {formatDate(org.createdAt)} &bull;{" "}
-                  {org.members.length} member
+                  Created {formatDate(org.createdAt)} &bull; {org.members.length} member
                   {org.members.length !== 1 ? "s" : ""}
                 </p>
               </div>
@@ -238,18 +231,13 @@ export default function OrganizationPage() {
               <h3 className="flex items-center gap-2 font-semibold text-gray-800">
                 <Users className="h-4 w-4 text-violet-500" /> Members
               </h3>
-              <span className="text-sm text-gray-400">
-                {org.members.length} total
-              </span>
+              <span className="text-sm text-gray-400">{org.members.length} total</span>
             </div>
             <div className="divide-y divide-gray-50">
               {org.members.map((member) => {
-                const isCreator =
-                  String(member._id) === String(org.createdBy?._id ?? "");
+                const isCreator = String(member._id) === String(org.createdBy?._id ?? "");
                 const isSelf = String(member._id) === String(userId);
-                const roleLabel = Array.isArray(member.role)
-                  ? member.role[0]
-                  : member.role;
+                const roleLabel = Array.isArray(member.role) ? member.role[0] : member.role;
                 return (
                   <div
                     key={member._id}
@@ -266,9 +254,7 @@ export default function OrganizationPage() {
                             </span>
                           )}
                           {isSelf && (
-                            <span className="ml-2 text-xs font-normal text-gray-400">
-                              (You)
-                            </span>
+                            <span className="ml-2 text-xs font-normal text-gray-400">(You)</span>
                           )}
                         </p>
                         <p className="truncate text-xs capitalize text-gray-400">
@@ -303,9 +289,7 @@ export default function OrganizationPage() {
                   </span>
                 )}
               </h3>
-              <span className="text-sm text-gray-400">
-                {joinRequests.length} total
-              </span>
+              <span className="text-sm text-gray-400">{joinRequests.length} total</span>
             </div>
 
             {joinRequestsLoading ? (
@@ -334,9 +318,7 @@ export default function OrganizationPage() {
                         <p className="truncate text-xs text-gray-400">
                           {jr.requestedBy?.email} &bull; {formatDate(jr.createdAt)}
                           {jr.message && (
-                            <span className="ml-1 text-gray-500">
-                              &bull; "{jr.message}"
-                            </span>
+                            <span className="ml-1 text-gray-500">&bull; "{jr.message}"</span>
                           )}
                         </p>
                       </div>
@@ -390,9 +372,7 @@ export default function OrganizationPage() {
               <h3 className="flex items-center gap-2 font-semibold text-gray-800">
                 <Send className="h-4 w-4 text-violet-500" /> Invitations Sent
               </h3>
-              <span className="text-sm text-gray-400">
-                {invites.length} total
-              </span>
+              <span className="text-sm text-gray-400">{invites.length} total</span>
             </div>
 
             {invitesLoading ? (
@@ -419,8 +399,7 @@ export default function OrganizationPage() {
                           {inv.invitedUser?.name}
                         </p>
                         <p className="truncate text-xs text-gray-400">
-                          {inv.invitedUser?.email} &bull; Sent{" "}
-                          {formatDate(inv.createdAt)}
+                          {inv.invitedUser?.email} &bull; Sent {formatDate(inv.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -449,11 +428,7 @@ export default function OrganizationPage() {
             required
           />
           <div className="flex justify-end gap-2 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCreateOrgOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setCreateOrgOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={createOrgMutation.isPending}>
@@ -475,9 +450,7 @@ export default function OrganizationPage() {
       >
         <form onSubmit={handleSendInvite} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Search user
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Search user</label>
             <input
               type="text"
               placeholder="Search by name or email…"
@@ -493,9 +466,7 @@ export default function OrganizationPage() {
           {userSearch && (
             <div className="max-h-52 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50">
               {invitableUsers.length === 0 ? (
-                <p className="px-4 py-3 text-sm text-gray-400">
-                  No users found
-                </p>
+                <p className="px-4 py-3 text-sm text-gray-400">No users found</p>
               ) : (
                 invitableUsers.map((u) => (
                   <button
@@ -513,12 +484,8 @@ export default function OrganizationPage() {
                       {u.name?.[0]?.toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-gray-800">
-                        {u.name}
-                      </p>
-                      <p className="truncate text-xs text-gray-400">
-                        {u.email}
-                      </p>
+                      <p className="truncate text-sm font-medium text-gray-800">{u.name}</p>
+                      <p className="truncate text-xs text-gray-400">{u.email}</p>
                     </div>
                     {selectedUserId === u._id && (
                       <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-violet-500" />
@@ -531,10 +498,7 @@ export default function OrganizationPage() {
 
           {selectedUserId && (
             <p className="rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-700">
-              Selected:{" "}
-              <strong>
-                {allUsers.find((u) => u._id === selectedUserId)?.name}
-              </strong>
+              Selected: <strong>{allUsers.find((u) => u._id === selectedUserId)?.name}</strong>
             </p>
           )}
 
@@ -550,10 +514,7 @@ export default function OrganizationPage() {
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!selectedUserId || sendInviteMutation.isPending}
-            >
+            <Button type="submit" disabled={!selectedUserId || sendInviteMutation.isPending}>
               {sendInviteMutation.isPending ? "Sending…" : "Send Invite"}
             </Button>
           </div>
@@ -561,21 +522,13 @@ export default function OrganizationPage() {
       </Modal>
 
       {/* Remove Confirm Modal */}
-      <Modal
-        isOpen={!!removeTarget}
-        onClose={() => setRemoveTarget(null)}
-        title="Remove Member"
-      >
+      <Modal isOpen={!!removeTarget} onClose={() => setRemoveTarget(null)} title="Remove Member">
         <p className="mb-6 text-sm text-gray-600">
-          Are you sure you want to remove{" "}
-          <strong>{removeTarget?.name}</strong> from the organization?
+          Are you sure you want to remove <strong>{removeTarget?.name}</strong> from the
+          organization?
         </p>
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setRemoveTarget(null)}
-          >
+          <Button type="button" variant="outline" onClick={() => setRemoveTarget(null)}>
             Cancel
           </Button>
           <Button

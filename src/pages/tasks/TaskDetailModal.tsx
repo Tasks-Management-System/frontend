@@ -23,8 +23,21 @@ import {
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import type { Task, TaskStatus, Subtask, TaskComment, TaskAttachment } from "../../types/task.types";
-import { useUpdateTask, useTaskById, useAddComment, useDeleteComment, useAddAttachment, useDeleteAttachment } from "../../apis/api/tasks";
+import type {
+  Task,
+  TaskStatus,
+  Subtask,
+  TaskComment,
+  TaskAttachment,
+} from "../../types/task.types";
+import {
+  useUpdateTask,
+  useTaskById,
+  useAddComment,
+  useDeleteComment,
+  useAddAttachment,
+  useDeleteAttachment,
+} from "../../apis/api/tasks";
 import { useAssignableUsers } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
 import { TASK_STATUS_OPTIONS, taskStatusSelectClass } from "../../constants/taskStatus";
@@ -32,7 +45,8 @@ import { taskAssigneeName, taskProjectName } from "./taskUtils";
 
 const PRIORITY_SELECT_CLASS: Record<string, string> = {
   low: "bg-emerald-50 text-emerald-900 border-emerald-200 focus:border-emerald-300 focus:ring-emerald-500/20",
-  medium: "bg-amber-50 text-amber-900 border-amber-200 focus:border-amber-300 focus:ring-amber-500/20",
+  medium:
+    "bg-amber-50 text-amber-900 border-amber-200 focus:border-amber-300 focus:ring-amber-500/20",
   urgent: "bg-red-50 text-red-900 border-red-200 focus:border-red-300 focus:ring-red-500/20",
 };
 
@@ -85,7 +99,8 @@ function getPreviewKind(mimetype: string, filename: string): PreviewKind {
   if (mimetype.startsWith("video/")) return "video";
   if (mimetype === "application/pdf") return "pdf";
   const ext = filename.split(".").pop()?.toLowerCase();
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico"].includes(ext ?? "")) return "image";
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico"].includes(ext ?? ""))
+    return "image";
   if (["mp4", "webm", "ogg", "mov", "mkv"].includes(ext ?? "")) return "video";
   if (ext === "pdf") return "pdf";
   return "other";
@@ -243,7 +258,9 @@ function FilePreviewModal({
                   type="button"
                   onClick={() => setIndex(i)}
                   className={`shrink-0 rounded-lg overflow-hidden border-2 transition ${
-                    i === index ? "border-violet-400 opacity-100" : "border-transparent opacity-50 hover:opacity-80"
+                    i === index
+                      ? "border-violet-400 opacity-100"
+                      : "border-transparent opacity-50 hover:opacity-80"
                   }`}
                 >
                   {k === "image" ? (
@@ -370,7 +387,10 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
   const save = async (field: string, body: Record<string, unknown>) => {
     setSaving(field);
     try {
-      await updateMut.mutateAsync({ id: activeTask._id, body: body as Parameters<typeof updateMut.mutateAsync>[0]["body"] });
+      await updateMut.mutateAsync({
+        id: activeTask._id,
+        body: body as Parameters<typeof updateMut.mutateAsync>[0]["body"],
+      });
     } catch (e) {
       toast.error((e as ApiError)?.message ?? "Could not update task");
     } finally {
@@ -403,9 +423,7 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
   };
 
   const handleToggleSubtask = (idx: number) => {
-    const updated = subtasks.map((s, i) =>
-      i === idx ? { ...s, completed: !s.completed } : s
-    );
+    const updated = subtasks.map((s, i) => (i === idx ? { ...s, completed: !s.completed } : s));
     save("subtasks", { subtasks: updated });
   };
 
@@ -431,7 +449,11 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
     const allMentions = [...new Set([...selectedMentions, ...mentionIds])];
 
     try {
-      await addCommentMut.mutateAsync({ taskId: activeTask._id, text: trimmed, mentions: allMentions });
+      await addCommentMut.mutateAsync({
+        taskId: activeTask._id,
+        text: trimmed,
+        mentions: allMentions,
+      });
       setCommentText("");
       setSelectedMentions([]);
     } catch (e) {
@@ -534,9 +556,7 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
 
       <div
         className={`relative z-10 mx-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-200 ${
-          visible
-            ? "translate-y-0 scale-100 opacity-100"
-            : "translate-y-3 scale-[0.98] opacity-0"
+          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[0.98] opacity-0"
         }`}
         style={{ maxHeight: "min(92dvh, 780px)" }}
       >
@@ -665,9 +685,24 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
               <div className="flex gap-1 rounded-lg bg-gray-100 p-1 mb-4">
                 {(
                   [
-                    { key: "subtasks" as const, label: "Subtasks", icon: <CheckSquare className="h-3.5 w-3.5" />, count: subtasks.length },
-                    { key: "comments" as const, label: "Comments", icon: <MessageSquare className="h-3.5 w-3.5" />, count: comments.length },
-                    { key: "attachments" as const, label: "Files", icon: <Paperclip className="h-3.5 w-3.5" />, count: attachments.length },
+                    {
+                      key: "subtasks" as const,
+                      label: "Subtasks",
+                      icon: <CheckSquare className="h-3.5 w-3.5" />,
+                      count: subtasks.length,
+                    },
+                    {
+                      key: "comments" as const,
+                      label: "Comments",
+                      icon: <MessageSquare className="h-3.5 w-3.5" />,
+                      count: comments.length,
+                    },
+                    {
+                      key: "attachments" as const,
+                      label: "Files",
+                      icon: <Paperclip className="h-3.5 w-3.5" />,
+                      count: attachments.length,
+                    },
                   ] as const
                 ).map((tab) => (
                   <button
@@ -699,10 +734,14 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                       <div className="h-1.5 flex-1 rounded-full bg-gray-100">
                         <div
                           className="h-full rounded-full bg-violet-500 transition-all"
-                          style={{ width: `${subtasks.length ? (completedSubtasks / subtasks.length) * 100 : 0}%` }}
+                          style={{
+                            width: `${subtasks.length ? (completedSubtasks / subtasks.length) * 100 : 0}%`,
+                          }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500">{completedSubtasks}/{subtasks.length}</span>
+                      <span className="text-xs text-gray-500">
+                        {completedSubtasks}/{subtasks.length}
+                      </span>
                     </div>
                   )}
 
@@ -719,7 +758,9 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                           <Square className="h-4 w-4" />
                         )}
                       </button>
-                      <span className={`flex-1 text-sm ${st.completed ? "line-through text-gray-400" : "text-gray-700"}`}>
+                      <span
+                        className={`flex-1 text-sm ${st.completed ? "line-through text-gray-400" : "text-gray-700"}`}
+                      >
                         {st.title}
                       </span>
                       <button
@@ -789,8 +830,12 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                           </span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-gray-800">{authorName}</span>
-                              <span className="text-[10px] text-gray-400">{timeAgo(c.createdAt)}</span>
+                              <span className="text-xs font-semibold text-gray-800">
+                                {authorName}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {timeAgo(c.createdAt)}
+                              </span>
                               {isOwn && (
                                 <button
                                   type="button"
@@ -801,13 +846,18 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                                 </button>
                               )}
                             </div>
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{c.text}</p>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">
+                              {c.text}
+                            </p>
                             {Array.isArray(c.mentions) && c.mentions.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {c.mentions.map((m) => {
                                   const mObj = typeof m === "object" ? m : null;
                                   return mObj ? (
-                                    <span key={mObj._id} className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">
+                                    <span
+                                      key={mObj._id}
+                                      className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full"
+                                    >
                                       @{mObj.name}
                                     </span>
                                   ) : null;
@@ -889,11 +939,15 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                             />
                           ) : kind === "video" ? (
                             <div className="flex h-9 w-12 items-center justify-center rounded-md bg-violet-50 border border-violet-100">
-                              <span className="text-[9px] font-bold text-violet-500 uppercase">Video</span>
+                              <span className="text-[9px] font-bold text-violet-500 uppercase">
+                                Video
+                              </span>
                             </div>
                           ) : kind === "pdf" ? (
                             <div className="flex h-9 w-12 items-center justify-center rounded-md bg-red-50 border border-red-100">
-                              <span className="text-[9px] font-bold text-red-500 uppercase">PDF</span>
+                              <span className="text-[9px] font-bold text-red-500 uppercase">
+                                PDF
+                              </span>
                             </div>
                           ) : (
                             <div className="flex h-9 w-12 items-center justify-center rounded-md bg-gray-50 border border-gray-100">
@@ -920,7 +974,10 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                           </a>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(a._id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAttachment(a._id);
+                            }}
                             className="rounded p-1 text-gray-400 hover:text-red-500 transition"
                             title="Delete"
                           >
@@ -1043,9 +1100,7 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                   disabled={isBusy}
                   onChange={(e) =>
                     save("dueDate", {
-                      dueDate: e.target.value
-                        ? new Date(e.target.value).toISOString()
-                        : null,
+                      dueDate: e.target.value ? new Date(e.target.value).toISOString() : null,
                     })
                   }
                   className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"

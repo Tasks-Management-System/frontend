@@ -39,13 +39,7 @@ function formatDate(dateStr: string | null | undefined) {
   });
 }
 
-function ProfileAvatar({
-  url,
-  name,
-}: {
-  url: string | null;
-  name: string;
-}) {
+function ProfileAvatar({ url, name }: { url: string | null; name: string }) {
   const resolved = resolveProfileImageUrl(url);
   const initials = name
     .split(/\s+/)
@@ -136,8 +130,7 @@ function UserProfileSkeleton() {
 const UserProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState("overview");
-  const sessionUserId =
-    getUserId();
+  const sessionUserId = getUserId();
 
   const { data: user, isLoading, isError } = getUserById(id ?? "");
 
@@ -170,18 +163,11 @@ const UserProfile = () => {
     return (
       <div className="min-h-screen space-y-4 bg-gray-50 p-3 sm:space-y-6 sm:p-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
-            Profile
-          </h1>
-          <p className="text-gray-500">
-            We couldn&apos;t load this team member.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">Profile</h1>
+          <p className="text-gray-500">We couldn&apos;t load this team member.</p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
-          <p>
-            The user may not exist or you may not have permission to view this
-            profile.
-          </p>
+          <p>The user may not exist or you may not have permission to view this profile.</p>
           <Link
             to={backHref}
             className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-violet-600 hover:text-violet-700"
@@ -205,9 +191,7 @@ const UserProfile = () => {
             <ArrowLeft className="h-4 w-4 shrink-0" />
             Back to Settings
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
-            Team member
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">Team member</h1>
           <p className="text-gray-500">
             View directory details for{" "}
             <span className="font-medium text-gray-700">{user.name}</span>.
@@ -228,9 +212,7 @@ const UserProfile = () => {
           <ProfileAvatar url={user.profileImage} name={user.name} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
-                {user.name}
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{user.name}</h2>
               {user.isActive ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -243,9 +225,7 @@ const UserProfile = () => {
               )}
             </div>
             <p className="mt-1 text-sm capitalize text-gray-500">
-              {(user.role ?? [])
-                .map((r) => formatRoleLabel(r))
-                .join(" · ") || "—"}
+              {(user.role ?? []).map((r) => formatRoleLabel(r)).join(" · ") || "—"}
             </p>
             <p className="mt-0.5 text-sm text-gray-600">{user.email}</p>
           </div>
@@ -265,9 +245,7 @@ const UserProfile = () => {
             <div className="rounded-xl border border-gray-100 p-4 text-sm text-gray-600 sm:p-6">
               <div className="mb-4 flex items-center gap-2">
                 <User className="h-5 w-5 text-violet-600" />
-                <h3 className="text-base font-semibold text-gray-900">
-                  Personal information
-                </h3>
+                <h3 className="text-base font-semibold text-gray-900">Personal information</h3>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                 <InfoField
@@ -275,16 +253,8 @@ const UserProfile = () => {
                   label="Full name"
                   value={user.name}
                 />
-                <InfoField
-                  icon={<Mail className="h-4 w-4" />}
-                  label="Email"
-                  value={user.email}
-                />
-                <InfoField
-                  icon={<Phone className="h-4 w-4" />}
-                  label="Phone"
-                  value={user.phone}
-                />
+                <InfoField icon={<Mail className="h-4 w-4" />} label="Email" value={user.email} />
+                <InfoField icon={<Phone className="h-4 w-4" />} label="Phone" value={user.phone} />
                 <InfoField
                   icon={<Calendar className="h-4 w-4" />}
                   label="Date of birth"
@@ -303,9 +273,7 @@ const UserProfile = () => {
                     value={
                       user.address?.length
                         ? `${user.address[0]?.address ?? ""}${
-                            user.address[0]?.city
-                              ? `, ${user.address[0].city}`
-                              : ""
+                            user.address[0]?.city ? `, ${user.address[0].city}` : ""
                           }`.trim() || null
                         : null
                     }
@@ -320,9 +288,7 @@ const UserProfile = () => {
               <div className="rounded-xl border border-gray-100 p-4 sm:p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <Briefcase className="h-5 w-5 text-violet-600" />
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Employment
-                  </h3>
+                  <h3 className="text-base font-semibold text-gray-900">Employment</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                   <InfoField
@@ -346,13 +312,10 @@ const UserProfile = () => {
               <div className="rounded-xl border border-gray-100 p-4 sm:p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-violet-600" />
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Identity & banking
-                  </h3>
+                  <h3 className="text-base font-semibold text-gray-900">Identity & banking</h3>
                 </div>
                 <p className="mb-4 text-xs text-gray-500">
-                  Shown for authorized staff only; handle according to your
-                  company policy.
+                  Shown for authorized staff only; handle according to your company policy.
                 </p>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                   <InfoField
@@ -417,11 +380,7 @@ const UserProfile = () => {
                   value={
                     user.education?.length
                       ? user.education
-                          .map((e) =>
-                            [e.degree, e.institution, e.year]
-                              .filter(Boolean)
-                              .join(" · ")
-                          )
+                          .map((e) => [e.degree, e.institution, e.year].filter(Boolean).join(" · "))
                           .filter(Boolean)
                           .join("; ")
                       : null
@@ -433,9 +392,7 @@ const UserProfile = () => {
                   value={
                     user.experience?.length
                       ? user.experience
-                          .map((e) =>
-                            [e.company, e.position].filter(Boolean).join(" — ")
-                          )
+                          .map((e) => [e.company, e.position].filter(Boolean).join(" — "))
                           .filter(Boolean)
                           .join("; ")
                       : null
@@ -448,9 +405,7 @@ const UserProfile = () => {
                     user.leaves?.length
                       ? user.leaves
                           .map((l) =>
-                            typeof l.totalBalance === "number"
-                              ? `${l.totalBalance} days`
-                              : ""
+                            typeof l.totalBalance === "number" ? `${l.totalBalance} days` : ""
                           )
                           .filter(Boolean)
                           .join(", ")
@@ -465,7 +420,5 @@ const UserProfile = () => {
     </div>
   );
 };
-
-
 
 export default UserProfile;

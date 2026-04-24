@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export type PillTabItem = {
   key: string;
@@ -98,11 +92,7 @@ export function PillTabBar({
           onClick={() => onTabChange(item.key)}
           className={`relative z-10 shrink-0 rounded-full font-medium transition-colors duration-200 ease-out ${
             isSm ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
-          } ${
-            activeKey === item.key
-              ? "text-gray-900"
-              : "text-[#5E6C84] hover:text-gray-800"
-          }`}
+          } ${activeKey === item.key ? "text-gray-900" : "text-[#5E6C84] hover:text-gray-800"}`}
         >
           <span
             className={`relative inline-flex items-center justify-center whitespace-nowrap ${isSm ? "gap-1.5" : "gap-2"}`}

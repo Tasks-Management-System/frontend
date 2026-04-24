@@ -16,11 +16,7 @@ import {
 import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
-import {
-  getStoredUserRoles,
-  userHasAnyRole,
-  type AppRole,
-} from "../../utils/moduleAccess";
+import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
 import { clearAuth, getUserId } from "../../utils/auth";
 import { disconnectSocket } from "../../utils/socket";
 
@@ -73,8 +69,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
   const userId = getUserId();
 
   const { data: user } = getUserById(userId);
-  const menuRoles =
-    (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
+  const menuRoles = (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
   const visibleProfileItems = profileMenuItems.filter((item) =>
     userHasAnyRole(menuRoles, item.roles)
   );
@@ -99,8 +94,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
       navigate("/login", { replace: true });
     }
   };
-  const { data: attendanceRes, isLoading: attendanceLoading } =
-    useTodayAttendance(!!userId);
+  const { data: attendanceRes, isLoading: attendanceLoading } = useTodayAttendance(!!userId);
   const todayRecord = useMemo(
     () => pickMyAttendanceRecord(attendanceRes, userId),
     [attendanceRes, userId]
@@ -130,9 +124,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
       const tick = () => {
         const r = recordRef.current;
         const base = r?.dayTotalMs ?? 0;
-        setElapsedTime(
-          formatElapsed(base + clientCurrentSessionWorkedMs(r))
-        );
+        setElapsedTime(formatElapsed(base + clientCurrentSessionWorkedMs(r)));
       };
       tick();
       const id = window.setInterval(tick, 1000);
@@ -147,9 +139,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
       !r?.punchInTime &&
       (r.totalTime != null || r.dayTotalMs != null)
     ) {
-      setElapsedTime(
-        formatElapsed(Number(r.totalTime ?? r.dayTotalMs ?? base))
-      );
+      setElapsedTime(formatElapsed(Number(r.totalTime ?? r.dayTotalMs ?? base)));
       return;
     }
     setElapsedTime(formatElapsed(base));
@@ -221,15 +211,10 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const mainLabel =
-    status === "on_break" ? "Break" : clockedIn ? "IN" : "OUT";
+  const mainLabel = status === "on_break" ? "Break" : clockedIn ? "IN" : "OUT";
 
   const mainHint =
-    status === "on_break"
-      ? "End break"
-      : status === "working"
-        ? "Punch out"
-        : "Punch in";
+    status === "on_break" ? "End break" : status === "working" ? "Punch out" : "Punch in";
 
   return (
     <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/80 shadow-sm sticky top-0 z-30 min-h-16">
@@ -245,9 +230,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
               <Menu className="h-5 w-5" />
             </button>
           ) : null}
-          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-900">
-            {title}
-          </h1>
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-gray-900">{title}</h1>
         </div>
         <div className="relative flex items-center gap-2" ref={menuRef}>
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">

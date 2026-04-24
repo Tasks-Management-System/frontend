@@ -43,11 +43,9 @@ export function useLogTime() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: LogTimeInput) =>
-      api.post<{ success: boolean; entry: TimesheetEntry }>(
-        apiPath.timesheets.log,
-        body,
-        { auth: true }
-      ),
+      api.post<{ success: boolean; entry: TimesheetEntry }>(apiPath.timesheets.log, body, {
+        auth: true,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["timesheets"] }),
   });
 }
@@ -55,13 +53,7 @@ export function useLogTime() {
 export function useUpdateTimesheetEntry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      body,
-    }: {
-      id: string;
-      body: Partial<LogTimeInput>;
-    }) =>
+    mutationFn: ({ id, body }: { id: string; body: Partial<LogTimeInput> }) =>
       api.put<{ success: boolean; entry: TimesheetEntry }>(
         `${apiPath.timesheets.byId}${id}`,
         body,
@@ -74,8 +66,7 @@ export function useUpdateTimesheetEntry() {
 export function useDeleteTimesheetEntry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      api.del(`${apiPath.timesheets.byId}${id}`, { auth: true }),
+    mutationFn: (id: string) => api.del(`${apiPath.timesheets.byId}${id}`, { auth: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["timesheets"] }),
   });
 }

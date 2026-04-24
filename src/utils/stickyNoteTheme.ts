@@ -1,11 +1,4 @@
-export const STICKY_COLOR_IDS = [
-  "lemon",
-  "mint",
-  "sky",
-  "lilac",
-  "peach",
-  "paper",
-] as const;
+export const STICKY_COLOR_IDS = ["lemon", "mint", "sky", "lilac", "peach", "paper"] as const;
 
 export type StickyColorId = (typeof STICKY_COLOR_IDS)[number];
 

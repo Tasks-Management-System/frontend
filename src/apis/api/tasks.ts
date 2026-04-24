@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, uploadFormData } from "../apiService";
 import { apiPath } from "../apiPath";
-import type { Task, TasksListResponse, TaskTemplate, Subtask, TaskComment } from "../../types/task.types";
+import type {
+  Task,
+  TasksListResponse,
+  TaskTemplate,
+  Subtask,
+  TaskComment,
+} from "../../types/task.types";
 
 export type TaskListFilters = {
   page?: number;
@@ -37,10 +43,9 @@ export function useTaskById(id: string | null) {
   return useQuery({
     queryKey: ["task", id],
     queryFn: async () => {
-      const res = await api.get<{ success: boolean; task: Task }>(
-        `${apiPath.tasks.byId}${id}`,
-        { auth: true }
-      );
+      const res = await api.get<{ success: boolean; task: Task }>(`${apiPath.tasks.byId}${id}`, {
+        auth: true,
+      });
       return res.task;
     },
     enabled: !!id,
@@ -91,11 +96,7 @@ export function useUpdateTask() {
   return useMutation({
     mutationKey: ["updateTask"],
     mutationFn: ({ id, body }: { id: string; body: UpdateTaskInput }) =>
-      api.put<{ success: boolean; task: Task }>(
-        `${apiPath.tasks.byId}${id}`,
-        body,
-        { auth: true }
-      ),
+      api.put<{ success: boolean; task: Task }>(`${apiPath.tasks.byId}${id}`, body, { auth: true }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
       qc.invalidateQueries({ queryKey: ["task"] });
@@ -107,7 +108,15 @@ export function useAddComment() {
   const qc = useQueryClient();
   return useMutation({
     mutationKey: ["addComment"],
-    mutationFn: ({ taskId, text, mentions }: { taskId: string; text: string; mentions?: string[] }) =>
+    mutationFn: ({
+      taskId,
+      text,
+      mentions,
+    }: {
+      taskId: string;
+      text: string;
+      mentions?: string[];
+    }) =>
       api.post<{ success: boolean; comment: TaskComment }>(
         `${apiPath.tasks.byId}${taskId}/comments`,
         { text, mentions },
@@ -139,7 +148,9 @@ export function useAddAttachment() {
     mutationFn: ({ taskId, file }: { taskId: string; file: File }) => {
       const fd = new FormData();
       fd.append("file", file);
-      return uploadFormData("POST", `${apiPath.tasks.byId}${taskId}/attachments`, fd, { auth: true });
+      return uploadFormData("POST", `${apiPath.tasks.byId}${taskId}/attachments`, fd, {
+        auth: true,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["task"] });
@@ -164,9 +175,8 @@ export function useTaskTemplates() {
   return useQuery({
     queryKey: ["taskTemplates"],
     queryFn: () =>
-      api.get<{ success: boolean; templates: TaskTemplate[] }>(
-        `${apiPath.tasks.list}/templates`,
-        { auth: true }
-      ),
+      api.get<{ success: boolean; templates: TaskTemplate[] }>(`${apiPath.tasks.list}/templates`, {
+        auth: true,
+      }),
   });
 }

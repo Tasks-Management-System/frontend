@@ -177,7 +177,13 @@ export const useSendJoinRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["sendJoinRequest"],
-    mutationFn: async ({ organizationId, message }: { organizationId: string; message?: string }) => {
+    mutationFn: async ({
+      organizationId,
+      message,
+    }: {
+      organizationId: string;
+      message?: string;
+    }) => {
       const res = await api.post<{ success: boolean; message: string; joinRequest: JoinRequest }>(
         apiPath.organization.sendJoinRequest,
         { organizationId, message },

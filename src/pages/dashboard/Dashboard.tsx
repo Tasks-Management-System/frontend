@@ -55,16 +55,10 @@ import {
   startOfWeekMonday,
   addDays,
 } from "../../apis/api/attendance";
-import {
-  usePendingLeaveRequests,
-  useUpdateLeaveStatus,
-} from "../../apis/api/leave";
+import { usePendingLeaveRequests, useUpdateLeaveStatus } from "../../apis/api/leave";
 import { useAnnouncements } from "../../apis/api/announcements";
 import type { Task } from "../../types/task.types";
-import type {
-  AttendanceListResponse,
-  AttendanceRecord,
-} from "../../types/attendance.types";
+import type { AttendanceListResponse, AttendanceRecord } from "../../types/attendance.types";
 import type { User as AppUser } from "../../types/user.types";
 import type { LeaveRecord } from "../../types/leave.types";
 
@@ -95,10 +89,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
 function formatDate(d?: string | null, opts?: Intl.DateTimeFormatOptions) {
   if (!d) return "";
   try {
-    return new Date(d).toLocaleDateString(
-      undefined,
-      opts ?? { month: "short", day: "numeric" }
-    );
+    return new Date(d).toLocaleDateString(undefined, opts ?? { month: "short", day: "numeric" });
   } catch {
     return "";
   }
@@ -154,10 +145,7 @@ function pickMyRecord(
   myId: string
 ): AttendanceRecord | null {
   if (!res?.attendance?.length || !myId) return null;
-  return (
-    res.attendance.find((a) => getUserIdFromAttendance(a) === String(myId)) ??
-    null
-  );
+  return res.attendance.find((a) => getUserIdFromAttendance(a) === String(myId)) ?? null;
 }
 
 /** Distinct users with a punchInTime in the given attendance list. */
@@ -172,10 +160,7 @@ function countPresent(records: AttendanceRecord[] = []): number {
 }
 
 /** Bucket a week of attendance data Mon..Sun. */
-function buildWeekAttendanceSeries(
-  records: AttendanceRecord[],
-  weekMonday: Date
-) {
+function buildWeekAttendanceSeries(records: AttendanceRecord[], weekMonday: Date) {
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const buckets: Record<string, Set<string>> = {};
   const ymds: string[] = [];
@@ -214,18 +199,13 @@ function buildTodayAttendanceSeries(records: AttendanceRecord[]) {
 }
 
 /** Bucket a month of attendance data into 4 weeks. */
-function buildMonthAttendanceSeries(
-  records: AttendanceRecord[],
-  monthStart: Date
-) {
+function buildMonthAttendanceSeries(records: AttendanceRecord[], monthStart: Date) {
   const weeks = [0, 0, 0, 0];
   const seen: Set<string>[] = [new Set(), new Set(), new Set(), new Set()];
   for (const r of records) {
     if (!r.date || !r.punchInTime) continue;
     const dt = new Date(String(r.date));
-    const diffDays = Math.floor(
-      (dt.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const diffDays = Math.floor((dt.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24));
     const weekIdx = Math.min(3, Math.max(0, Math.floor(diffDays / 7)));
     const uid = getUserIdFromAttendance(r);
     if (uid && !seen[weekIdx].has(uid + dt.toDateString())) {
@@ -243,9 +223,7 @@ function buildTaskCompletionSeries(tasks: Task[], weekMonday: Date) {
   for (const t of tasks) {
     if (t.status !== "completed" || !t.updatedAt) continue;
     const d = new Date(t.updatedAt);
-    const diffDays = Math.floor(
-      (d.getTime() - weekMonday.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const diffDays = Math.floor((d.getTime() - weekMonday.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays >= 0 && diffDays < 7) counts[diffDays] += 1;
   }
   return labels.map((name, i) => ({ name, value: counts[i] }));
@@ -305,9 +283,7 @@ function upcomingBirthdays(users: TeamBirthdayUser[]): BirthdayEntry[] {
     if (next < today) {
       next = new Date(today.getFullYear() + 1, dob.getMonth(), dob.getDate());
     }
-    const daysUntil = Math.round(
-      (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const daysUntil = Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     const roleLabel = Array.isArray(u.role) ? u.role[0] : u.role;
 
@@ -340,7 +316,12 @@ type Activity = {
 function buildRecentActivity(args: {
   tasks: Task[];
   leaves: LeaveRecord[];
-  announcements: { _id: string; title: string; createdAt: string; postedBy?: { name?: string } | null }[];
+  announcements: {
+    _id: string;
+    title: string;
+    createdAt: string;
+    postedBy?: { name?: string } | null;
+  }[];
   newUsers: AppUser[];
 }): Activity[] {
   const items: Activity[] = [];
@@ -354,16 +335,15 @@ function buildRecentActivity(args: {
         t.status === "completed"
           ? "Task completed"
           : t.status === "review"
-          ? "Task in review"
-          : "Task updated",
+            ? "Task in review"
+            : "Task updated",
       detail: t.taskName,
       time: formatRelative(t.updatedAt ?? t.createdAt),
       at,
     });
   }
   for (const l of args.leaves) {
-    const userName =
-      typeof l.user === "object" && l.user ? l.user.name : "Someone";
+    const userName = typeof l.user === "object" && l.user ? l.user.name : "Someone";
     items.push({
       id: `l-${l._id}`,
       type: "leave",
@@ -420,9 +400,7 @@ function QuickAction({
       onClick={onClick}
       className="flex flex-col items-center gap-2 rounded-xl border border-gray-100 p-3 text-center text-xs font-medium text-gray-700 transition hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm"
     >
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>
-        {icon}
-      </span>
+      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>{icon}</span>
       {label}
     </button>
   );
@@ -472,9 +450,7 @@ const Dashboard = () => {
   const weekTo = localYmd(addDays(weekMonday, 6));
   const { data: weekAttendance } = useAttendanceRange(weekFrom, weekTo);
   const monthFrom = localYmd(monthStart);
-  const monthTo = localYmd(
-    new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  );
+  const monthTo = localYmd(new Date(today.getFullYear(), today.getMonth() + 1, 0));
   const { data: monthAttendance } = useAttendanceRange(monthFrom, monthTo);
 
   const updateLeaveMutation = useUpdateLeaveStatus();
@@ -495,10 +471,7 @@ const Dashboard = () => {
   const myCompletedThisWeek = useMemo(
     () =>
       myTasks.filter(
-        (t) =>
-          t.status === "completed" &&
-          t.updatedAt &&
-          new Date(t.updatedAt) >= weekMonday
+        (t) => t.status === "completed" && t.updatedAt && new Date(t.updatedAt) >= weekMonday
       ).length,
     [myTasks, weekMonday]
   );
@@ -508,10 +481,7 @@ const Dashboard = () => {
     () =>
       myTasks.filter((t) => {
         if (!t.dueDate) return false;
-        return (
-          String(t.dueDate).slice(0, 10) === todayStr &&
-          t.status !== "completed"
-        );
+        return String(t.dueDate).slice(0, 10) === todayStr && t.status !== "completed";
       }),
     [myTasks, todayStr]
   );
@@ -522,22 +492,15 @@ const Dashboard = () => {
 
   // my leave balance
   const myLeaveBalance = sessionUser?.leaves?.[0];
-  const leaveRemaining =
-    (myLeaveBalance?.totalBalance ?? 0) - (myLeaveBalance?.leaveTaken ?? 0);
+  const leaveRemaining = (myLeaveBalance?.totalBalance ?? 0) - (myLeaveBalance?.leaveTaken ?? 0);
 
   // ------ chart data ------
   const attendanceSeries = useMemo(() => {
     if (chartRange === "today")
       return buildTodayAttendanceSeries(todayAttendance?.attendance ?? []);
     if (chartRange === "month")
-      return buildMonthAttendanceSeries(
-        monthAttendance?.attendance ?? [],
-        monthStart
-      );
-    return buildWeekAttendanceSeries(
-      weekAttendance?.attendance ?? [],
-      weekMonday
-    );
+      return buildMonthAttendanceSeries(monthAttendance?.attendance ?? [], monthStart);
+    return buildWeekAttendanceSeries(weekAttendance?.attendance ?? [], weekMonday);
   }, [
     chartRange,
     todayAttendance?.attendance,
@@ -552,19 +515,13 @@ const Dashboard = () => {
     [orgTasks, weekMonday]
   );
 
-  const taskStatusPie = useMemo(
-    () => buildTaskStatusPie(orgTasks),
-    [orgTasks]
-  );
+  const taskStatusPie = useMemo(() => buildTaskStatusPie(orgTasks), [orgTasks]);
 
   const newUsers = useMemo(
     () =>
       users
         .filter((u) => u.createdAt)
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3),
     [users]
   );
@@ -574,9 +531,7 @@ const Dashboard = () => {
       [...orgTasks]
         .filter((t) => t.updatedAt)
         .sort(
-          (a, b) =>
-            new Date(b.updatedAt ?? "").getTime() -
-            new Date(a.updatedAt ?? "").getTime()
+          (a, b) => new Date(b.updatedAt ?? "").getTime() - new Date(a.updatedAt ?? "").getTime()
         )
         .slice(0, 5),
     [orgTasks]
@@ -593,10 +548,7 @@ const Dashboard = () => {
     [recentTasks, pendingLeaves, announcements, newUsers]
   );
 
-  const birthdays = useMemo(
-    () => upcomingBirthdays(teamBirthdayUsers),
-    [teamBirthdayUsers]
-  );
+  const birthdays = useMemo(() => upcomingBirthdays(teamBirthdayUsers), [teamBirthdayUsers]);
 
   // ------ stat cards ------
   const managerStats = [
@@ -764,10 +716,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleLeaveDecision = async (
-    id: string,
-    status: "approved" | "rejected"
-  ) => {
+  const handleLeaveDecision = async (id: string, status: "approved" | "rejected") => {
     try {
       await updateLeaveMutation.mutateAsync({ id, body: { status } });
       toast.success(`Leave ${status}.`);
@@ -809,16 +758,16 @@ const Dashboard = () => {
             key={i}
             className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm transition hover:shadow-md"
           >
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}>
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}
+            >
               <span className={item.iconColor}>{item.icon}</span>
             </div>
             <div className="min-w-0">
               <p className="truncate text-xs font-medium uppercase tracking-wide text-gray-400">
                 {item.title}
               </p>
-              <p className="mt-0.5 text-2xl font-bold text-gray-900 leading-none">
-                {item.value}
-              </p>
+              <p className="mt-0.5 text-2xl font-bold text-gray-900 leading-none">{item.value}</p>
             </div>
           </div>
         ))}
@@ -826,10 +775,8 @@ const Dashboard = () => {
 
       {/* ── Main content grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         {/* ── LEFT COLUMN (2/3) ── */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-
           {/* Attendance chart — range tabs live inside the card header */}
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
@@ -856,9 +803,18 @@ const Dashboard = () => {
                 <LineChart data={attendanceSeries}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip
-                    contentStyle={{ borderRadius: 10, border: "none", boxShadow: "0 4px 20px #0001" }}
+                    contentStyle={{
+                      borderRadius: 10,
+                      border: "none",
+                      boxShadow: "0 4px 20px #0001",
+                    }}
                   />
                   <Line
                     type="monotone"
@@ -889,10 +845,24 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height={190}>
                   <BarChart data={taskCompletionSeries} barSize={24}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
                     <Tooltip
-                      contentStyle={{ borderRadius: 10, border: "none", boxShadow: "0 4px 20px #0001" }}
+                      contentStyle={{
+                        borderRadius: 10,
+                        border: "none",
+                        boxShadow: "0 4px 20px #0001",
+                      }}
                     />
                     <Bar dataKey="value" fill="#6366F1" radius={[6, 6, 0, 0]} />
                   </BarChart>
@@ -920,7 +890,11 @@ const Dashboard = () => {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ borderRadius: 10, border: "none", boxShadow: "0 4px 20px #0001" }}
+                      contentStyle={{
+                        borderRadius: 10,
+                        border: "none",
+                        boxShadow: "0 4px 20px #0001",
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -976,7 +950,6 @@ const Dashboard = () => {
 
         {/* ── RIGHT COLUMN (1/3) ── */}
         <div className="flex flex-col gap-6">
-
           {/* My Tasks Due Today */}
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
@@ -1007,12 +980,14 @@ const Dashboard = () => {
                           task.priority === "urgent"
                             ? "bg-red-500"
                             : task.priority === "medium"
-                            ? "bg-amber-400"
-                            : "bg-emerald-400"
+                              ? "bg-amber-400"
+                              : "bg-emerald-400"
                         }`}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-800">{task.taskName}</p>
+                        <p className="truncate text-sm font-medium text-gray-800">
+                          {task.taskName}
+                        </p>
                         <p className="text-xs text-gray-400">{formatDate(task.dueDate)}</p>
                       </div>
                       <span
@@ -1020,8 +995,8 @@ const Dashboard = () => {
                           task.status === "in_progress"
                             ? "bg-blue-50 text-blue-700"
                             : task.status === "review"
-                            ? "bg-purple-50 text-purple-700"
-                            : "bg-gray-100 text-gray-600"
+                              ? "bg-purple-50 text-purple-700"
+                              : "bg-gray-100 text-gray-600"
                         }`}
                       >
                         {task.status.replace("_", " ")}
@@ -1095,17 +1070,17 @@ const Dashboard = () => {
                         b.isToday
                           ? "bg-pink-500 text-white"
                           : b.daysUntil <= 7
-                          ? "bg-pink-50 text-pink-600"
-                          : "bg-gray-100 text-gray-500"
+                            ? "bg-pink-50 text-pink-600"
+                            : "bg-gray-100 text-gray-500"
                       }`}
                     >
                       {b.isToday
                         ? "🎉 Today"
                         : b.daysUntil === 1
-                        ? "Tomorrow"
-                        : b.daysUntil <= 14
-                        ? `In ${b.daysUntil}d`
-                        : b.date}
+                          ? "Tomorrow"
+                          : b.daysUntil <= 14
+                            ? `In ${b.daysUntil}d`
+                            : b.date}
                     </span>
                   </li>
                 ))}
@@ -1130,8 +1105,7 @@ const Dashboard = () => {
               ) : (
                 <ul className="divide-y divide-gray-50">
                   {pendingLeaves.slice(0, 4).map((l) => {
-                    const uName =
-                      typeof l.user === "object" && l.user ? l.user.name : "Unknown";
+                    const uName = typeof l.user === "object" && l.user ? l.user.name : "Unknown";
                     const pending = updateLeaveMutation.isPending;
                     return (
                       <li key={l._id} className="flex items-center gap-3 px-5 py-3">
@@ -1278,23 +1252,14 @@ const Dashboard = () => {
       </div>
 
       {/* Modals */}
-      <Modal
-        isOpen={openModal === "employee"}
-        onClose={handleClose}
-        title="Add Employee"
-      >
+      <Modal isOpen={openModal === "employee"} onClose={handleClose} title="Add Employee">
         {canCreateUsers ? (
-          <form
-            onSubmit={handleCreateEmployee}
-            className="flex flex-col gap-3 mt-1"
-          >
+          <form onSubmit={handleCreateEmployee} className="flex flex-col gap-3 mt-1">
             <Input
               label="Full name"
               name="name"
               value={employeeForm.name}
-              onChange={(e) =>
-                setEmployeeForm((s) => ({ ...s, name: e.target.value }))
-              }
+              onChange={(e) => setEmployeeForm((s) => ({ ...s, name: e.target.value }))}
               required
               placeholder="Jane Doe"
             />
@@ -1303,9 +1268,7 @@ const Dashboard = () => {
               name="email"
               type="email"
               value={employeeForm.email}
-              onChange={(e) =>
-                setEmployeeForm((s) => ({ ...s, email: e.target.value }))
-              }
+              onChange={(e) => setEmployeeForm((s) => ({ ...s, email: e.target.value }))}
               required
               placeholder="jane@company.com"
             />
@@ -1314,17 +1277,12 @@ const Dashboard = () => {
               name="password"
               type="password"
               value={employeeForm.password}
-              onChange={(e) =>
-                setEmployeeForm((s) => ({ ...s, password: e.target.value }))
-              }
+              onChange={(e) => setEmployeeForm((s) => ({ ...s, password: e.target.value }))}
               required
               placeholder="At least 6 characters"
             />
             <div className="flex flex-col gap-1">
-              <label
-                className="text-sm font-medium text-gray-700"
-                htmlFor="create-user-role"
-              >
+              <label className="text-sm font-medium text-gray-700" htmlFor="create-user-role">
                 Role
               </label>
               <select
@@ -1361,19 +1319,13 @@ const Dashboard = () => {
         )}
       </Modal>
 
-      <Modal
-        isOpen={openModal === "project"}
-        onClose={handleClose}
-        title="Create Project"
-      >
+      <Modal isOpen={openModal === "project"} onClose={handleClose} title="Create Project">
         <form onSubmit={handleCreateProject} className="flex flex-col gap-3 mt-1">
           <Input
             label="Project name"
             name="projectName"
             value={projectForm.projectName}
-            onChange={(e) =>
-              setProjectForm((s) => ({ ...s, projectName: e.target.value }))
-            }
+            onChange={(e) => setProjectForm((s) => ({ ...s, projectName: e.target.value }))}
             required
             placeholder="e.g. Website redesign"
           />
@@ -1382,9 +1334,7 @@ const Dashboard = () => {
             name="description"
             type="textarea"
             value={projectForm.description}
-            onChange={(e) =>
-              setProjectForm((s) => ({ ...s, description: e.target.value }))
-            }
+            onChange={(e) => setProjectForm((s) => ({ ...s, description: e.target.value }))}
             placeholder="Brief description of the project…"
           />
           <div className="flex justify-end gap-2 mt-2">
@@ -1398,36 +1348,25 @@ const Dashboard = () => {
         </form>
       </Modal>
 
-      <Modal
-        isOpen={openModal === "task"}
-        onClose={handleClose}
-        title="Assign Task"
-      >
+      <Modal isOpen={openModal === "task"} onClose={handleClose} title="Assign Task">
         <form onSubmit={handleCreateTask} className="flex flex-col gap-3 mt-1">
           <Input
             label="Task name"
             name="taskName"
             value={taskForm.taskName}
-            onChange={(e) =>
-              setTaskForm((s) => ({ ...s, taskName: e.target.value }))
-            }
+            onChange={(e) => setTaskForm((s) => ({ ...s, taskName: e.target.value }))}
             required
             placeholder="e.g. Prepare Q3 report"
           />
           <div className="flex flex-col gap-1">
-            <label
-              className="text-sm font-medium text-gray-700"
-              htmlFor="task-project"
-            >
+            <label className="text-sm font-medium text-gray-700" htmlFor="task-project">
               Project
             </label>
             <select
               id="task-project"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
               value={taskForm.project}
-              onChange={(e) =>
-                setTaskForm((s) => ({ ...s, project: e.target.value }))
-              }
+              onChange={(e) => setTaskForm((s) => ({ ...s, project: e.target.value }))}
               required
             >
               <option value="">Select a project</option>
@@ -1439,19 +1378,14 @@ const Dashboard = () => {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label
-              className="text-sm font-medium text-gray-700"
-              htmlFor="task-assignee"
-            >
+            <label className="text-sm font-medium text-gray-700" htmlFor="task-assignee">
               Assign to
             </label>
             <select
               id="task-assignee"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/30"
               value={taskForm.assignedTo}
-              onChange={(e) =>
-                setTaskForm((s) => ({ ...s, assignedTo: e.target.value }))
-              }
+              onChange={(e) => setTaskForm((s) => ({ ...s, assignedTo: e.target.value }))}
             >
               <option value="">Unassigned</option>
               {users.map((u) => (
@@ -1463,10 +1397,7 @@ const Dashboard = () => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label
-                className="text-sm font-medium text-gray-700"
-                htmlFor="task-priority"
-              >
+              <label className="text-sm font-medium text-gray-700" htmlFor="task-priority">
                 Priority
               </label>
               <select
@@ -1490,9 +1421,7 @@ const Dashboard = () => {
               name="dueDate"
               type="date"
               value={taskForm.dueDate}
-              onChange={(e) =>
-                setTaskForm((s) => ({ ...s, dueDate: e.target.value }))
-              }
+              onChange={(e) => setTaskForm((s) => ({ ...s, dueDate: e.target.value }))}
             />
           </div>
           <div className="flex justify-end gap-2 mt-2">

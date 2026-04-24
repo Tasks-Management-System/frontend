@@ -26,9 +26,7 @@ export function userHasAnyRole(
 }
 
 /** Routes that require specific roles (undefined = any logged-in user). */
-export const ROUTE_ROLE_ACCESS: Partial<
-  Record<string, readonly AppRole[] | undefined>
-> = {
+export const ROUTE_ROLE_ACCESS: Partial<Record<string, readonly AppRole[] | undefined>> = {
   "/salary": ["admin", "hr", "super-admin"],
   "/employee": ["admin", "hr", "super-admin"],
   "/settings": ["admin", "hr", "super-admin"],

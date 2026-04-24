@@ -90,13 +90,7 @@ function ProfileAvatarFace({
   );
 }
 
-function PreviewModalImage({
-  url,
-  alt,
-}: {
-  url: string | null;
-  alt: string;
-}) {
+function PreviewModalImage({ url, alt }: { url: string | null; alt: string }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   if (!url || failedUrl === url) {
     return (
@@ -160,9 +154,18 @@ const Profile = () => {
       bankName: user?.bankName ?? "",
       bankIFSC: user?.bankIFSC ?? "",
       bankBranch: user?.bankBranch ?? "",
-      skillsJson: (user?.skills ?? []).map((s) => s.skill).filter(Boolean).join(", "),
-      educationJson: (user?.education ?? []).map((e) => e.degree).filter(Boolean).join(", "),
-      experienceJson: (user?.experience ?? []).map((e) => e.company).filter(Boolean).join(", "),
+      skillsJson: (user?.skills ?? [])
+        .map((s) => s.skill)
+        .filter(Boolean)
+        .join(", "),
+      educationJson: (user?.education ?? [])
+        .map((e) => e.degree)
+        .filter(Boolean)
+        .join(", "),
+      experienceJson: (user?.experience ?? [])
+        .map((e) => e.company)
+        .filter(Boolean)
+        .join(", "),
       leavesJson: (user?.leaves ?? [])
         .map((l) => (typeof l.totalBalance === "number" ? String(l.totalBalance) : ""))
         .filter(Boolean)
@@ -175,9 +178,7 @@ const Profile = () => {
     setIsEditing(false);
   };
 
-  const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -270,7 +271,9 @@ const Profile = () => {
                 .map((totalBalance) => ({ totalBalance }));
       }
     } catch {
-      toast.error("Invalid input for structured details. Use comma-separated text or a valid JSON array.");
+      toast.error(
+        "Invalid input for structured details. Use comma-separated text or a valid JSON array."
+      );
       return;
     }
 
@@ -386,9 +389,7 @@ const Profile = () => {
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm capitalize text-gray-500">
-                  {user?.role?.[0] ?? "—"}
-                </p>
+                <p className="mt-1 text-sm capitalize text-gray-500">{user?.role?.[0] ?? "—"}</p>
               </div>
             </div>
 
@@ -456,9 +457,7 @@ const Profile = () => {
                       disabled={updateUser.isPending}
                       className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
                     >
-                      {updateUser.isPending && (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      )}
+                      {updateUser.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       Save
                     </button>
                   </div>
@@ -499,7 +498,8 @@ const Profile = () => {
                       label="ADDRESS"
                       value={
                         user?.address?.length
-                          ? `${user.address[0]?.address ?? ""}${user.address[0]?.city ? `, ${user.address[0].city}` : ""}`.trim() || "—"
+                          ? `${user.address[0]?.address ?? ""}${user.address[0]?.city ? `, ${user.address[0].city}` : ""}`.trim() ||
+                            "—"
                           : undefined
                       }
                     />
@@ -618,21 +618,75 @@ const Profile = () => {
 
               {!isEditing ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <InfoField label="AADHAR" value={user?.aadharCardNumber} icon={<CheckCircle2 className="w-4 h-4" />} />
-                  <InfoField label="PAN" value={user?.panCardNumber} icon={<CheckCircle2 className="w-4 h-4" />} />
-                  <InfoField label="BANK ACCOUNT" value={user?.bankAccountNo} icon={<CheckCircle2 className="w-4 h-4" />} />
-                  <InfoField label="BANK NAME" value={user?.bankName} icon={<CheckCircle2 className="w-4 h-4" />} />
-                  <InfoField label="IFSC" value={user?.bankIFSC} icon={<CheckCircle2 className="w-4 h-4" />} />
-                  <InfoField label="BRANCH" value={user?.bankBranch} icon={<CheckCircle2 className="w-4 h-4" />} />
+                  <InfoField
+                    label="AADHAR"
+                    value={user?.aadharCardNumber}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                  />
+                  <InfoField
+                    label="PAN"
+                    value={user?.panCardNumber}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                  />
+                  <InfoField
+                    label="BANK ACCOUNT"
+                    value={user?.bankAccountNo}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                  />
+                  <InfoField
+                    label="BANK NAME"
+                    value={user?.bankName}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                  />
+                  <InfoField
+                    label="IFSC"
+                    value={user?.bankIFSC}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                  />
+                  <InfoField
+                    label="BRANCH"
+                    value={user?.bankBranch}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                  />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <EditField label="AADHAR" name="aadharCardNumber" value={formData.aadharCardNumber} onChange={handleFormChange} />
-                  <EditField label="PAN" name="panCardNumber" value={formData.panCardNumber} onChange={handleFormChange} />
-                  <EditField label="BANK ACCOUNT" name="bankAccountNo" value={formData.bankAccountNo} onChange={handleFormChange} />
-                  <EditField label="BANK NAME" name="bankName" value={formData.bankName} onChange={handleFormChange} />
-                  <EditField label="IFSC" name="bankIFSC" value={formData.bankIFSC} onChange={handleFormChange} />
-                  <EditField label="BRANCH" name="bankBranch" value={formData.bankBranch} onChange={handleFormChange} />
+                  <EditField
+                    label="AADHAR"
+                    name="aadharCardNumber"
+                    value={formData.aadharCardNumber}
+                    onChange={handleFormChange}
+                  />
+                  <EditField
+                    label="PAN"
+                    name="panCardNumber"
+                    value={formData.panCardNumber}
+                    onChange={handleFormChange}
+                  />
+                  <EditField
+                    label="BANK ACCOUNT"
+                    name="bankAccountNo"
+                    value={formData.bankAccountNo}
+                    onChange={handleFormChange}
+                  />
+                  <EditField
+                    label="BANK NAME"
+                    name="bankName"
+                    value={formData.bankName}
+                    onChange={handleFormChange}
+                  />
+                  <EditField
+                    label="IFSC"
+                    name="bankIFSC"
+                    value={formData.bankIFSC}
+                    onChange={handleFormChange}
+                  />
+                  <EditField
+                    label="BRANCH"
+                    name="bankBranch"
+                    value={formData.bankBranch}
+                    onChange={handleFormChange}
+                  />
                 </div>
               )}
             </div>
@@ -652,19 +706,40 @@ const Profile = () => {
                   <InfoField
                     icon={<FolderKanban className="w-4 h-4" />}
                     label="SKILLS"
-                    value={user?.skills?.length ? user.skills.map((s) => s.skill).filter(Boolean).join(", ") : undefined}
+                    value={
+                      user?.skills?.length
+                        ? user.skills
+                            .map((s) => s.skill)
+                            .filter(Boolean)
+                            .join(", ")
+                        : undefined
+                    }
                     className="wrap-break-word"
                   />
                   <InfoField
                     icon={<FolderKanban className="w-4 h-4" />}
                     label="EDUCATION"
-                    value={user?.education?.length ? user.education.map((e) => e.degree).filter(Boolean).join(", ") : undefined}
+                    value={
+                      user?.education?.length
+                        ? user.education
+                            .map((e) => e.degree)
+                            .filter(Boolean)
+                            .join(", ")
+                        : undefined
+                    }
                     className="wrap-break-word"
                   />
                   <InfoField
                     icon={<FolderKanban className="w-4 h-4" />}
                     label="EXPERIENCE"
-                    value={user?.experience?.length ? user.experience.map((e) => e.company).filter(Boolean).join(", ") : undefined}
+                    value={
+                      user?.experience?.length
+                        ? user.experience
+                            .map((e) => e.company)
+                            .filter(Boolean)
+                            .join(", ")
+                        : undefined
+                    }
                     className="wrap-break-word"
                   />
                   <InfoField
@@ -773,9 +848,7 @@ const Profile = () => {
                 </h2>
               </div>
 
-              <div className="text-sm text-gray-400 text-center py-6">
-                No recent activity
-              </div>
+              <div className="text-sm text-gray-400 text-center py-6">No recent activity</div>
             </div>
           </div>
         </div>
@@ -825,9 +898,7 @@ function InfoField({
           {label}
         </span>
       </div>
-      <p className={`text-sm font-medium text-gray-900 ${className}`}>
-        {value || "—"}
-      </p>
+      <p className={`text-sm font-medium text-gray-900 ${className}`}>{value || "—"}</p>
     </div>
   );
 }

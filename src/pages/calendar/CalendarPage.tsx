@@ -4,10 +4,7 @@ import toast from "react-hot-toast";
 import { api, ApiError } from "../../apis/apiService";
 import { apiPath } from "../../apis/apiPath";
 import { getUserById } from "../../apis/api/auth";
-import {
-  useCalendarEvents,
-  useInvalidateCalendarEvents,
-} from "../../hooks/useCalendarEvents";
+import { useCalendarEvents, useInvalidateCalendarEvents } from "../../hooks/useCalendarEvents";
 import type { CalendarEvent, CalendarViewMode, EventFilters } from "../../types/calendar.types";
 import { CALENDAR_TYPE_ORDER } from "../../types/calendar.types";
 import CalendarLayout from "../../components/calendar/CalendarLayout";
@@ -37,10 +34,7 @@ function initialView(): CalendarViewMode {
 }
 
 function emptyFilters(): EventFilters {
-  return CALENDAR_TYPE_ORDER.reduce(
-    (acc, t) => ({ ...acc, [t]: true }),
-    {} as EventFilters
-  );
+  return CALENDAR_TYPE_ORDER.reduce((acc, t) => ({ ...acc, [t]: true }), {} as EventFilters);
 }
 
 const CalendarPage = () => {
@@ -83,10 +77,7 @@ const CalendarPage = () => {
   const { events, isLoading, isError } = useCalendarEvents(rangeStart, rangeEnd);
   const invalidateCalendar = useInvalidateCalendarEvents();
 
-  const filteredEvents = useMemo(
-    () => events.filter((e) => filters[e.type]),
-    [events, filters]
-  );
+  const filteredEvents = useMemo(() => events.filter((e) => filters[e.type]), [events, filters]);
 
   const canModify = useCallback(
     (ev: CalendarEvent) => {
@@ -210,7 +201,8 @@ const CalendarPage = () => {
     // Calculate the time difference and apply to both start and end
     const oldStart = new Date(ev.start);
     const dayDiff = Math.round(
-      (newDate.getTime() - new Date(oldStart.getFullYear(), oldStart.getMonth(), oldStart.getDate()).getTime()) /
+      (newDate.getTime() -
+        new Date(oldStart.getFullYear(), oldStart.getMonth(), oldStart.getDate()).getTime()) /
         (24 * 60 * 60 * 1000)
     );
     if (dayDiff === 0) return;

@@ -1,110 +1,109 @@
 export const apiPath = {
-    auth: {
-        signup: "/auth/register",
-        login: "/auth/login",
-        createUser: "/auth/create-user",
-        getUsers: "/auth",
-        getUserById: "/auth/",
-        updateUser: "/auth/",
-        deleteUser: "/auth/",
-        logout: "/auth/logout",
-        refreshToken: "/auth/refresh-token",
-        teamBirthdays: "/auth/team/birthdays",
-    },
-    projects: {
-        list: "/project",
-        create: "/project/create",
-        byId: "/project/",
-    },
-    tasks: {
-        list: "/task",
-        create: "/task/create",
-        byId: "/task/",
-        taskQuery: "/task/query/",
-        tasksReply: "/task/reply/",
-    },
-    attendance: {
-        punchIn: "/attendance/punch-in",
-        startBreak: "/attendance/start-break",
-        endBreak: "/attendance/end-break",
-        getAttendance: "/attendance",
-        punchOut: "/attendance/punch-out",
-    },
-    leave: {
-        history: "/leave",
-        pending: "/leave/pending",
-        apply: "/leave/apply",
-        byId: "/leave/",
-        updateStatus: "/leave/",
-    },
-    hiring: {
-        createHiring: "/hiring/create",
-        getHiring: "/hiring",
-        getHiringById: "/hiring/",
-        deleteHiring: "/hiring/",
-        updateHiring: "/hiring/update/",
-    },
-    notes: {
-        list: "/notes",
-        create: "/notes/create",
-        byId: "/notes/",
-    },
-    events: {
-        list: "/events",
-        team: "/events/team",
-        byId: "/events/",
-    },
-    salary: {
-        list: "/salary",
-        create: "/salary/create",
-        byId: "/salary/",
-        pdf: "/salary/pdf/",
-    },
-    announcements: {
-        list: "/announcements",
-        create: "/announcements/create",
-        byId: "/announcements/",
-        read: "/announcements/:id/read",
-        pin: "/announcements/:id/pin",
-    },
-    assets: {
-        list: "/assets",
-        create: "/assets/create",
-        byId: "/assets/",
-        assign: "/assets/:id/assign",
-        return: "/assets/:id/return",
-    },
-    timesheets: {
-        list: "/timesheets",
-        log: "/timesheets/log",
-        byId: "/timesheets/",
-        exportCsv: "/timesheets/export/csv",
-    },
-    organization: {
-        create: "/organization",
-        my: "/organization/my",
-        all: "/organization/all",
-        sendInvite: "/organization/invite",
-        adminInvites: "/organization/invites",
-        myInvites: "/organization/invites/my",
-        acceptInvite: "/organization/invites/:id/accept",
-        rejectInvite: "/organization/invites/:id/reject",
-        removeMember: "/organization/:orgId/members/:userId",
-        sendJoinRequest: "/organization/join-request",
-        joinRequests: "/organization/join-requests",
-        myJoinRequests: "/organization/join-requests/my",
-        acceptJoinRequest: "/organization/join-requests/:id/accept",
-        rejectJoinRequest: "/organization/join-requests/:id/reject",
-    },
-}
+  auth: {
+    signup: "/auth/register",
+    login: "/auth/login",
+    createUser: "/auth/create-user",
+    getUsers: "/auth",
+    getUserById: "/auth/",
+    updateUser: "/auth/",
+    deleteUser: "/auth/",
+    logout: "/auth/logout",
+    refreshToken: "/auth/refresh-token",
+    teamBirthdays: "/auth/team/birthdays",
+  },
+  projects: {
+    list: "/project",
+    create: "/project/create",
+    byId: "/project/",
+  },
+  tasks: {
+    list: "/task",
+    create: "/task/create",
+    byId: "/task/",
+    taskQuery: "/task/query/",
+    tasksReply: "/task/reply/",
+  },
+  attendance: {
+    punchIn: "/attendance/punch-in",
+    startBreak: "/attendance/start-break",
+    endBreak: "/attendance/end-break",
+    getAttendance: "/attendance",
+    punchOut: "/attendance/punch-out",
+  },
+  leave: {
+    history: "/leave",
+    pending: "/leave/pending",
+    apply: "/leave/apply",
+    byId: "/leave/",
+    updateStatus: "/leave/",
+  },
+  hiring: {
+    createHiring: "/hiring/create",
+    getHiring: "/hiring",
+    getHiringById: "/hiring/",
+    deleteHiring: "/hiring/",
+    updateHiring: "/hiring/update/",
+  },
+  notes: {
+    list: "/notes",
+    create: "/notes/create",
+    byId: "/notes/",
+  },
+  events: {
+    list: "/events",
+    team: "/events/team",
+    byId: "/events/",
+  },
+  salary: {
+    list: "/salary",
+    create: "/salary/create",
+    byId: "/salary/",
+    pdf: "/salary/pdf/",
+  },
+  announcements: {
+    list: "/announcements",
+    create: "/announcements/create",
+    byId: "/announcements/",
+    read: "/announcements/:id/read",
+    pin: "/announcements/:id/pin",
+  },
+  assets: {
+    list: "/assets",
+    create: "/assets/create",
+    byId: "/assets/",
+    assign: "/assets/:id/assign",
+    return: "/assets/:id/return",
+  },
+  timesheets: {
+    list: "/timesheets",
+    log: "/timesheets/log",
+    byId: "/timesheets/",
+    exportCsv: "/timesheets/export/csv",
+  },
+  organization: {
+    create: "/organization",
+    my: "/organization/my",
+    all: "/organization/all",
+    sendInvite: "/organization/invite",
+    adminInvites: "/organization/invites",
+    myInvites: "/organization/invites/my",
+    acceptInvite: "/organization/invites/:id/accept",
+    rejectInvite: "/organization/invites/:id/reject",
+    removeMember: "/organization/:orgId/members/:userId",
+    sendJoinRequest: "/organization/join-request",
+    joinRequests: "/organization/join-requests",
+    myJoinRequests: "/organization/join-requests/my",
+    acceptJoinRequest: "/organization/join-requests/:id/accept",
+    rejectJoinRequest: "/organization/join-requests/:id/reject",
+  },
+};
 
 /**
  * Configure this in `.env` as `VITE_API_BASE_URL`.
  * Example: `VITE_API_BASE_URL=http://localhost:5000/api`
  */
 export const API_BASE_URL: string =
-    (import.meta as any)?.env?.VITE_API_BASE_URL?.toString?.() ||
-    "http://localhost:5051/api/v1";
+  (import.meta as any)?.env?.VITE_API_BASE_URL?.toString?.() || "http://localhost:5051/api/v1";
 
 type PathParams = Record<string, string | number | boolean | null | undefined>;
 
@@ -112,29 +111,25 @@ type PathParams = Record<string, string | number | boolean | null | undefined>;
  * Builds a URL path by replacing `:param` segments and optionally appending
  * query params. Does not prepend `API_BASE_URL`.
  */
-export function buildPath(
-    pathTemplate: string,
-    params?: PathParams,
-    query?: PathParams
-): string {
-    let path = pathTemplate;
+export function buildPath(pathTemplate: string, params?: PathParams, query?: PathParams): string {
+  let path = pathTemplate;
 
-    if (params) {
-        for (const [key, value] of Object.entries(params)) {
-            const encoded = encodeURIComponent(String(value ?? ""));
-            path = path.replace(new RegExp(`:${key}\\b`, "g"), encoded);
-        }
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      const encoded = encodeURIComponent(String(value ?? ""));
+      path = path.replace(new RegExp(`:${key}\\b`, "g"), encoded);
     }
+  }
 
-    if (query) {
-        const usp = new URLSearchParams();
-        for (const [key, value] of Object.entries(query)) {
-            if (value === undefined || value === null) continue;
-            usp.set(key, String(value));
-        }
-        const qs = usp.toString();
-        if (qs) path += (path.includes("?") ? "&" : "?") + qs;
+  if (query) {
+    const usp = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined || value === null) continue;
+      usp.set(key, String(value));
     }
+    const qs = usp.toString();
+    if (qs) path += (path.includes("?") ? "&" : "?") + qs;
+  }
 
-    return path;
+  return path;
 }

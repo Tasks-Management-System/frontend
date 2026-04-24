@@ -24,8 +24,7 @@ export const TASK_STATUS_UI: Record<
   },
   completed: {
     label: "Done",
-    badgeClassName:
-      "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80",
+    badgeClassName: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80",
     selectClassName:
       "bg-emerald-50 text-emerald-950 border-emerald-200 focus:border-emerald-300 focus:ring-emerald-500/20",
   },
@@ -38,4 +37,3 @@ export const TASK_STATUS_OPTIONS: Array<{ label: string; value: TaskStatus }> = 
 export function taskStatusSelectClass(status: TaskStatus) {
   return TASK_STATUS_UI[status].selectClassName;
 }
-

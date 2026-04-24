@@ -31,10 +31,7 @@ const Dropdown = ({
   // 👉 Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -44,13 +41,8 @@ const Dropdown = ({
 
   return (
     <div className="w-full relative" ref={dropdownRef}>
-      
       {/* Label */}
-      {label && (
-        <label className="text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
+      {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
 
       {/* Trigger */}
       <button
@@ -60,11 +52,7 @@ const Dropdown = ({
           mt-1 w-full flex items-center justify-between
           px-3 py-2 rounded-lg border text-sm bg-white
           transition-all duration-200
-          ${
-            error
-              ? "border-red-500"
-              : "border-gray-300 hover:border-gray-400"
-          }
+          ${error ? "border-red-500" : "border-gray-300 hover:border-gray-400"}
           focus:ring-2 focus:ring-violet-500
         `}
       >
@@ -73,9 +61,7 @@ const Dropdown = ({
         </span>
 
         <ChevronDown
-          className={`w-4 h-4 transition-transform duration-300 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -113,17 +99,13 @@ const Dropdown = ({
               </div>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-gray-400">
-              No options
-            </div>
+            <div className="px-3 py-2 text-sm text-gray-400">No options</div>
           )}
         </div>
       )}
 
       {/* Error */}
-      {error && (
-        <p className="text-xs text-red-500 mt-1">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 };

@@ -38,8 +38,14 @@ function ageTurning(dob: string | null | undefined) {
 
 /** Repeats an element N times with a staggered delay for CSS animations. */
 const CONFETTI_COLORS = [
-  "#f472b6", "#fb7185", "#facc15", "#a78bfa",
-  "#60a5fa", "#34d399", "#fbbf24", "#f87171",
+  "#f472b6",
+  "#fb7185",
+  "#facc15",
+  "#a78bfa",
+  "#60a5fa",
+  "#34d399",
+  "#fbbf24",
+  "#f87171",
 ];
 
 function Confetti() {
@@ -115,10 +121,7 @@ const BirthdayPopup = () => {
   const myId = getUserId();
   const { data: users = [] } = useTeamBirthdays();
 
-  const birthdayUsers = useMemo(
-    () => users.filter((u) => isBirthdayToday(u.dob ?? null)),
-    [users]
-  );
+  const birthdayUsers = useMemo(() => users.filter((u) => isBirthdayToday(u.dob ?? null)), [users]);
 
   // Put the current user last so they see teammates first (happier UX).
   const queue = useMemo(() => {
@@ -251,10 +254,7 @@ const BirthdayPopup = () => {
                 {isSelf ? "Happy Birthday!" : "Birthday alert"}
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
-              <h2
-                id="bday-popup-title"
-                className="mt-2 text-2xl font-bold leading-tight"
-              >
+              <h2 id="bday-popup-title" className="mt-2 text-2xl font-bold leading-tight">
                 {isSelf ? `Happy Birthday, ${firstName}!` : `It's ${firstName}'s Birthday!`}
               </h2>
               {age !== null && (
@@ -269,11 +269,9 @@ const BirthdayPopup = () => {
             <div className="flex items-center gap-3">
               <BirthdayAvatar user={current} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {current.name}
-                </p>
+                <p className="truncate text-sm font-semibold text-slate-900">{current.name}</p>
                 <p className="truncate text-xs capitalize text-slate-500">
-                  {Array.isArray(current.role) ? current.role[0] : current.role ?? "Team"}
+                  {Array.isArray(current.role) ? current.role[0] : (current.role ?? "Team")}
                 </p>
               </div>
               <div className="ml-auto flex items-center gap-1 rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-600">
@@ -298,8 +296,8 @@ const BirthdayPopup = () => {
                         i === index
                           ? "w-6 bg-pink-500"
                           : i < index
-                          ? "w-1.5 bg-pink-300"
-                          : "w-1.5 bg-slate-200"
+                            ? "w-1.5 bg-pink-300"
+                            : "w-1.5 bg-slate-200"
                       }`}
                     />
                   ))}

@@ -165,7 +165,9 @@ export function normaliseToCalendarEvent(
     let end: Date;
     if (a.punchInTime) {
       start = new Date(a.punchInTime);
-      end = a.punchOutTime ? new Date(a.punchOutTime) : new Date(start.getTime() + 8 * 60 * 60 * 1000);
+      end = a.punchOutTime
+        ? new Date(a.punchOutTime)
+        : new Date(start.getTime() + 8 * 60 * 60 * 1000);
     } else {
       start = new Date(day);
       start.setHours(9, 0, 0, 0);

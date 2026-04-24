@@ -1,5 +1,9 @@
 import { CalendarDays, Loader2, UserRound } from "lucide-react";
-import { TASK_STATUS_OPTIONS, TASK_STATUS_UI, taskStatusSelectClass } from "../../constants/taskStatus";
+import {
+  TASK_STATUS_OPTIONS,
+  TASK_STATUS_UI,
+  taskStatusSelectClass,
+} from "../../constants/taskStatus";
 import type { Task, TaskStatus } from "../../types/task.types";
 import { formatDue, taskAssigneeName, taskProjectName } from "./taskUtils";
 
@@ -42,12 +46,8 @@ export function TaskCard({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-200/80 to-transparent opacity-0 transition group-hover:opacity-100" />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-            {projectName}
-          </p>
-          <h3 className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">
-            {task.taskName}
-          </h3>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{projectName}</p>
+          <h3 className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">{task.taskName}</h3>
         </div>
         <span
           className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${TASK_STATUS_UI[task.status].badgeClassName}`}

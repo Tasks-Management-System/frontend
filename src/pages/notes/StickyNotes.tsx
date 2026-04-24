@@ -56,10 +56,7 @@ function ColorSwatches({
   onChange: (c: StickyColorId) => void;
   size?: "sm" | "md";
 }) {
-  const btn =
-    size === "sm"
-      ? "h-6 w-6 ring-2 ring-offset-1"
-      : "h-9 w-9 ring-2 ring-offset-2";
+  const btn = size === "sm" ? "h-6 w-6 ring-2 ring-offset-1" : "h-9 w-9 ring-2 ring-offset-2";
   return (
     <div className="flex flex-wrap gap-2" role="list" aria-label="Note color">
       {STICKY_COLOR_OPTIONS.map((opt) => (
@@ -157,9 +154,7 @@ export default function StickyNotes() {
         { id: s.id, body: { positionX: nx, positionY: ny } },
         {
           onError: (err) => {
-            toast.error(
-              (err as ApiError)?.message ?? "Could not save position"
-            );
+            toast.error((err as ApiError)?.message ?? "Could not save position");
           },
         }
       );
@@ -187,46 +182,41 @@ export default function StickyNotes() {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const zoomOut = () =>
-    setZoom((z) => clamp(z - ZOOM_STEP, ZOOM_MIN, ZOOM_MAX));
-  const zoomIn = () =>
-    setZoom((z) => clamp(z + ZOOM_STEP, ZOOM_MIN, ZOOM_MAX));
+  const zoomOut = () => setZoom((z) => clamp(z - ZOOM_STEP, ZOOM_MIN, ZOOM_MAX));
+  const zoomIn = () => setZoom((z) => clamp(z + ZOOM_STEP, ZOOM_MIN, ZOOM_MAX));
   const zoomReset = () => setZoom(1);
 
-  const handleGripDown = useCallback(
-    (e: ReactPointerEvent, note: StickyNoteType) => {
-      if (!boardRef.current) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const article = (e.currentTarget as HTMLElement).closest(
-        "[data-sticky-note]"
-      ) as HTMLElement | null;
-      if (!article) return;
+  const handleGripDown = useCallback((e: ReactPointerEvent, note: StickyNoteType) => {
+    if (!boardRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const article = (e.currentTarget as HTMLElement).closest(
+      "[data-sticky-note]"
+    ) as HTMLElement | null;
+    if (!article) return;
 
-      const br = boardRef.current.getBoundingClientRect();
-      const pos = notePosition(note);
-      dragSession.current = {
-        id: note._id,
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        originX: pos.x,
-        originY: pos.y,
-        boardW: br.width,
-        boardH: br.height,
-        el: article,
-      };
-      article.style.zIndex = "60";
-      article.style.willChange = "transform";
-      article.classList.add("sticky-note--dragging");
-      document.body.style.userSelect = "none";
-      try {
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-      } catch {
-        /* older browsers */
-      }
-    },
-    []
-  );
+    const br = boardRef.current.getBoundingClientRect();
+    const pos = notePosition(note);
+    dragSession.current = {
+      id: note._id,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      originX: pos.x,
+      originY: pos.y,
+      boardW: br.width,
+      boardH: br.height,
+      el: article,
+    };
+    article.style.zIndex = "60";
+    article.style.willChange = "transform";
+    article.classList.add("sticky-note--dragging");
+    document.body.style.userSelect = "none";
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* older browsers */
+    }
+  }, []);
 
   const handleColorChange = (noteId: string, color: StickyColorId) => {
     patchMut.mutate(
@@ -349,89 +339,86 @@ export default function StickyNotes() {
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(203,213,225)_1px,transparent_0)] [background-size:24px_24px] opacity-[0.35]" />
           <div className="relative h-full min-h-full min-w-full w-full">
-          {isLoading ? (
-            <StickyNotesBoardSkeleton />
-          ) : isError ? (
-            <div className="absolute inset-0 flex items-center justify-center p-4">
-              <div className="rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-800">
-                {(error as Error)?.message ?? "Could not load notes."}
+            {isLoading ? (
+              <StickyNotesBoardSkeleton />
+            ) : isError ? (
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div className="rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-800">
+                  {(error as Error)?.message ?? "Could not load notes."}
+                </div>
               </div>
-            </div>
-          ) : notes.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
-              <StickyNote className="h-12 w-12 text-gray-300" />
-              <p className="max-w-sm text-sm text-gray-500">
-                Your board is empty. Click{" "}
-                <span className="font-medium text-gray-700">New sticky</span>{" "}
-                to add a note—it will appear here and you can drag it
-                anywhere.
-              </p>
-            </div>
-          ) : (
-            notes.map((note) => {
-              const { x, y } = notePosition(note);
-              const card = stickyCardClasses(note.color);
-              return (
-                <article
-                  key={note._id}
-                  data-sticky-note
-                  className={`
+            ) : notes.length === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
+                <StickyNote className="h-12 w-12 text-gray-300" />
+                <p className="max-w-sm text-sm text-gray-500">
+                  Your board is empty. Click{" "}
+                  <span className="font-medium text-gray-700">New sticky</span> to add a note—it
+                  will appear here and you can drag it anywhere.
+                </p>
+              </div>
+            ) : (
+              notes.map((note) => {
+                const { x, y } = notePosition(note);
+                const card = stickyCardClasses(note.color);
+                return (
+                  <article
+                    key={note._id}
+                    data-sticky-note
+                    className={`
                     absolute w-[min(15.5rem,calc(100vw-3rem))] max-w-[248px] rounded-xl border bg-gradient-to-br p-0
                     shadow-[3px_3px_0_rgba(15,23,42,0.07),0_12px_28px_rgba(15,23,42,0.06)]
                     z-10
                     ${card}
                   `}
-                  style={{ left: `${x}%`, top: `${y}%` }}
-                >
-                  <div
-                    className="flex cursor-grab touch-none items-center gap-1.5 border-b border-black/5 bg-black/[0.03] px-2 py-1.5 active:cursor-grabbing"
-                    onPointerDown={(e) => handleGripDown(e, note)}
-                    role="presentation"
+                    style={{ left: `${x}%`, top: `${y}%` }}
                   >
-                    <GripVertical className="h-4 w-4 shrink-0 text-gray-500/80" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                      Drag
-                    </span>
-                  </div>
-                  <div className="px-3 pb-2 pt-2">
-                    <h3 className="text-sm font-bold leading-snug">{note.title}</h3>
-                    <p className="mt-1.5 max-h-36 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed opacity-90">
-                      {note.content}
-                    </p>
-                    {note.updatedAt ? (
-                      <p className="mt-2 text-[10px] font-medium uppercase tracking-wide opacity-55">
-                        {formatWhen(note.updatedAt)}
-                      </p>
-                    ) : null}
                     <div
-                      className="mt-3 flex items-center gap-1.5 border-t border-black/5 pt-2"
-                      onPointerDown={(e) => e.stopPropagation()}
+                      className="flex cursor-grab touch-none items-center gap-1.5 border-b border-black/5 bg-black/[0.03] px-2 py-1.5 active:cursor-grabbing"
+                      onPointerDown={(e) => handleGripDown(e, note)}
+                      role="presentation"
                     >
-                      <span className="text-[10px] font-medium text-gray-600/90">
-                        Color
+                      <GripVertical className="h-4 w-4 shrink-0 text-gray-500/80" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        Drag
                       </span>
-                      <div className="flex flex-wrap gap-1">
-                        {STICKY_COLOR_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            title={opt.label}
-                            disabled={patchMut.isPending}
-                            onClick={() => handleColorChange(note._id, opt.id)}
-                            className={`
+                    </div>
+                    <div className="px-3 pb-2 pt-2">
+                      <h3 className="text-sm font-bold leading-snug">{note.title}</h3>
+                      <p className="mt-1.5 max-h-36 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed opacity-90">
+                        {note.content}
+                      </p>
+                      {note.updatedAt ? (
+                        <p className="mt-2 text-[10px] font-medium uppercase tracking-wide opacity-55">
+                          {formatWhen(note.updatedAt)}
+                        </p>
+                      ) : null}
+                      <div
+                        className="mt-3 flex items-center gap-1.5 border-t border-black/5 pt-2"
+                        onPointerDown={(e) => e.stopPropagation()}
+                      >
+                        <span className="text-[10px] font-medium text-gray-600/90">Color</span>
+                        <div className="flex flex-wrap gap-1">
+                          {STICKY_COLOR_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              title={opt.label}
+                              disabled={patchMut.isPending}
+                              onClick={() => handleColorChange(note._id, opt.id)}
+                              className={`
                               h-5 w-5 shrink-0 rounded-full transition hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500
                               ${opt.swatch}
                               ${(note.color ?? "lemon") === opt.id ? "ring-2 ring-violet-600 ring-offset-1" : "ring-1 ring-black/10"}
                             `}
-                          />
-                        ))}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })
-          )}
+                  </article>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -467,10 +454,7 @@ export default function StickyNotes() {
           aria-labelledby="sticky-panel-title"
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-            <h2
-              id="sticky-panel-title"
-              className="text-lg font-semibold text-gray-900"
-            >
+            <h2 id="sticky-panel-title" className="text-lg font-semibold text-gray-900">
               New sticky
             </h2>
             <button

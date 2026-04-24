@@ -74,7 +74,7 @@ export function AttendanceRow({ record, showUser, expanded, onToggle }: Attendan
         {showUser && (
           <td className="py-3 pr-4 font-medium text-slate-900">
             {typeof record.user === "object" && record.user && "name" in record.user
-              ? (record.user as { name?: string }).name ?? "—"
+              ? ((record.user as { name?: string }).name ?? "—")
               : "—"}
           </td>
         )}

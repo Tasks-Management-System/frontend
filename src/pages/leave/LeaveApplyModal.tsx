@@ -183,10 +183,7 @@ export function LeaveApplyModal({ isOpen, onClose }: LeaveApplyModalProps) {
         </div>
 
         <div>
-          <label
-            htmlFor="leave-reason"
-            className="mb-1 block text-sm font-medium text-slate-700"
-          >
+          <label htmlFor="leave-reason" className="mb-1 block text-sm font-medium text-slate-700">
             Reason
           </label>
           <textarea
@@ -198,9 +195,7 @@ export function LeaveApplyModal({ isOpen, onClose }: LeaveApplyModalProps) {
               errors.reason ? "border-red-500" : "border-gray-300"
             }`}
           />
-          {errors.reason && (
-            <p className="mt-1 text-xs text-red-600">{errors.reason.message}</p>
-          )}
+          {errors.reason && <p className="mt-1 text-xs text-red-600">{errors.reason.message}</p>}
         </div>
 
         <div className="flex justify-end gap-2 pt-2">

@@ -6,8 +6,7 @@ import type { Announcement, AnnouncementsListResponse } from "../../types/announ
 export function useAnnouncements() {
   return useQuery({
     queryKey: ["announcements"],
-    queryFn: () =>
-      api.get<AnnouncementsListResponse>(apiPath.announcements.list, { auth: true }),
+    queryFn: () => api.get<AnnouncementsListResponse>(apiPath.announcements.list, { auth: true }),
     select: (data) => data.announcements,
   });
 }
@@ -57,11 +56,7 @@ export function usePinAnnouncement() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, isPinned }: { id: string; isPinned: boolean }) =>
-      api.patch(
-        `${apiPath.announcements.byId}${id}/pin`,
-        { isPinned },
-        { auth: true }
-      ),
+      api.patch(`${apiPath.announcements.byId}${id}/pin`, { isPinned }, { auth: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["announcements"] }),
   });
 }
@@ -69,8 +64,7 @@ export function usePinAnnouncement() {
 export function useDeleteAnnouncement() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      api.del(`${apiPath.announcements.byId}${id}`, { auth: true }),
+    mutationFn: (id: string) => api.del(`${apiPath.announcements.byId}${id}`, { auth: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["announcements"] }),
   });
 }

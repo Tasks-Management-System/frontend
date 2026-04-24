@@ -45,12 +45,24 @@ export function ListView({
             <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50/90 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th scope="col" className="px-4 py-3.5">Project</th>
-                  <th scope="col" className="px-4 py-3.5">Task</th>
-                  <th scope="col" className="px-4 py-3.5">Description</th>
-                  <th scope="col" className="px-4 py-3.5">Assignee</th>
-                  <th scope="col" className="px-4 py-3.5 whitespace-nowrap">Due</th>
-                  <th scope="col" className="px-4 py-3.5 whitespace-nowrap">Status</th>
+                  <th scope="col" className="px-4 py-3.5">
+                    Project
+                  </th>
+                  <th scope="col" className="px-4 py-3.5">
+                    Task
+                  </th>
+                  <th scope="col" className="px-4 py-3.5">
+                    Description
+                  </th>
+                  <th scope="col" className="px-4 py-3.5">
+                    Assignee
+                  </th>
+                  <th scope="col" className="px-4 py-3.5 whitespace-nowrap">
+                    Due
+                  </th>
+                  <th scope="col" className="px-4 py-3.5 whitespace-nowrap">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -97,7 +109,9 @@ export function ListView({
                           className={`min-w-[8.5rem] rounded-lg border px-2 py-1.5 text-xs font-medium shadow-sm focus:outline-none focus:ring-2 disabled:opacity-50 ${taskStatusSelectClass(task.status)}`}
                         >
                           {TASK_STATUS_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
                           ))}
                         </select>
                         {updatingId === task._id ? (
@@ -123,7 +137,9 @@ export function ListView({
                 aria-label="Rows per page"
               >
                 {PAGE_SIZE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
                 ))}
               </select>
             </div>

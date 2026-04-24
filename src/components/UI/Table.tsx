@@ -17,14 +17,9 @@ interface TableProps {
   hideStaleCompletedTasks?: boolean;
 }
 
-const Table: React.FC<TableProps> = ({
-  columns,
-  data,
-  hideStaleCompletedTasks = false,
-}) => {
+const Table: React.FC<TableProps> = ({ columns, data, hideStaleCompletedTasks = false }) => {
   const visibleData = useMemo(
-    () =>
-      hideStaleCompletedTasks ? withoutStaleCompletedTasks(data) : data,
+    () => (hideStaleCompletedTasks ? withoutStaleCompletedTasks(data) : data),
     [data, hideStaleCompletedTasks]
   );
 
@@ -33,8 +28,7 @@ const Table: React.FC<TableProps> = ({
   /** Avoid squashing many columns into overlapping tracks; scroll horizontally instead. */
   const gridMinWidth = Math.min(1200, Math.max(100, colCount * 140));
 
-  const cellClass =
-    "min-w-0 max-w-full overflow-hidden [overflow-wrap:anywhere] break-words";
+  const cellClass = "min-w-0 max-w-full overflow-hidden [overflow-wrap:anywhere] break-words";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -74,17 +68,12 @@ const Table: React.FC<TableProps> = ({
       {/* Footer */}
       <div className="flex items-center justify-between px-6 py-4 text-sm text-gray-500 bg-gray-50 border-t border-gray-100">
         <span>
-          Showing {visibleData.length}{" "}
-          {visibleData.length === 1 ? "row" : "rows"}
+          Showing {visibleData.length} {visibleData.length === 1 ? "row" : "rows"}
         </span>
 
         <div className="flex gap-2">
-          <button className="w-8 h-8 rounded-lg border hover:bg-gray-100">
-            {"<"}
-          </button>
-          <button className="w-8 h-8 rounded-lg border hover:bg-gray-100">
-            {">"}
-          </button>
+          <button className="w-8 h-8 rounded-lg border hover:bg-gray-100">{"<"}</button>
+          <button className="w-8 h-8 rounded-lg border hover:bg-gray-100">{">"}</button>
         </div>
       </div>
     </div>

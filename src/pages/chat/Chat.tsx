@@ -1,13 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import {
-  Search,
-  Send,
-  MessageSquare,
-  Circle,
-  ArrowLeft,
-  Check,
-  CheckCheck,
-} from "lucide-react";
+import { Search, Send, MessageSquare, Circle, ArrowLeft, Check, CheckCheck } from "lucide-react";
 import { useChatMessages, useChatUsers, useOnlineUsers } from "../../apis/api/chat";
 import { getUserId } from "../../utils/auth";
 import { socket } from "../../utils/socket";
@@ -88,15 +80,9 @@ function formatDateSeparator(iso: string) {
   });
 }
 
-function shouldShowDateSeparator(
-  current: ChatMessage,
-  prev: ChatMessage | undefined
-) {
+function shouldShowDateSeparator(current: ChatMessage, prev: ChatMessage | undefined) {
   if (!prev) return true;
-  return (
-    new Date(current.createdAt).toDateString() !==
-    new Date(prev.createdAt).toDateString()
-  );
+  return new Date(current.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
 }
 
 /* ------------------------------------------------------------------ */
@@ -127,9 +113,7 @@ function ContactList({
     if (!search.trim()) return others;
     const q = search.toLowerCase();
     return others.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
+      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
     );
   }, [users, currentUserId, search]);
 
@@ -142,10 +126,7 @@ function ContactList({
       const aMsg = lastMessages.get(a._id);
       const bMsg = lastMessages.get(b._id);
       if (aMsg && bMsg)
-        return (
-          new Date(bMsg.createdAt).getTime() -
-          new Date(aMsg.createdAt).getTime()
-        );
+        return new Date(bMsg.createdAt).getTime() - new Date(aMsg.createdAt).getTime();
       if (aMsg) return -1;
       if (bMsg) return 1;
       return a.name.localeCompare(b.name);
@@ -193,11 +174,7 @@ function ContactList({
                     : "border-l-[3px] border-transparent hover:bg-gray-50"
                 }`}
               >
-                <Avatar
-                  name={user.name}
-                  image={user.profileImage}
-                  online={isOnline}
-                />
+                <Avatar name={user.name} image={user.profileImage} online={isOnline} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p
@@ -221,7 +198,7 @@ function ContactList({
                           : lastMsg.message
                         : isOnline
                           ? "Online"
-                          : user.role?.[0] ?? "Offline"}
+                          : (user.role?.[0] ?? "Offline")}
                     </p>
                     {unread > 0 && !isSelected && (
                       <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
@@ -243,17 +220,9 @@ function ContactList({
 /*  Message Bubble                                                     */
 /* ------------------------------------------------------------------ */
 
-function MessageBubble({
-  msg,
-  isMine,
-}: {
-  msg: ChatMessage;
-  isMine: boolean;
-}) {
+function MessageBubble({ msg, isMine }: { msg: ChatMessage; isMine: boolean }) {
   return (
-    <div
-      className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1 group`}
-    >
+    <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1 group`}>
       <div
         className={`relative max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 shadow-sm ${
           isMine
@@ -261,17 +230,13 @@ function MessageBubble({
             : "bg-white text-gray-800 rounded-bl-md border border-gray-100"
         }`}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-          {msg.message}
-        </p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.message}</p>
         <div
           className={`mt-1 flex items-center justify-end gap-1 ${
             isMine ? "text-violet-200" : "text-gray-400"
           }`}
         >
-          <span className="text-[10px]">
-            {formatMessageTime(msg.createdAt)}
-          </span>
+          <span className="text-[10px]">{formatMessageTime(msg.createdAt)}</span>
           {isMine &&
             (msg.isRead ? (
               <CheckCheck className="h-3.5 w-3.5" />
@@ -313,9 +278,7 @@ function EmptyState() {
       <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-violet-50">
         <MessageSquare className="h-10 w-10 text-violet-400" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-800">
-        Start a conversation
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-800">Start a conversation</h3>
       <p className="mt-1 max-w-xs text-sm text-gray-500">
         Select a contact from the list to begin chatting with your team members.
       </p>
@@ -339,12 +302,8 @@ const Chat = () => {
   const [messageInput, setMessageInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  const [lastMessages, setLastMessages] = useState<Map<string, ChatMessage>>(
-    new Map()
-  );
-  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(
-    new Map()
-  );
+  const [lastMessages, setLastMessages] = useState<Map<string, ChatMessage>>(new Map());
+  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(new Map());
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -373,10 +332,7 @@ const Chat = () => {
   // Socket event listeners
   useEffect(() => {
     function handleReceive(msg: ChatMessage) {
-      const otherUserId =
-        msg.sender._id === currentUserId
-          ? msg.receiver._id
-          : msg.sender._id;
+      const otherUserId = msg.sender._id === currentUserId ? msg.receiver._id : msg.sender._id;
 
       // Update last message for contact list
       setLastMessages((prev) => {
@@ -387,10 +343,8 @@ const Chat = () => {
 
       // If this message belongs to the active conversation, add it
       if (
-        (msg.sender._id === selectedUserId &&
-          msg.receiver._id === currentUserId) ||
-        (msg.sender._id === currentUserId &&
-          msg.receiver._id === selectedUserId)
+        (msg.sender._id === selectedUserId && msg.receiver._id === currentUserId) ||
+        (msg.sender._id === currentUserId && msg.receiver._id === selectedUserId)
       ) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev;
@@ -433,9 +387,7 @@ const Chat = () => {
       if (readBy === selectedUserId) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.sender._id === currentUserId && !m.isRead
-              ? { ...m, isRead: true }
-              : m
+            m.sender._id === currentUserId && !m.isRead ? { ...m, isRead: true } : m
           )
         );
       }
@@ -478,12 +430,15 @@ const Chat = () => {
     }
   }, [selectedUserId]);
 
-  const handleSelectUser = useCallback((id: string) => {
-    if (id === selectedUserId) return;
-    setSelectedUserId(id);
-    setMessages([]);
-    setMessageInput("");
-  }, [selectedUserId]);
+  const handleSelectUser = useCallback(
+    (id: string) => {
+      if (id === selectedUserId) return;
+      setSelectedUserId(id);
+      setMessages([]);
+      setMessageInput("");
+    },
+    [selectedUserId]
+  );
 
   const handleSend = useCallback(() => {
     const text = messageInput.trim();
@@ -532,9 +487,7 @@ const Chat = () => {
     }
   };
 
-  const isSelectedOnline = selectedUserId
-    ? onlineUserIds.has(selectedUserId)
-    : false;
+  const isSelectedOnline = selectedUserId ? onlineUserIds.has(selectedUserId) : false;
 
   const showTyping = selectedUserId && typingUsers.has(selectedUserId);
 
@@ -563,9 +516,7 @@ const Chat = () => {
         <div className="flex items-center justify-between border-b border-gray-200/60 px-4 py-4 sm:px-5">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Messages</h2>
-            <p className="text-xs text-gray-500">
-              {onlineUserIds.size} online
-            </p>
+            <p className="text-xs text-gray-500">{onlineUserIds.size} online</p>
           </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
             <MessageSquare className="h-5 w-5" />
@@ -584,11 +535,7 @@ const Chat = () => {
       </div>
 
       {/* ---- Chat Area ---- */}
-      <div
-        className={`${
-          !mobileShowChat ? "hidden" : "flex"
-        } min-w-0 flex-1 flex-col md:flex`}
-      >
+      <div className={`${!mobileShowChat ? "hidden" : "flex"} min-w-0 flex-1 flex-col md:flex`}>
         {!selectedUserId ? (
           <EmptyState />
         ) : (
@@ -621,11 +568,7 @@ const Chat = () => {
                     }`}
                   />
                   <span className="text-xs text-gray-500">
-                    {showTyping
-                      ? "Typing..."
-                      : isSelectedOnline
-                        ? "Online"
-                        : "Offline"}
+                    {showTyping ? "Typing..." : isSelectedOnline ? "Online" : "Offline"}
                   </span>
                 </div>
               </div>
@@ -641,9 +584,7 @@ const Chat = () => {
                   <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-violet-50">
                     <MessageSquare className="h-7 w-7 text-violet-400" />
                   </div>
-                  <p className="text-sm font-medium text-gray-600">
-                    No messages yet
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">No messages yet</p>
                   <p className="mt-0.5 text-xs text-gray-400">
                     Send a message to start the conversation
                   </p>
@@ -660,17 +601,12 @@ const Chat = () => {
                         <div className="h-px flex-1 bg-gray-200" />
                       </div>
                     )}
-                    <MessageBubble
-                      msg={msg}
-                      isMine={msg.sender._id === currentUserId}
-                    />
+                    <MessageBubble msg={msg} isMine={msg.sender._id === currentUserId} />
                   </div>
                 ))
               )}
 
-              {showTyping && (
-                <TypingIndicator name={selectedUser?.name ?? ""} />
-              )}
+              {showTyping && <TypingIndicator name={selectedUser?.name ?? ""} />}
 
               <div ref={messagesEndRef} />
             </div>
@@ -707,9 +643,7 @@ const Chat = () => {
                   <Send className="h-5 w-5" />
                 </button>
               </div>
-              <p className="mt-1.5 text-[11px] text-gray-400 sm:hidden">
-                Tap send or press Enter
-              </p>
+              <p className="mt-1.5 text-[11px] text-gray-400 sm:hidden">Tap send or press Enter</p>
               <p className="mt-1.5 hidden text-[11px] text-gray-400 sm:block">
                 Press Enter to send, Shift+Enter for new line
               </p>

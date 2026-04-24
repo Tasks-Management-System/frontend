@@ -10,13 +10,7 @@ import type { CalendarEvent } from "../../types/calendar.types";
 import { EVENT_COLORS, SWATCH_COLORS } from "../../types/calendar.types";
 import { getCalendarEventMongoId } from "./calendarUtils";
 
-type CalType =
-  | "meeting"
-  | "schedule"
-  | "call"
-  | "deadline"
-  | "reminder"
-  | "other";
+type CalType = "meeting" | "schedule" | "call" | "deadline" | "reminder" | "other";
 
 const TYPE_GRID: { key: CalType; label: string }[] = [
   { key: "meeting", label: "Meeting" },
@@ -78,13 +72,7 @@ function initials(name: string) {
     .slice(0, 2);
 }
 
-const CreateEventModal = ({
-  open,
-  onClose,
-  onSuccess,
-  editingEvent,
-  defaultDateTime,
-}: Props) => {
+const CreateEventModal = ({ open, onClose, onSuccess, editingEvent, defaultDateTime }: Props) => {
   const { data: users = [] } = useAssignableUsers();
   const [title, setTitle] = useState("");
   const [type, setType] = useState<CalType>("meeting");
@@ -107,10 +95,7 @@ const CreateEventModal = ({
     const q = search.trim().toLowerCase();
     if (!q) return users.slice(0, 8);
     return users
-      .filter(
-        (u) =>
-          u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-      )
+      .filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
       .slice(0, 12);
   }, [users, search]);
 
@@ -157,19 +142,16 @@ const CreateEventModal = ({
     setDescription("");
     setColor(SWATCH_COLORS[0]);
     setRecurrence("none");
-      setReminderMinutes(15);
-      setReminderSent(false);
-      setVisibleToTeam(true);
+    setReminderMinutes(15);
+    setReminderSent(false);
+    setVisibleToTeam(true);
     setAttendees([]);
     setSearch("");
   }, [open, editingEvent, defaultDateTime]);
 
   const addUser = (u: User) => {
     if (attendees.some((a) => a.userId === u._id)) return;
-    setAttendees((prev) => [
-      ...prev,
-      { userId: u._id, name: u.name, email: u.email },
-    ]);
+    setAttendees((prev) => [...prev, { userId: u._id, name: u.name, email: u.email }]);
     setSearch("");
   };
 
@@ -215,9 +197,7 @@ const CreateEventModal = ({
       color,
       recurrence,
       reminderMinutes,
-      ...(editingEvent?.source === "calendar"
-        ? { reminderSent }
-        : {}),
+      ...(editingEvent?.source === "calendar" ? { reminderSent } : {}),
       visibleToTeam,
     };
 

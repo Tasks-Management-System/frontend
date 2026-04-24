@@ -2,7 +2,13 @@ import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AttendanceRecord } from "../../types/attendance.types";
 import { AttendanceWeekSkeleton } from "../../components/UI/Skeleton";
-import { formatMs, recordDateYmd, recordUserId, shortDayHeading, userLabel } from "./attendanceUtils";
+import {
+  formatMs,
+  recordDateYmd,
+  recordUserId,
+  shortDayHeading,
+  userLabel,
+} from "./attendanceUtils";
 
 interface WeeklySummaryTableProps {
   days: string[];
@@ -52,8 +58,7 @@ export function WeeklySummaryTable({
         .map(([id, name]) => ({ id, name }))
         .sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      const uid =
-        (records.length > 0 ? recordUserId(records[0]) : "") || selfUserId;
+      const uid = (records.length > 0 ? recordUserId(records[0]) : "") || selfUserId;
       rowKeys = [{ id: uid || "me", name: "Your hours" }];
     }
 
@@ -70,7 +75,7 @@ export function WeeklySummaryTable({
           ms,
           display:
             rec && (ms > 0 || rec.status === "working" || rec.status === "on_break")
-              ? rec.readableDayTotal ?? formatMs(ms)
+              ? (rec.readableDayTotal ?? formatMs(ms))
               : "—",
         };
       });
@@ -125,9 +130,7 @@ export function WeeklySummaryTable({
         <table className="w-full min-w-[640px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/90 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {isAdmin && (
-                <th className="sticky left-0 z-10 bg-slate-50/95 px-3 py-3">Employee</th>
-              )}
+              {isAdmin && <th className="sticky left-0 z-10 bg-slate-50/95 px-3 py-3">Employee</th>}
               {days.map((ymd) => (
                 <th key={ymd} className="px-2 py-3 text-center">
                   {shortDayHeading(ymd)}
@@ -145,10 +148,7 @@ export function WeeklySummaryTable({
                   </td>
                 )}
                 {row.cells.map((c) => (
-                  <td
-                    key={c.ymd}
-                    className="px-2 py-3 text-center tabular-nums text-slate-700"
-                  >
+                  <td key={c.ymd} className="px-2 py-3 text-center tabular-nums text-slate-700">
                     <span title={c.rec ? String(c.rec.status) : undefined}>{c.display}</span>
                   </td>
                 ))}

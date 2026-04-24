@@ -29,33 +29,25 @@ const Input: React.FC<InputProps> = ({
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      
       {/* LABEL */}
       {label && (
         <label className="text-sm font-medium text-gray-700 flex justify-between">
           {label}
-          {rightLabel && (
-            <span className="text-sm text-gray-500">
-              {rightLabel}
-            </span>
-          )}
+          {rightLabel && <span className="text-sm text-gray-500">{rightLabel}</span>}
         </label>
       )}
 
       <div className="relative">
-        
         {/* ICON */}
         {icon && !isTextarea && (
-          <span className="absolute left-3 top-2.5 text-gray-400">
-            {icon}
-          </span>
+          <span className="absolute left-3 top-2.5 text-gray-400">{icon}</span>
         )}
 
         {/* TEXTAREA */}
         {isTextarea ? (
           <textarea
-            value={(value as string) || ""}   // ✅ FIX
-            onChange={onChange as any}       // ✅ FIX
+            value={(value as string) || ""} // ✅ FIX
+            onChange={onChange as any} // ✅ FIX
             name={name}
             placeholder={placeholder}
             rows={4}
@@ -68,8 +60,8 @@ const Input: React.FC<InputProps> = ({
           /* INPUT */
           <input
             type={isPassword && showPassword ? "text" : type}
-            value={(value as string) || ""}   // ✅ FIX (MAIN ISSUE)
-            onChange={onChange}               // ✅ FIX
+            value={(value as string) || ""} // ✅ FIX (MAIN ISSUE)
+            onChange={onChange} // ✅ FIX
             name={name}
             placeholder={placeholder}
             className={`w-full px-3 py-2 border rounded-lg outline-none transition 
@@ -95,11 +87,7 @@ const Input: React.FC<InputProps> = ({
       </div>
 
       {/* ERROR */}
-      {error && (
-        <span className="text-xs text-red-500 mt-1">
-          {error}
-        </span>
-      )}
+      {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
     </div>
   );
 };
