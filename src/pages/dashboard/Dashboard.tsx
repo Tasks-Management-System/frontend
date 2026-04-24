@@ -1,5 +1,5 @@
-import React, { useMemo, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
   Activity,
   Cake,
@@ -8,13 +8,9 @@ import {
   CircleCheckBig,
   Clock,
   Download,
-  FolderPlus,
   ListTodo,
-  Megaphone,
-  NotebookPen,
   Presentation,
   User,
-  UserPlus,
   Users,
 } from "lucide-react";
 import {
@@ -39,7 +35,7 @@ import Input from "../../components/UI/Input";
 import Modal from "../../components/UI/Model";
 import { ApiError } from "../../apis/apiService";
 import {
-  getUserById,
+  useUserById,
   useAssignableUsers,
   useCreateUserByAdmin,
   useTeamBirthdays,
@@ -383,33 +379,9 @@ function buildRecentActivity(args: {
 
 type ModalKind = "employee" | "project" | "task" | null;
 
-function QuickAction({
-  icon,
-  bg,
-  label,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  bg: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center gap-2 rounded-xl border border-gray-100 p-3 text-center text-xs font-medium text-gray-700 transition hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm"
-    >
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>{icon}</span>
-      {label}
-    </button>
-  );
-}
-
 const Dashboard = () => {
-  const navigate = useNavigate();
   const userId = getUserId();
-  const { data: sessionUser } = getUserById(userId);
+  const { data: sessionUser } = useUserById(userId);
 
   const roles = sessionUser?.role ?? [];
   const isSuperAdmin = roles.includes("super-admin");
@@ -439,11 +411,14 @@ const Dashboard = () => {
   });
 
   const today = new Date();
-  const weekMonday = useMemo(() => startOfWeekMonday(today), [today.toDateString()]);
+  const todayDateStr = today.toDateString();
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const weekMonday = useMemo(() => startOfWeekMonday(new Date(todayDateStr)), [todayDateStr]);
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const monthStart = useMemo(() => {
-    const d = new Date(today.getFullYear(), today.getMonth(), 1);
-    return d;
-  }, [today.getMonth()]);
+    const d = new Date(todayDateStr);
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }, [todayDateStr]); // eslint-disable-line react-hooks/preserve-manual-memoization
 
   const { data: todayAttendance } = useTodayAttendance();
   const weekFrom = localYmd(weekMonday);
@@ -464,10 +439,13 @@ const Dashboard = () => {
   const absentToday = Math.max(0, totalEmployees - presentToday);
   const activeProjects = projects.length;
 
-  const orgTasks = orgTasksRes?.tasks ?? [];
-  const myTasks = myTasksRes?.tasks ?? [];
+  const orgTasksData = orgTasksRes?.tasks;
+  const myTasksData = myTasksRes?.tasks;
+  const orgTasks = useMemo(() => orgTasksData ?? [], [orgTasksData]);
+  const myTasks = useMemo(() => myTasksData ?? [], [myTasksData]);
 
   const myOpenTasks = myTasks.filter((t) => t.status !== "completed").length;
+
   const myCompletedThisWeek = useMemo(
     () =>
       myTasks.filter(
@@ -477,13 +455,14 @@ const Dashboard = () => {
   );
 
   const todayStr = localYmd(today);
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const tasksDueToday = useMemo(
     () =>
       myTasks.filter((t) => {
         if (!t.dueDate) return false;
         return String(t.dueDate).slice(0, 10) === todayStr && t.status !== "completed";
       }),
-    [myTasks, todayStr]
+    [myTasks, todayStr] // eslint-disable-line react-hooks/preserve-manual-memoization
   );
 
   // my attendance today
@@ -495,6 +474,7 @@ const Dashboard = () => {
   const leaveRemaining = (myLeaveBalance?.totalBalance ?? 0) - (myLeaveBalance?.leaveTaken ?? 0);
 
   // ------ chart data ------
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const attendanceSeries = useMemo(() => {
     if (chartRange === "today")
       return buildTodayAttendanceSeries(todayAttendance?.attendance ?? []);
@@ -638,30 +618,6 @@ const Dashboard = () => {
     priority: "medium" as "low" | "medium" | "urgent",
     dueDate: "",
   });
-
-  const handleOpen = (kind: ModalKind) => {
-    if (kind === "employee") {
-      setEmployeeForm({
-        name: "",
-        email: "",
-        password: "",
-        role: roleOptions[0],
-      });
-    }
-    if (kind === "project") {
-      setProjectForm({ projectName: "", description: "" });
-    }
-    if (kind === "task") {
-      setTaskForm({
-        taskName: "",
-        project: projects[0]?._id ?? "",
-        assignedTo: "",
-        priority: "medium",
-        dueDate: "",
-      });
-    }
-    setOpenModal(kind);
-  };
 
   const handleClose = () => setOpenModal(null);
 

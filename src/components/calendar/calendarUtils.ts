@@ -43,7 +43,7 @@ export function getMonthGrid(anchor: Date): Date[][] {
   const pad = first.getDay();
   const gridStart = new Date(year, month, 1 - pad);
   const weeks: Date[][] = [];
-  let cur = new Date(gridStart);
+  const cur = new Date(gridStart);
   for (let w = 0; w < 6; w++) {
     const row: Date[] = [];
     for (let i = 0; i < 7; i++) {

@@ -12,7 +12,7 @@ import {
   FolderKanban,
   ArrowLeft,
 } from "lucide-react";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import { Skeleton } from "../../components/UI/Skeleton";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
@@ -132,7 +132,7 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const sessionUserId = getUserId();
 
-  const { data: user, isLoading, isError } = getUserById(id ?? "");
+  const { data: user, isLoading, isError } = useUserById(id ?? "");
 
   const isSelf = Boolean(id && sessionUserId && id === sessionUserId);
   const backHref = "/settings";

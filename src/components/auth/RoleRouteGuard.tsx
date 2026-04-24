@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { getStoredUserRoles, routeAllowedRoles, userHasAnyRole } from "../../utils/moduleAccess";
 import { getToken, getUserId } from "../../utils/auth";
 
@@ -16,7 +16,7 @@ const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const { pathname } = useLocation();
   const allowed = routeAllowedRoles(pathname);
   const userId = getUserId();
-  const { data: user, isLoading, isError } = getUserById(userId);
+  const { data: user, isLoading, isError } = useUserById(userId);
 
   if (!getToken() || !userId || isError) {
     return <Navigate to="/login" replace />;

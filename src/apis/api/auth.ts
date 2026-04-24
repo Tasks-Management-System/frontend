@@ -5,7 +5,7 @@ import type { LoginResponse, User } from "../../types/user.types";
 
 type AuthMutationResponse = Omit<LoginResponse, "token"> & { token?: string };
 
-export const login = () => {
+export const useLogin = () => {
   return useMutation({
     mutationKey: ["login"],
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
@@ -34,7 +34,7 @@ export const useLogout = () => {
   });
 };
 
-export const signup = () => {
+export const useSignup = () => {
   return useMutation({
     mutationKey: ["signup"],
     mutationFn: async ({
@@ -97,7 +97,7 @@ export const useCreateUserByAdmin = () => {
   });
 };
 
-export const getUserById = (id: string) => {
+export const useUserById = (id: string) => {
   return useQuery({
     queryKey: ["user", id],
     enabled: !!id,
@@ -145,7 +145,7 @@ export const useUpdateProfileImage = () => {
   });
 };
 
-export const getUsers = () => {
+export const useUsers = () => {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {

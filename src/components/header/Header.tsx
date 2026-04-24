@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { User, Settings, LogOut, ChevronDown, Menu, Coffee, Bell } from "lucide-react";
 import { useMyInvites } from "../../apis/api/organization";
 import { useLocation } from "react-router-dom";
-import { getUserById, useLogout } from "../../apis/api/auth";
+import { useUserById, useLogout } from "../../apis/api/auth";
 import {
   clientCurrentSessionWorkedMs,
   pickMyAttendanceRecord,
@@ -68,7 +68,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const userId = getUserId();
 
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const menuRoles = (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
   const visibleProfileItems = profileMenuItems.filter((item) =>
     userHasAnyRole(menuRoles, item.roles)

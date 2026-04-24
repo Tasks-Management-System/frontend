@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Archive, Columns3, LayoutGrid, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
-import { useAssignableUsers, getUserById } from "../../apis/api/auth";
+import { useAssignableUsers, useUserById } from "../../apis/api/auth";
 import { useProjectsList } from "../../apis/api/projects";
 import { useTasksList, useUpdateTask } from "../../apis/api/tasks";
 import { getUserId } from "../../utils/auth";
@@ -47,7 +47,7 @@ export default function Tasks() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const userId = getUserId();
-  const { data: me } = getUserById(userId);
+  const { data: me } = useUserById(userId);
   const { data: projects = [] } = useProjectsList(100);
   const { data: users = [] } = useAssignableUsers();
 

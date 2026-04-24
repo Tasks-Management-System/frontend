@@ -15,7 +15,6 @@ import {
   Calendar1Icon,
   Megaphone,
   Package,
-  Timer,
   MessageCircle,
   Building2,
 } from "lucide-react";
@@ -28,7 +27,7 @@ import {
   type CreateProjectInput,
 } from "../../apis/api/projects";
 import { useMyOrganization } from "../../apis/api/organization";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { SidebarProjectsSkeleton } from "../UI/Skeleton";
@@ -116,7 +115,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const createProjectMutation = useCreateProject();
   const { data: myOrg } = useMyOrganization();
   const userId = getUserId();
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [projectForm, setProjectForm] = useState<CreateProjectInput>({

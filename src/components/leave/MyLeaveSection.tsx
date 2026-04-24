@@ -122,6 +122,7 @@ export function MyLeaveHistoryPanel({
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [statusFilter]);
 
@@ -138,6 +139,7 @@ export function MyLeaveHistoryPanel({
   useEffect(() => {
     if (!pagination || pagination.total === 0) return;
     if (page > pagination.totalPages) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPage(pagination.totalPages);
     }
   }, [pagination, page]);

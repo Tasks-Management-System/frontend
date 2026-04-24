@@ -10,7 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getUsers } from "../../apis/api/auth";
+import { useUsers } from "../../apis/api/auth";
 import {
   useCreateSalary,
   useDeleteSalary,
@@ -83,7 +83,7 @@ export default function Salary() {
   const hasPreviousPage = data?.hasPreviousPage ?? false;
 
   // Employee list for the create form
-  const { data: users = [] } = getUsers();
+  const { data: users = [] } = useUsers();
   const employeeOptions = (users as { _id: string; name: string }[]).map((u) => ({
     label: u.name,
     value: u._id,
@@ -207,6 +207,7 @@ export default function Salary() {
       // Create anchor
       const a = document.createElement("a");
       a.href = url;
+      // eslint-disable-next-line react-hooks/purity
       a.download = `salary-slip-${Date.now()}.pdf`;
 
       document.body.appendChild(a);
@@ -217,7 +218,7 @@ export default function Salary() {
       window.URL.revokeObjectURL(url);
 
       toast.success("PDF downloaded successfully");
-    } catch (err) {
+    } catch {
       toast.error("Failed to download PDF");
     }
   };

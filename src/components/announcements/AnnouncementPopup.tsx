@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Megaphone, Pin, Check, ChevronRight } from "lucide-react";
 import { useAnnouncements, useMarkAnnouncementRead } from "../../apis/api/announcements";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import type { Announcement } from "../../types/announcement.types";
 
@@ -23,7 +23,7 @@ function formatDate(iso: string) {
  */
 const AnnouncementPopup = () => {
   const userId = getUserId();
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const roles: string[] = user?.role ?? [];
   const isManager = roles.some((r) => HIDDEN_FOR_ROLES.includes(r));
 
@@ -57,7 +57,9 @@ const AnnouncementPopup = () => {
   useEffect(() => {
     if (isManager || isLoading || dismissed || queue !== null) return;
     if (unread.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQueue(unread);
+
       setIndex(0);
     }
   }, [isManager, isLoading, unread, dismissed, queue]);
@@ -67,6 +69,7 @@ const AnnouncementPopup = () => {
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldRender(true);
       requestAnimationFrame(() => setIsVisible(true));
       return;

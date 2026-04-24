@@ -106,6 +106,7 @@ export function LeaveHistoryTable({
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!server) setPage(1);
   }, [server, leaves]);
 

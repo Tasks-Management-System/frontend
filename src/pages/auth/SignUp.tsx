@@ -4,7 +4,7 @@ import Button from "../../components/UI/Button";
 import { Lock, Mail, MoveRight, User, Shield, Zap, ShieldCheck, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import { signup } from "../../apis/api/auth";
+import { useSignup } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "../../apis/apiPath";
@@ -31,7 +31,7 @@ const SignUp = () => {
     formData.password === formData.confirmPassword &&
     isChecked;
   const navigate = useNavigate();
-  const signupMutation = signup();
+  const signupMutation = useSignup();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

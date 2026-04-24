@@ -16,7 +16,7 @@ import {
   Clock,
   Loader2,
 } from "lucide-react";
-import { getUserById, useUpdateProfileImage, useUpdateUser } from "../../apis/api/auth";
+import { useUserById, useUpdateProfileImage, useUpdateUser } from "../../apis/api/auth";
 import toast from "react-hot-toast";
 import Modal from "../../components/UI/Model";
 import { PillTabBar } from "../../components/UI/PillTabBar";
@@ -134,7 +134,7 @@ const Profile = () => {
     leavesJson: "[]",
   });
   const userId = getUserId();
-  const { data: user, isLoading } = getUserById(userId);
+  const { data: user, isLoading } = useUserById(userId);
   const updateImage = useUpdateProfileImage();
   const updateUser = useUpdateUser();
   const fileInputRef = useRef<HTMLInputElement>(null);

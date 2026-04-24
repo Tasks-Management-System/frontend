@@ -320,6 +320,7 @@ const Chat = () => {
   // Load messages from REST when conversation changes or cached data is already available
   useEffect(() => {
     if (chatData?.data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMessages(chatData.data);
     }
   }, [chatData, selectedUserId]);
@@ -393,11 +394,11 @@ const Chat = () => {
       }
     }
 
-    function handleOnline({ userId }: { userId: string }) {
+    function handleOnline() {
       queryClient.invalidateQueries({ queryKey: ["onlineUsers"] });
     }
 
-    function handleOffline({ userId }: { userId: string }) {
+    function handleOffline() {
       queryClient.invalidateQueries({ queryKey: ["onlineUsers"] });
     }
 
@@ -422,6 +423,7 @@ const Chat = () => {
   useEffect(() => {
     if (selectedUserId) {
       socket.emit("message:read", { senderId: selectedUserId });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnreadCounts((prev) => {
         const next = new Map(prev);
         next.delete(selectedUserId);

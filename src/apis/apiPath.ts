@@ -103,7 +103,8 @@ export const apiPath = {
  * Example: `VITE_API_BASE_URL=http://localhost:5000/api`
  */
 export const API_BASE_URL: string =
-  (import.meta as any)?.env?.VITE_API_BASE_URL?.toString?.() || "http://localhost:5051/api/v1";
+  (import.meta as ImportMeta & { env?: Record<string, string> })?.env?.VITE_API_BASE_URL ||
+  "http://localhost:5051/api/v1";
 
 type PathParams = Record<string, string | number | boolean | null | undefined>;
 

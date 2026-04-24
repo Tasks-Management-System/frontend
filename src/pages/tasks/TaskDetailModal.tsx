@@ -23,13 +23,7 @@ import {
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import type {
-  Task,
-  TaskStatus,
-  Subtask,
-  TaskComment,
-  TaskAttachment,
-} from "../../types/task.types";
+import type { Task, TaskStatus, TaskComment, TaskAttachment } from "../../types/task.types";
 import {
   useUpdateTask,
   useTaskById,

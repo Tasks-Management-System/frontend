@@ -42,6 +42,7 @@ export function LeaveInboxSection({
   const visiblePending = pending.slice(inboxSliceStart, inboxSliceStart + INBOX_PAGE_SIZE);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (inboxPage > inboxTotalPages) setInboxPage(inboxTotalPages);
   }, [inboxPage, inboxTotalPages]);
 

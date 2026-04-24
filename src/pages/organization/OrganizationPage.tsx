@@ -24,9 +24,8 @@ import {
   useRejectJoinRequest,
   type OrgMember,
   type OrgInvite,
-  type JoinRequest,
 } from "../../apis/api/organization";
-import { getUsers, getUserById } from "../../apis/api/auth";
+import { useUsers, useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { ApiError } from "../../apis/apiService";
@@ -83,13 +82,13 @@ function Avatar({ user }: { user: OrgMember }) {
 
 export default function OrganizationPage() {
   const userId = getUserId();
-  const { data: sessionUser } = getUserById(userId);
+  const { data: sessionUser } = useUserById(userId);
   const roles = sessionUser?.role ?? [];
   const isAdmin = roles.some((r: string) => ["admin", "super-admin"].includes(r));
 
   const { data: org, isLoading: orgLoading } = useMyOrganization();
   const { data: invites = [], isLoading: invitesLoading } = useAdminInvites();
-  const { data: allUsers = [] } = getUsers();
+  const { data: allUsers = [] } = useUsers();
 
   const { data: joinRequests = [], isLoading: joinRequestsLoading } = useJoinRequests();
   const createOrgMutation = useCreateOrganization();

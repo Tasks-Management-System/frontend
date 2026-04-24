@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { useEffect, useState } from "react";
 import { ApiError } from "../../apis/apiService";
-import { login } from "../../apis/api/auth";
+import { useLogin } from "../../apis/api/auth";
 import { getToken, setToken, setUserId, setStoredRoles } from "../../utils/auth";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "../../apis/apiPath";
@@ -27,7 +27,7 @@ const Login = () => {
     password: "",
   });
 
-  const loginMutation = login();
+  const loginMutation = useLogin();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

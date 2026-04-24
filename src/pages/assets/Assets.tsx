@@ -19,7 +19,7 @@ import {
   useReturnAsset,
   useDeleteAsset,
 } from "../../apis/api/assets";
-import { getUserById, useAssignableUsers } from "../../apis/api/auth";
+import { useUserById, useAssignableUsers } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import type { Asset, AssetCondition, AssetStatus } from "../../types/asset.types";
 import Modal from "../../components/UI/Model";
@@ -67,7 +67,7 @@ type CreateForm = {
 
 export default function Assets() {
   const userId = getUserId();
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const roles = user?.role ?? [];
   const canManage = roles.some((r: string) => ["admin", "hr", "super-admin"].includes(r));
   const { data: employees = [] } = useAssignableUsers();

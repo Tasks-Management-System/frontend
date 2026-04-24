@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
@@ -116,9 +117,12 @@ export default function StickyNotes() {
   const createMut = useCreateNote();
   const patchMut = usePatchNote();
   const patchMutRef = useRef(patchMut);
-  patchMutRef.current = patchMut;
   const notes = data?.notes ?? [];
-  zoomRef.current = zoom;
+
+  useLayoutEffect(() => {
+    patchMutRef.current = patchMut;
+    zoomRef.current = zoom;
+  });
 
   function notePosition(note: StickyNoteType) {
     return {

@@ -27,6 +27,7 @@ const Modal = ({ isOpen, onClose, title, children, panelClassName }: ModalProps)
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldRender(true);
       // next frame so transitions apply
       requestAnimationFrame(() => setIsVisible(true));

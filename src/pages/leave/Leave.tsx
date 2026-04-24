@@ -1,7 +1,7 @@
 import { getUserId } from "../../utils/auth";
 import { useMemo, useState } from "react";
 import { ClipboardList, Inbox, Plus } from "lucide-react";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { usePendingLeaveRequests } from "../../apis/api/leave";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import Button from "../../components/UI/Button";
@@ -13,7 +13,7 @@ import { LeaveReviewModal } from "./LeaveReviewModal";
 
 export default function Leave() {
   const userId = getUserId();
-  const { data: user, isLoading: userLoading } = getUserById(userId);
+  const { data: user, isLoading: userLoading } = useUserById(userId);
   const roles = user?.role ?? [];
   const canReview = roles.some((r) => ["admin", "hr", "super-admin"].includes(r));
 

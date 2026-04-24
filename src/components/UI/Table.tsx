@@ -4,12 +4,12 @@ import { withoutStaleCompletedTasks } from "../../utils/taskStaleHide";
 interface Column {
   key: string;
   label: string;
-  render?: (row: any) => React.ReactNode;
+  render?: (row: Record<string, unknown>) => React.ReactNode;
 }
 
 interface TableProps {
   columns: Column[];
-  data: any[];
+  data: Record<string, unknown>[];
   /**
    * When true, rows with `status: "completed"` and `updatedAt` older than 24h are omitted
    * (task-shaped rows only; other tables are unchanged).

@@ -9,7 +9,7 @@ import {
   usePinAnnouncement,
   useDeleteAnnouncement,
 } from "../../apis/api/announcements";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import type { Announcement } from "../../types/announcement.types";
 import Modal from "../../components/UI/Model";
@@ -31,7 +31,7 @@ type FormState = { title: string; content: string; isPinned: boolean };
 
 export default function Announcements() {
   const userId = getUserId();
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const roles = user?.role ?? [];
   const canManage = roles.some((r: string) => ["admin", "hr", "super-admin"].includes(r));
 

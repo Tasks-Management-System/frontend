@@ -16,7 +16,6 @@ import UserProfile from "./pages/userProfile/UserProfile";
 import Salary from "./pages/salary/Salary";
 import Announcements from "./pages/announcements/Announcements";
 import Assets from "./pages/assets/Assets";
-import Timesheets from "./pages/timesheets/Timesheets";
 import Chat from "./pages/chat/Chat";
 import OrganizationPage from "./pages/organization/OrganizationPage";
 import InvitesPage from "./pages/invites/InvitesPage";

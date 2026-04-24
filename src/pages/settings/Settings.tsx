@@ -29,8 +29,8 @@ function primaryRole(user: User): AssignableRole {
 }
 import toast from "react-hot-toast";
 import {
-  getUserById,
-  getUsers,
+  useUserById,
+  useUsers,
   useCreateUserByAdmin,
   useUpdateUser,
   type AdminCreateUserInput,
@@ -62,7 +62,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("user-management");
-  const { data: users = [], isLoading } = getUsers();
+  const { data: users = [], isLoading } = useUsers();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
   const [openModal, setOpenModal] = useState<string | null>(null);
   const [projectForm, setProjectForm] = useState<CreateProjectInput>({
@@ -91,7 +91,7 @@ const Settings = () => {
     leavesJson: "",
   });
   const userId = getUserId();
-  const { data: sessionUser } = getUserById(userId);
+  const { data: sessionUser } = useUserById(userId);
   const createUserMutation = useCreateUserByAdmin();
   const createProjectMutation = useCreateProject();
   const updateUserMutation = useUpdateUser();
@@ -183,25 +183,25 @@ const Settings = () => {
           const list = parseFlexibleList(employeeForm.skillsJson);
           if (!list) return undefined;
           // If user pasted objects, keep as-is. If they typed "a, b", map to {skill}.
-          if (list.length && typeof list[0] === "object") return list as any;
+          if (list.length && typeof list[0] === "object") return list as Record<string, unknown>[];
           return (list as string[]).map((skill) => ({ skill }));
         })(),
         education: (() => {
           const list = parseFlexibleList(employeeForm.educationJson);
           if (!list) return undefined;
-          if (list.length && typeof list[0] === "object") return list as any;
+          if (list.length && typeof list[0] === "object") return list as Record<string, unknown>[];
           return (list as string[]).map((degree) => ({ degree }));
         })(),
         experience: (() => {
           const list = parseFlexibleList(employeeForm.experienceJson);
           if (!list) return undefined;
-          if (list.length && typeof list[0] === "object") return list as any;
+          if (list.length && typeof list[0] === "object") return list as Record<string, unknown>[];
           return (list as string[]).map((company) => ({ company }));
         })(),
         leaves: (() => {
           const list = parseFlexibleList(employeeForm.leavesJson);
           if (!list) return undefined;
-          if (list.length && typeof list[0] === "object") return list as any;
+          if (list.length && typeof list[0] === "object") return list as Record<string, unknown>[];
           // allow "24, 12" -> [{totalBalance:24},{totalBalance:12}]
           return (list as string[])
             .map((v) => Number(v))

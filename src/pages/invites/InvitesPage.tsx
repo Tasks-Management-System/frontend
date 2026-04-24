@@ -15,7 +15,6 @@ import {
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { ApiError } from "../../apis/apiService";
 import Button from "../../components/UI/Button";
-import { getUserId } from "../../utils/auth";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -127,7 +126,6 @@ function InviteCard({ invite }: { invite: OrgInvite }) {
 }
 
 export default function InvitesPage() {
-  const userId = getUserId();
   const { data: invites = [], isLoading } = useMyInvites();
   const { data: allOrgs = [], isLoading: orgsLoading } = useAllOrganizations();
   const { data: myJoinRequests = [] } = useMyJoinRequests();

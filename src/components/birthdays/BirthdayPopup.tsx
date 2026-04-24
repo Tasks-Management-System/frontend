@@ -48,20 +48,26 @@ const CONFETTI_COLORS = [
   "#f87171",
 ];
 
+const CONFETTI_PIECES = Array.from({ length: 32 }).map((_, i) => ({
+  id: i,
+  left: Math.random() * 100,
+  delay: Math.random() * 1.5,
+  duration: 2.8 + Math.random() * 2.2,
+  rotate: Math.random() * 360,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  size: 6 + Math.round(Math.random() * 6),
+}));
+
+const BALLOON_PIECES = Array.from({ length: 6 }).map((_, i) => ({
+  id: i,
+  left: 8 + i * 15 + Math.random() * 4,
+  delay: Math.random() * 2,
+  duration: 3 + Math.random() * 2,
+  color: CONFETTI_COLORS[(i + 2) % CONFETTI_COLORS.length],
+}));
+
 function Confetti() {
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: 32 }).map((_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 1.5,
-        duration: 2.8 + Math.random() * 2.2,
-        rotate: Math.random() * 360,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        size: 6 + Math.round(Math.random() * 6),
-      })),
-    []
-  );
+  const pieces = CONFETTI_PIECES;
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {pieces.map((p) => (
@@ -83,17 +89,7 @@ function Confetti() {
 }
 
 function Balloons() {
-  const balloons = useMemo(
-    () =>
-      Array.from({ length: 6 }).map((_, i) => ({
-        id: i,
-        left: 8 + i * 15 + Math.random() * 4,
-        delay: Math.random() * 2,
-        duration: 3 + Math.random() * 2,
-        color: CONFETTI_COLORS[(i + 2) % CONFETTI_COLORS.length],
-      })),
-    []
-  );
+  const balloons = BALLOON_PIECES;
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32">
       {balloons.map((b) => (
@@ -147,6 +143,7 @@ const BirthdayPopup = () => {
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldRender(true);
       requestAnimationFrame(() => setIsVisible(true));
       return;

@@ -3,7 +3,7 @@ import Sidebar from "../sidebar/Sidebar";
 import Header from "../header/Header";
 import RoleRouteGuard from "../auth/RoleRouteGuard";
 import { useEffect, useState } from "react";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { getToken, getUserId, setStoredRoles } from "../../utils/auth";
 import { connectSocket, disconnectSocket } from "../../utils/socket";
 import AnnouncementPopup from "../announcements/AnnouncementPopup";
@@ -14,11 +14,7 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isNotesFullscreen = location.pathname === "/notes";
   const userId = getUserId();
-  const { data: sessionUser } = getUserById(userId);
-
-  if (!getToken()) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  }
+  const { data: sessionUser } = useUserById(userId);
 
   useEffect(() => {
     if (sessionUser?.role?.length) {
@@ -33,6 +29,10 @@ const DashboardLayout = () => {
       disconnectSocket();
     };
   }, []);
+
+  if (!getToken()) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
 
   return (
     <div className="flex min-h-screen bg-[#f7f8fb]">

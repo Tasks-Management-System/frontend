@@ -1,7 +1,7 @@
 import { getUserId } from "../../utils/auth";
 import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import {
   addDays,
   localYmd,
@@ -20,7 +20,7 @@ type ViewMode = "day" | "week";
 
 export default function Attendance() {
   const userId = getUserId();
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const [view, setView] = useState<ViewMode>("day");
   const [date, setDate] = useState(() => localYmd());
   const [weekMonday, setWeekMonday] = useState(() => startOfWeekMonday());

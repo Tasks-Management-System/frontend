@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { api, ApiError } from "../../apis/apiService";
 import { apiPath } from "../../apis/apiPath";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { useCalendarEvents, useInvalidateCalendarEvents } from "../../hooks/useCalendarEvents";
 import type { CalendarEvent, CalendarViewMode, EventFilters } from "../../types/calendar.types";
 import { CALENDAR_TYPE_ORDER } from "../../types/calendar.types";
@@ -39,7 +39,7 @@ function emptyFilters(): EventFilters {
 
 const CalendarPage = () => {
   const userId = getUserId();
-  const { data: me } = getUserById(userId);
+  const { data: me } = useUserById(userId);
   const role = me?.role?.[0] ?? "";
 
   const [view, setView] = useState<CalendarViewMode>(initialView);
@@ -70,6 +70,7 @@ const CalendarPage = () => {
 
   useEffect(() => {
     if (view !== "month") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAnchorMonth(startOfMonth(currentDate));
     }
   }, [currentDate, view]);

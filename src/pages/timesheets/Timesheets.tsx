@@ -17,7 +17,7 @@ import {
   useDeleteTimesheetEntry,
   downloadTimesheetCsv,
 } from "../../apis/api/timesheets";
-import { getUserById } from "../../apis/api/auth";
+import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
 import { useProjectsList } from "../../apis/api/projects";
 import { useTasksList } from "../../apis/api/tasks";
@@ -45,14 +45,6 @@ function getWeekDates(week: number, year: number): { start: Date; end: Date } {
   return { start, end };
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
-
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -68,7 +60,7 @@ type LogForm = {
 
 export default function Timesheets() {
   const userId = getUserId();
-  const { data: user } = getUserById(userId);
+  const { data: user } = useUserById(userId);
   const roles = user?.role ?? [];
   const canViewAll = roles.some((r: string) =>
     ["admin", "hr", "manager", "super-admin"].includes(r)
