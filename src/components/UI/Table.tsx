@@ -1,15 +1,15 @@
 import React, { useMemo } from "react";
 import { withoutStaleCompletedTasks } from "../../utils/taskStaleHide";
 
-interface Column {
+export interface Column<T = Record<string, unknown>> {
   key: string;
   label: string;
-  render?: (row: Record<string, unknown>) => React.ReactNode;
+  render?: (row: T) => React.ReactNode;
 }
 
-interface TableProps {
-  columns: Column[];
-  data: Record<string, unknown>[];
+interface TableProps<T = Record<string, unknown>> {
+  columns: Column<T>[];
+  data: T[];
   /**
    * When true, rows with `status: "completed"` and `updatedAt` older than 24h are omitted
    * (task-shaped rows only; other tables are unchanged).
@@ -17,9 +17,18 @@ interface TableProps {
   hideStaleCompletedTasks?: boolean;
 }
 
-const Table: React.FC<TableProps> = ({ columns, data, hideStaleCompletedTasks = false }) => {
+function Table<T = Record<string, unknown>>({
+  columns,
+  data,
+  hideStaleCompletedTasks = false,
+}: TableProps<T>) {
   const visibleData = useMemo(
-    () => (hideStaleCompletedTasks ? withoutStaleCompletedTasks(data) : data),
+    () =>
+      hideStaleCompletedTasks
+        ? (withoutStaleCompletedTasks(
+            data as unknown as { status?: string; updatedAt?: string | null }[]
+          ) as unknown as T[])
+        : data,
     [data, hideStaleCompletedTasks]
   );
 
@@ -48,19 +57,24 @@ const Table: React.FC<TableProps> = ({ columns, data, hideStaleCompletedTasks = 
 
           {/* Rows */}
           <div className="divide-y divide-gray-100">
-            {visibleData.map((row) => (
-              <div
-                key={row.id ?? row._id}
-                className="grid gap-4 px-6 py-4 items-center text-sm text-gray-900 hover:bg-gray-50 transition"
-                style={{ gridTemplateColumns }}
-              >
-                {columns.map((col) => (
-                  <div key={col.key} className={cellClass}>
-                    {col.render ? col.render(row) : row[col.key]}
-                  </div>
-                ))}
-              </div>
-            ))}
+            {visibleData.map((row, rowIdx) => {
+              const r = row as Record<string, unknown>;
+              return (
+                <div
+                  key={String(r.id ?? r._id ?? rowIdx)}
+                  className="grid gap-4 px-6 py-4 items-center text-sm text-gray-900 hover:bg-gray-50 transition"
+                  style={{ gridTemplateColumns }}
+                >
+                  {columns.map((col) => (
+                    <div key={col.key} className={cellClass}>
+                      {col.render
+                        ? col.render(row)
+                        : (r[col.key] as React.ReactNode)}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -78,6 +92,6 @@ const Table: React.FC<TableProps> = ({ columns, data, hideStaleCompletedTasks = 
       </div>
     </div>
   );
-};
+}
 
 export default Table;

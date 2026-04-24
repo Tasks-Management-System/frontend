@@ -47,7 +47,7 @@ const Input: React.FC<InputProps> = ({
         {isTextarea ? (
           <textarea
             value={(value as string) || ""} // ✅ FIX
-            onChange={onChange as React.ChangeEventHandler<HTMLTextAreaElement>}
+            onChange={onChange as unknown as React.ChangeEventHandler<HTMLTextAreaElement>}
             name={name}
             placeholder={placeholder}
             rows={4}

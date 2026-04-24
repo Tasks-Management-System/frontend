@@ -105,7 +105,7 @@ export async function request<T = unknown>(
   if (!res.ok) {
     handleInactiveAccountIfNeeded(res.status, data, auth);
     const message =
-      (data as Record<string, unknown>)?.message ||
+      String((data as Record<string, unknown>)?.message || "") ||
       (typeof data === "string" && data) ||
       res.statusText ||
       "Request failed";
@@ -143,7 +143,7 @@ export async function uploadFormData<T = unknown>(
   if (!res.ok) {
     handleInactiveAccountIfNeeded(res.status, data, auth);
     const message =
-      (data as Record<string, unknown>)?.message ||
+      String((data as Record<string, unknown>)?.message || "") ||
       (typeof data === "string" && data) ||
       res.statusText ||
       "Request failed";

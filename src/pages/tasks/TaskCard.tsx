@@ -1,11 +1,11 @@
 import { CalendarDays, UserRound } from "lucide-react";
 import { TASK_STATUS_UI } from "../../constants/taskStatus";
-import type { Task } from "../../types/task.types";
+import type { Task, TaskStatus } from "../../types/task.types";
 import { formatDue, taskAssigneeName, taskProjectName } from "./taskUtils";
 
 interface TaskCardProps {
   task: Task;
-  onStatusChange?: (id: string, status: string) => void;
+  onStatusChange?: (id: string, status: TaskStatus) => void;
   updating?: boolean;
   currentUserId?: string;
   isDragging?: boolean;
