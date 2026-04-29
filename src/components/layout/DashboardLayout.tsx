@@ -8,6 +8,8 @@ import { getToken, getUserId, setStoredRoles } from "../../utils/auth";
 import { connectSocket, disconnectSocket } from "../../utils/socket";
 import AnnouncementPopup from "../announcements/AnnouncementPopup";
 import BirthdayPopup from "../birthdays/BirthdayPopup";
+import { ActiveOrgProvider } from "../../contexts/ActiveOrgContext";
+import { ChatNotificationProvider } from "../../contexts/ChatNotificationContext";
 
 const DashboardLayout = () => {
   const location = useLocation();
@@ -35,25 +37,29 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f7f8fb]">
-      <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:pl-64">
-        <Header onOpenSidebar={() => setSidebarOpen(true)} />
-        <main
-          className={
-            isNotesFullscreen
-              ? "flex min-h-0 flex-1 flex-col overflow-hidden p-0"
-              : "flex-1 overflow-auto p-4 sm:p-6 lg:p-8"
-          }
-        >
-          <RoleRouteGuard>
-            <Outlet />
-          </RoleRouteGuard>
-        </main>
+    <ActiveOrgProvider>
+      <ChatNotificationProvider>
+      <div className="flex min-h-screen bg-[#f7f8fb]">
+        <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:pl-64">
+          <Header onOpenSidebar={() => setSidebarOpen(true)} />
+          <main
+            className={
+              isNotesFullscreen
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden p-0"
+                : "flex-1 overflow-auto p-4 sm:p-6 lg:p-8"
+            }
+          >
+            <RoleRouteGuard>
+              <Outlet />
+            </RoleRouteGuard>
+          </main>
+        </div>
+        <AnnouncementPopup />
+        <BirthdayPopup />
       </div>
-      <AnnouncementPopup />
-      <BirthdayPopup />
-    </div>
+      </ChatNotificationProvider>
+    </ActiveOrgProvider>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Search, Send, MessageSquare, Circle, ArrowLeft, Check, CheckCheck } from "lucide-react";
+import { Search, Send, MessageSquare, Circle, ArrowLeft, Check, CheckCheck, Smile } from "lucide-react";
 import { useChatMessages, useChatUsers, useOnlineUsers } from "../../apis/api/chat";
 import { getUserId } from "../../utils/auth";
 import { socket } from "../../utils/socket";
@@ -7,6 +7,9 @@ import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatMessage } from "../../types/chat.types";
 import type { User } from "../../types/user.types";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
+import { useChatNotifications } from "../../contexts/ChatNotificationContext";
 
 /* ------------------------------------------------------------------ */
 /*  Avatar                                                             */
@@ -303,7 +306,18 @@ const Chat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [lastMessages, setLastMessages] = useState<Map<string, ChatMessage>>(new Map());
-  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(new Map());
+
+  // Use global unread counts (persisted, visible in sidebar)
+  const { unreadCounts: globalUnreadCounts, clearUnread, setActiveChatUser } = useChatNotifications();
+  // Convert to Map for the ContactList component
+  const unreadCounts = useMemo(
+    () => new Map(Object.entries(globalUnreadCounts).map(([k, v]) => [k, v])),
+    [globalUnreadCounts]
+  );
+
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -352,23 +366,11 @@ const Chat = () => {
           return [...prev, msg];
         });
 
-        // Mark as read if from the other user and clear any stale unread count
+        // Mark as read if from the other user
         if (msg.sender._id === selectedUserId) {
           socket.emit("message:read", { senderId: selectedUserId });
-          setUnreadCounts((prev) => {
-            if (!prev.has(selectedUserId)) return prev;
-            const next = new Map(prev);
-            next.delete(selectedUserId);
-            return next;
-          });
+          clearUnread(selectedUserId);
         }
-      } else if (msg.sender._id !== currentUserId) {
-        // Increment unread for a different conversation
-        setUnreadCounts((prev) => {
-          const next = new Map(prev);
-          next.set(otherUserId, (prev.get(otherUserId) ?? 0) + 1);
-          return next;
-        });
       }
     }
 
@@ -417,20 +419,38 @@ const Chat = () => {
       socket.off("user:online", handleOnline);
       socket.off("user:offline", handleOffline);
     };
-  }, [selectedUserId, currentUserId, queryClient]);
+  }, [selectedUserId, currentUserId, queryClient, clearUnread]);
 
-  // Mark messages as read when selecting a conversation
+  // Close emoji picker when clicking outside
   useEffect(() => {
+    if (!emojiOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(e.target as Node) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(e.target as Node)
+      ) {
+        setEmojiOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [emojiOpen]);
+
+  // Mark messages as read when selecting a conversation + tell global context
+  // which chat is open so new messages from that sender don't increment the badge
+  useEffect(() => {
+    setActiveChatUser(selectedUserId);
     if (selectedUserId) {
       socket.emit("message:read", { senderId: selectedUserId });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUnreadCounts((prev) => {
-        const next = new Map(prev);
-        next.delete(selectedUserId);
-        return next;
-      });
+      clearUnread(selectedUserId);
     }
-  }, [selectedUserId]);
+    return () => {
+      // Clear active chat when leaving the chat page or closing conversation
+      setActiveChatUser("");
+    };
+  }, [selectedUserId, clearUnread, setActiveChatUser]);
 
   const handleSelectUser = useCallback(
     (id: string) => {
@@ -488,6 +508,32 @@ const Chat = () => {
       }, 1500);
     }
   };
+
+  // Insert emoji at the current cursor position in the textarea
+  const handleEmojiSelect = useCallback(
+    (emoji: { native: string }) => {
+      const textarea = inputRef.current;
+      if (!textarea) {
+        setMessageInput((prev) => prev + emoji.native);
+        return;
+      }
+      const start = textarea.selectionStart ?? messageInput.length;
+      const end = textarea.selectionEnd ?? messageInput.length;
+      const newValue =
+        messageInput.slice(0, start) + emoji.native + messageInput.slice(end);
+      setMessageInput(newValue);
+      // Restore focus + move cursor after the inserted emoji
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const newPos = start + emoji.native.length;
+        textarea.setSelectionRange(newPos, newPos);
+        // Also resize the textarea
+        textarea.style.height = "auto";
+        textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
+      });
+    },
+    [messageInput]
+  );
 
   const isSelectedOnline = selectedUserId ? onlineUserIds.has(selectedUserId) : false;
 
@@ -615,7 +661,45 @@ const Chat = () => {
 
             {/* Input Area */}
             <div className="border-t border-gray-200/60 bg-white px-3 py-3 sm:px-6">
-              <div className="flex gap-2 sm:gap-3 justify-center items-center w-full">
+              <div className="flex items-end gap-2 sm:gap-3">
+                {/* Emoji toggle button — picker anchors directly above this button */}
+                <div className="relative mb-0.5 shrink-0">
+                  <button
+                    ref={emojiButtonRef}
+                    type="button"
+                    onClick={() => setEmojiOpen((o) => !o)}
+                    title="Emoji"
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${
+                      emojiOpen
+                        ? "bg-violet-100 text-violet-600"
+                        : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    }`}
+                  >
+                    <Smile className="h-5 w-5" />
+                  </button>
+
+                  {/* Picker floats directly above the button */}
+                  {emojiOpen && (
+                    <div
+                      ref={emojiPickerRef}
+                      className="absolute bottom-full left-0 z-50 mb-2"
+                    >
+                      <Picker
+                        data={data}
+                        onEmojiSelect={handleEmojiSelect}
+                        theme="light"
+                        previewPosition="none"
+                        skinTonePosition="search"
+                        maxFrequentRows={2}
+                        perLine={8}
+                        emojiSize={22}
+                        emojiButtonSize={32}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Text input */}
                 <div className="relative min-w-0 flex-1">
                   <textarea
                     ref={inputRef}
@@ -625,10 +709,7 @@ const Chat = () => {
                     placeholder="Type a message..."
                     rows={1}
                     className="max-h-32 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-500/20"
-                    style={{
-                      height: "auto",
-                      minHeight: "44px",
-                    }}
+                    style={{ height: "auto", minHeight: "44px" }}
                     onInput={(e) => {
                       const target = e.target as HTMLTextAreaElement;
                       target.style.height = "auto";
@@ -636,18 +717,21 @@ const Chat = () => {
                     }}
                   />
                 </div>
+
+                {/* Send button */}
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={!messageInput.trim()}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm transition-all hover:bg-violet-700 hover:shadow-md disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+                  className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm transition-all hover:bg-violet-700 hover:shadow-md disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                 >
                   <Send className="h-5 w-5" />
                 </button>
               </div>
+
               <p className="mt-1.5 text-[11px] text-gray-400 sm:hidden">Tap send or press Enter</p>
               <p className="mt-1.5 hidden text-[11px] text-gray-400 sm:block">
-                Press Enter to send, Shift+Enter for new line
+                Press Enter to send · Shift+Enter for new line
               </p>
             </div>
           </>

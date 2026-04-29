@@ -3,20 +3,24 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useUserById } from "../../apis/api/auth";
 import { getStoredUserRoles, routeAllowedRoles, userHasAnyRole } from "../../utils/moduleAccess";
 import { getToken, getUserId } from "../../utils/auth";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 
 type RoleRouteGuardProps = {
   children: ReactNode;
 };
 
 /**
- * Enforces `ROUTE_ROLE_ACCESS` for the current path. Falls back to stored roles
- * from login, then merges with fetched profile when available.
+ * Enforces `ROUTE_ROLE_ACCESS` for the current path.
+ * Also respects the active org mode — when the user has switched to their
+ * joined-org (member) context, or has no org at all, admin-only routes are
+ * blocked even if their DB role is "admin".
  */
 const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const { pathname } = useLocation();
   const allowed = routeAllowedRoles(pathname);
   const userId = getUserId();
   const { data: user, isLoading, isError } = useUserById(userId);
+  const { activeMode, hasBoth, noOrg } = useActiveOrg();
 
   if (!getToken() || !userId || isError) {
     return <Navigate to="/login" replace />;
@@ -28,7 +32,13 @@ const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
 
   const fromStore = getStoredUserRoles();
   const fromApi = user?.role ?? [];
-  const effectiveRoles = fromApi.length ? fromApi : fromStore;
+  const dbRoles = fromApi.length ? fromApi : fromStore;
+
+  // Override to employee roles when:
+  // • user has no org at all (fresh account, nothing set up)
+  // • user has both orgs but has switched to their joined-org (member) context
+  const isEmployeeContext = noOrg || (hasBoth && activeMode === "member");
+  const effectiveRoles: string[] = isEmployeeContext ? ["employee"] : dbRoles;
 
   if (isLoading && !fromStore.length) {
     return (

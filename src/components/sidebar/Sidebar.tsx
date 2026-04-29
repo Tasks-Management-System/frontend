@@ -17,6 +17,9 @@ import {
   Package,
   MessageCircle,
   Building2,
+  ShieldCheck,
+  UserCircle2,
+  ArrowLeftRight,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
 import { useMemo, useState, type FormEvent } from "react";
@@ -26,7 +29,6 @@ import {
   useProjectsList,
   type CreateProjectInput,
 } from "../../apis/api/projects";
-import { useMyOrganization } from "../../apis/api/organization";
 import { useUserById } from "../../apis/api/auth";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
@@ -36,6 +38,9 @@ import Modal from "../UI/Model";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
+import { useChatNotifications } from "../../contexts/ChatNotificationContext";
+import { useChatUsers } from "../../apis/api/chat";
 
 const PROJECT_ACCENTS = [
   "bg-violet-500",
@@ -94,12 +99,14 @@ const mainNav: MainNavItem[] = [
     end: false,
     roles: ["admin", "hr", "super-admin"],
   },
+  // Organization is visible to every logged-in user:
+  // owners manage their org, members see their member view, and anyone without
+  // an org can create one from here.
   {
     path: "/organization",
     label: "Organization",
     icon: Building2,
     end: false,
-    roles: ["admin", "super-admin"],
   },
 ];
 
@@ -113,7 +120,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const navigate = useNavigate();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
   const createProjectMutation = useCreateProject();
-  const { data: myOrg } = useMyOrganization();
+  const { activeMode, setActiveMode, ownedOrg, memberOrg, hasBoth, noOrg } = useActiveOrg();
   const userId = getUserId();
   const { data: user } = useUserById(userId);
   const [projectsOpen, setProjectsOpen] = useState(true);
@@ -123,13 +130,37 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     description: "",
   });
 
-  const effectiveRoles = (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
+  const userRoles = (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
+
+  // Determine which nav items to show:
+  // 1. No org at all → employee view (Salary/Employee/Assets are useless without an org)
+  // 2. Has both orgs and switched to member mode → employee view for joined org
+  // 3. Otherwise → use actual DB roles (admin sees full nav)
+  const effectiveRoles: string[] =
+    noOrg || (hasBoth && activeMode === "member") ? ["employee"] : userRoles;
 
   const canCreateProjects = effectiveRoles.some((r) =>
     ["admin", "manager", "super-admin"].includes(r)
   );
 
   const visibleMainNav = mainNav.filter((item) => userHasAnyRole(effectiveRoles, item.roles));
+
+  // Active org display info
+  const activeOrg = activeMode === "member" ? memberOrg : ownedOrg;
+
+  // Chat notifications
+  const { unreadCounts, totalUnread } = useChatNotifications();
+  const { data: chatUsers = [] } = useChatUsers();
+  // Senders who have unread messages, enriched with name for display
+  const unreadSenders = useMemo(() => {
+    return Object.entries(unreadCounts)
+      .filter(([, count]) => count > 0)
+      .map(([senderId, count]) => ({
+        senderId,
+        count,
+        name: chatUsers.find((u) => u._id === senderId)?.name ?? "Someone",
+      }));
+  }, [unreadCounts, chatUsers]);
 
   const selectedProjectId = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -193,28 +224,108 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
         </div>
       </div>
 
+      {/* Org Switcher — only shown when user belongs to two orgs */}
+      {hasBoth && (
+        <div className="border-b border-gray-200/80 px-3 py-2.5">
+          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+            Active Organization
+          </p>
+          <div className="flex items-stretch gap-1.5 rounded-xl bg-gray-100/80 p-1">
+            <button
+              type="button"
+              onClick={() => setActiveMode("owned")}
+              title={ownedOrg?.name}
+              className={`flex flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                activeMode === "owned"
+                  ? "bg-white text-violet-700 shadow ring-1 ring-violet-200"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{ownedOrg?.name ?? "My Org"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMode("member");
+                // Navigate away from admin-only pages if currently on one
+                const adminOnlyPaths = ["/salary", "/employee", "/assets"];
+                if (adminOnlyPaths.includes(location.pathname)) {
+                  navigate("/");
+                }
+              }}
+              title={memberOrg?.name}
+              className={`flex flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                activeMode === "member"
+                  ? "bg-white text-sky-600 shadow ring-1 ring-sky-200"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <UserCircle2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{memberOrg?.name ?? "Joined Org"}</span>
+            </button>
+          </div>
+          <div className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-gray-400">
+            <ArrowLeftRight className="h-2.5 w-2.5" />
+            <span>Click to switch context</span>
+          </div>
+        </div>
+      )}
+
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {visibleMainNav
           .filter((item) => item.path !== "/tasks")
-          .map(({ path, label, icon: Icon, end }) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={end}
-              onClick={() => onMobileClose?.()}
-              className={({ isActive }) => linkClass({ isActive })}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive ? (
-                    <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-violet-600" />
-                  ) : null}
-                  <Icon className="h-5 w-5 shrink-0 text-gray-500 group-hover:text-gray-700" />
-                  <span className="truncate">{label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
+          .map(({ path, label, icon: Icon, end }) => {
+            const isChat = path === "/chat";
+            return (
+              <div key={path}>
+                <NavLink
+                  to={path}
+                  end={end}
+                  onClick={() => onMobileClose?.()}
+                  className={({ isActive }) => linkClass({ isActive })}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive ? (
+                        <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-violet-600" />
+                      ) : null}
+                      <Icon className="h-5 w-5 shrink-0 text-gray-500 group-hover:text-gray-700" />
+                      <span className="flex-1 truncate">{label}</span>
+                      {/* Unread badge — only on the Chat nav item */}
+                      {isChat && totalUnread > 0 && (
+                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                          {totalUnread > 99 ? "99+" : totalUnread}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+
+                {/* Per-sender unread list — rendered directly below the Chat nav item */}
+                {/* {isChat && unreadSenders.length > 0 && (
+                  <div className="ml-3 mt-0.5 space-y-0.5 border-l-2 border-rose-200 pl-3">
+                    {unreadSenders.map(({ senderId, count, name }) => (
+                      <NavLink
+                        key={senderId}
+                        to="/chat"
+                        onClick={() => onMobileClose?.()}
+                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-[9px] font-bold text-white">
+                          {name[0]?.toUpperCase()}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{name}</span>
+                        <span className="shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600">
+                          {count}
+                        </span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )} */}
+              </div>
+            );
+          })}
 
         <NavLink
           to="/tasks"
@@ -317,11 +428,27 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
             <p className="truncate text-sm font-semibold text-gray-900">
               {user?.name ?? "Account"}
             </p>
-            <p className="truncate text-xs capitalize text-gray-500">{roleLabel}</p>
-            {myOrg && (
-              <p className="truncate text-xs text-violet-500 flex items-center gap-1 mt-0.5">
+            <p className="truncate text-xs capitalize text-gray-500">
+              {noOrg
+                ? "No Organization"
+                : hasBoth && activeMode === "member"
+                  ? "Employee"
+                  : roleLabel}
+            </p>
+            {activeOrg && (
+              <p
+                className={`truncate text-xs flex items-center gap-1 mt-0.5 ${
+                  activeMode === "member" ? "text-sky-500" : "text-violet-500"
+                }`}
+              >
                 <Building2 className="h-3 w-3 shrink-0" />
-                {myOrg.name}
+                {activeOrg.name}
+              </p>
+            )}
+            {noOrg && (
+              <p className="truncate text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+                <Building2 className="h-3 w-3 shrink-0" />
+                Create or join an org
               </p>
             )}
           </div>

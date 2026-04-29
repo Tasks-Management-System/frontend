@@ -13,6 +13,7 @@ import {
   Inbox,
   ShieldCheck,
   UserCircle2,
+  ArrowLeftRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -36,6 +37,7 @@ import { ApiError } from "../../apis/apiService";
 import Modal from "../../components/UI/Model";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";
+import { useActiveOrg, type OrgMode } from "../../contexts/ActiveOrgContext";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -530,12 +532,11 @@ export default function OrganizationPage() {
   const { data: context, isLoading } = useMyOrgContext();
   const createOrgMutation = useCreateOrganization();
 
+  // Sync with global org context so sidebar switcher and this page stay in lock-step
+  const { activeMode, setActiveMode, hasBoth } = useActiveOrg();
+
   const ownedOrg = context?.ownedOrg ?? null;
   const memberOrg = context?.memberOrg ?? null;
-  const hasBoth = !!ownedOrg && !!memberOrg;
-
-  // "owned" = viewing the org they created; "member" = viewing the org they joined
-  const [activeView, setActiveView] = useState<"owned" | "member">("owned");
 
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -569,39 +570,70 @@ export default function OrganizationPage() {
         )}
       </div>
 
-      {/* Org switch tabs — only shown when the user has BOTH an owned org and a joined org */}
+      {/* Org switch tabs — only shown when user has BOTH an owned org and a joined org */}
       {hasBoth && (
-        <div className="flex gap-2 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm w-fit">
-          <button
-            type="button"
-            onClick={() => setActiveView("owned")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
-              activeView === "owned"
-                ? "bg-violet-600 text-white shadow"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            }`}
-          >
-            <ShieldCheck className="h-4 w-4" />
-            My Organization
-            <span className={`rounded-full px-1.5 py-0.5 text-xs ${activeView === "owned" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
-              Owner
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("member")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
-              activeView === "member"
-                ? "bg-sky-500 text-white shadow"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            }`}
-          >
-            <UserCircle2 className="h-4 w-4" />
-            {memberOrg!.name}
-            <span className={`rounded-full px-1.5 py-0.5 text-xs ${activeView === "member" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
-              Member
-            </span>
-          </button>
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-gray-400">
+            <ArrowLeftRight className="h-3.5 w-3.5" /> Switch Organization
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveMode("owned" as OrgMode)}
+              className={`flex flex-1 items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                activeMode === "owned"
+                  ? "border-violet-200 bg-violet-50 text-violet-700 shadow-sm"
+                  : "border-gray-100 bg-gray-50 text-gray-500 hover:border-violet-100 hover:bg-violet-50/50 hover:text-violet-600"
+              }`}
+            >
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                  activeMode === "owned"
+                    ? "bg-violet-600 text-white"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 text-left">
+                <p className="truncate font-semibold">{ownedOrg?.name ?? "My Organization"}</p>
+                <p className="text-xs font-normal text-gray-400">Owner · Admin access</p>
+              </div>
+              {activeMode === "owned" && (
+                <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-violet-500" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMode("member" as OrgMode)}
+              className={`flex flex-1 items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                activeMode === "member"
+                  ? "border-sky-200 bg-sky-50 text-sky-700 shadow-sm"
+                  : "border-gray-100 bg-gray-50 text-gray-500 hover:border-sky-100 hover:bg-sky-50/50 hover:text-sky-600"
+              }`}
+            >
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                  activeMode === "member"
+                    ? "bg-sky-500 text-white"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                <UserCircle2 className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 text-left">
+                <p className="truncate font-semibold">{memberOrg?.name ?? "Joined Org"}</p>
+                <p className="text-xs font-normal text-gray-400">Employee · Member access</p>
+              </div>
+              {activeMode === "member" && (
+                <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-sky-500" />
+              )}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            Switching org changes your navigation and available features across the whole app.
+          </p>
         </div>
       )}
 
@@ -627,9 +659,9 @@ export default function OrganizationPage() {
       {/* Org content */}
       {!isLoading && (
         <>
-          {/* User has both orgs — show whichever tab is active */}
-          {hasBoth && activeView === "owned" && <AdminOrgView org={ownedOrg!} userId={userId} />}
-          {hasBoth && activeView === "member" && <MemberOrgView org={memberOrg!} userId={userId} />}
+          {/* User has both orgs — show whichever is active */}
+          {hasBoth && activeMode === "owned" && <AdminOrgView org={ownedOrg!} userId={userId} />}
+          {hasBoth && activeMode === "member" && <MemberOrgView org={memberOrg!} userId={userId} />}
           {/* User only has their own org */}
           {!hasBoth && ownedOrg && <AdminOrgView org={ownedOrg} userId={userId} />}
           {/* User only joined someone else's org */}
