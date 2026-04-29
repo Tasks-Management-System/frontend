@@ -301,28 +301,6 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                     </>
                   )}
                 </NavLink>
-
-                {/* Per-sender unread list — rendered directly below the Chat nav item */}
-                {/* {isChat && unreadSenders.length > 0 && (
-                  <div className="ml-3 mt-0.5 space-y-0.5 border-l-2 border-rose-200 pl-3">
-                    {unreadSenders.map(({ senderId, count, name }) => (
-                      <NavLink
-                        key={senderId}
-                        to="/chat"
-                        onClick={() => onMobileClose?.()}
-                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-rose-50 hover:text-rose-600"
-                      >
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-[9px] font-bold text-white">
-                          {name[0]?.toUpperCase()}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate">{name}</span>
-                        <span className="shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600">
-                          {count}
-                        </span>
-                      </NavLink>
-                    ))}
-                  </div>
-                )} */}
               </div>
             );
           })}

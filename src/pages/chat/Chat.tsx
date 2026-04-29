@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Search, Send, MessageSquare, Circle, ArrowLeft, Check, CheckCheck, Smile } from "lucide-react";
+import {
+  Search,
+  Send,
+  MessageSquare,
+  Circle,
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Smile,
+} from "lucide-react";
 import { useChatMessages, useChatUsers, useOnlineUsers } from "../../apis/api/chat";
 import { getUserId } from "../../utils/auth";
 import { socket } from "../../utils/socket";
@@ -307,7 +316,11 @@ const Chat = () => {
   const [lastMessages, setLastMessages] = useState<Map<string, ChatMessage>>(new Map());
 
   // Use global unread counts (persisted, visible in sidebar)
-  const { unreadCounts: globalUnreadCounts, clearUnread, setActiveChatUser } = useChatNotifications();
+  const {
+    unreadCounts: globalUnreadCounts,
+    clearUnread,
+    setActiveChatUser,
+  } = useChatNotifications();
   // Convert to Map for the ContactList component
   const unreadCounts = useMemo(
     () => new Map(Object.entries(globalUnreadCounts).map(([k, v]) => [k, v])),
@@ -677,10 +690,7 @@ const Chat = () => {
 
                   {/* Picker floats directly above the button */}
                   {emojiOpen && (
-                    <div
-                      ref={emojiPickerRef}
-                      className="absolute bottom-full left-0 z-50 mb-2"
-                    >
+                    <div ref={emojiPickerRef} className="absolute bottom-full left-0 z-50 mb-2">
                       <EmojiPicker onSelect={handleEmojiSelect} />
                     </div>
                   )}

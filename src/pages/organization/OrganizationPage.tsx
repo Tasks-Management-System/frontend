@@ -88,8 +88,7 @@ function Avatar({ user }: { user: OrgMember }) {
 
 // ── Member view (read-only) shown when the user has joined someone else's org ──
 function MemberOrgView({ org, userId }: { org: Organization; userId: string }) {
-  const roleLabel = (m: OrgMember) =>
-    Array.isArray(m.role) ? m.role[0] : (m.role ?? "member");
+  const roleLabel = (m: OrgMember) => (Array.isArray(m.role) ? m.role[0] : (m.role ?? "member"));
 
   return (
     <div className="space-y-6">
@@ -149,13 +148,7 @@ function MemberOrgView({ org, userId }: { org: Organization; userId: string }) {
 }
 
 // ── Admin view shown for the org the user owns ──
-function AdminOrgView({
-  org,
-  userId,
-}: {
-  org: Organization;
-  userId: string;
-}) {
+function AdminOrgView({ org, userId }: { org: Organization; userId: string }) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [removeTarget, setRemoveTarget] = useState<OrgMember | null>(null);
@@ -206,8 +199,7 @@ function AdminOrgView({
     }
   };
 
-  const roleLabel = (m: OrgMember) =>
-    Array.isArray(m.role) ? m.role[0] : (m.role ?? "member");
+  const roleLabel = (m: OrgMember) => (Array.isArray(m.role) ? m.role[0] : (m.role ?? "member"));
 
   return (
     <div className="space-y-6">
@@ -248,10 +240,7 @@ function AdminOrgView({
             const isCreator = String(member._id) === String(org.createdBy?._id ?? "");
             const isSelf = String(member._id) === String(userId);
             return (
-              <div
-                key={member._id}
-                className="flex items-center justify-between gap-3 px-6 py-3"
-              >
+              <div key={member._id} className="flex items-center justify-between gap-3 px-6 py-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar user={member} />
                   <div className="min-w-0">
@@ -305,9 +294,7 @@ function AdminOrgView({
             ))}
           </div>
         ) : joinRequests.length === 0 ? (
-          <div className="px-6 py-10 text-center text-sm text-gray-400">
-            No join requests yet.
-          </div>
+          <div className="px-6 py-10 text-center text-sm text-gray-400">No join requests yet.</div>
         ) : (
           <div className="divide-y divide-gray-50">
             {joinRequests.map((jr) => (
@@ -588,9 +575,7 @@ export default function OrganizationPage() {
             >
               <span
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                  activeMode === "owned"
-                    ? "bg-violet-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                  activeMode === "owned" ? "bg-violet-600 text-white" : "bg-gray-200 text-gray-500"
                 }`}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -615,9 +600,7 @@ export default function OrganizationPage() {
             >
               <span
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                  activeMode === "member"
-                    ? "bg-sky-500 text-white"
-                    : "bg-gray-200 text-gray-500"
+                  activeMode === "member" ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
                 }`}
               >
                 <UserCircle2 className="h-4 w-4" />

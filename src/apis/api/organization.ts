@@ -94,10 +94,11 @@ export const useMyOrgContext = () => {
   return useQuery<OrgContext>({
     queryKey: ["organization", "myContext"],
     queryFn: async () => {
-      const res = await api.get<{ success: boolean; ownedOrg: Organization | null; memberOrg: Organization | null }>(
-        apiPath.organization.myContext,
-        { auth: true }
-      );
+      const res = await api.get<{
+        success: boolean;
+        ownedOrg: Organization | null;
+        memberOrg: Organization | null;
+      }>(apiPath.organization.myContext, { auth: true });
       return { ownedOrg: res.ownedOrg ?? null, memberOrg: res.memberOrg ?? null };
     },
   });

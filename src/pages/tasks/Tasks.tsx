@@ -84,7 +84,8 @@ export default function Tasks() {
   const pagination = tasksRes?.pagination;
 
   const tasks = useMemo(() => {
-    const base = tab === "archived" || view === "cards" ? rawTasks : withoutStaleCompletedTasks(rawTasks);
+    const base =
+      tab === "archived" || view === "cards" ? rawTasks : withoutStaleCompletedTasks(rawTasks);
     // Apply any in-flight optimistic status overrides so the card moves immediately on drop
     if (Object.keys(optimisticStatuses).length === 0) return base;
     return base.map((t) =>
