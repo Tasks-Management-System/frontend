@@ -29,6 +29,27 @@ export type OrgInvite = {
   createdAt: string;
 };
 
+export type InvitableUser = {
+  _id: string;
+  name: string;
+  email: string;
+  profileImage?: string | null;
+  role?: string[] | string;
+};
+
+export const useInvitableUsers = () => {
+  return useQuery<InvitableUser[]>({
+    queryKey: ["organization", "invitableUsers"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; users: InvitableUser[] }>(
+        apiPath.organization.invitableUsers,
+        { auth: true }
+      );
+      return res.users ?? [];
+    },
+  });
+};
+
 export const useCreateOrganization = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -60,6 +81,24 @@ export const useMyOrganization = () => {
       } catch {
         return null;
       }
+    },
+  });
+};
+
+export type OrgContext = {
+  ownedOrg: Organization | null;
+  memberOrg: Organization | null;
+};
+
+export const useMyOrgContext = () => {
+  return useQuery<OrgContext>({
+    queryKey: ["organization", "myContext"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; ownedOrg: Organization | null; memberOrg: Organization | null }>(
+        apiPath.organization.myContext,
+        { auth: true }
+      );
+      return { ownedOrg: res.ownedOrg ?? null, memberOrg: res.memberOrg ?? null };
     },
   });
 };

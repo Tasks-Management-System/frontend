@@ -105,6 +105,8 @@ export default function StickyNotes() {
   const boardRef = useRef<HTMLDivElement>(null);
   const dragSession = useRef<DragSession | null>(null);
   const zoomRef = useRef(1);
+  const rafId = useRef<number | null>(null);
+  const pendingDragPos = useRef<{ dx: number; dy: number; z: number } | null>(null);
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
@@ -136,19 +138,45 @@ export default function StickyNotes() {
       const s = dragSession.current;
       if (!s) return;
       e.preventDefault();
-      const dx = e.clientX - s.startClientX;
-      const dy = e.clientY - s.startClientY;
-      const z = zoomRef.current;
-      s.el.style.transform = `translate3d(${dx / z}px, ${dy / z}px, 0)`;
+
+      // Always store the latest pointer position so the RAF always paints the most recent frame
+      pendingDragPos.current = {
+        dx: e.clientX - s.startClientX,
+        dy: e.clientY - s.startClientY,
+        z: zoomRef.current,
+      };
+
+      // Only schedule one RAF per paint frame — drop excess pointermove events
+      if (rafId.current !== null) return;
+      rafId.current = requestAnimationFrame(() => {
+        rafId.current = null;
+        const pos = pendingDragPos.current;
+        const session = dragSession.current;
+        if (!pos || !session) return;
+        session.el.style.transform = `translate3d(${pos.dx / pos.z}px, ${pos.dy / pos.z}px, 0)`;
+      });
     };
+
     const finishDrag = (e: PointerEvent) => {
       const s = dragSession.current;
       if (!s) return;
+
+      // Cancel any queued paint so we don't apply a stale transform after drop
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+        rafId.current = null;
+      }
+      pendingDragPos.current = null;
+
       dragSession.current = null;
       const dxPct = ((e.clientX - s.startClientX) / s.boardW) * 100;
       const dyPct = ((e.clientY - s.startClientY) / s.boardH) * 100;
       const nx = clamp(s.originX + dxPct, 0, 82);
       const ny = clamp(s.originY + dyPct, 0, 78);
+      // Set the new position on the element BEFORE clearing the transform so
+      // the note never flashes back to its old left/top coordinates.
+      s.el.style.left = `${nx}%`;
+      s.el.style.top = `${ny}%`;
       s.el.style.transform = "";
       s.el.style.zIndex = "";
       s.el.style.willChange = "";
@@ -163,6 +191,7 @@ export default function StickyNotes() {
         }
       );
     };
+
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);
@@ -170,6 +199,9 @@ export default function StickyNotes() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", finishDrag);
       window.removeEventListener("pointercancel", finishDrag);
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
   }, []);
 

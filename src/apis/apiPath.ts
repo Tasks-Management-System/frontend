@@ -83,6 +83,7 @@ export const apiPath = {
   organization: {
     create: "/organization",
     my: "/organization/my",
+    myContext: "/organization/my-context",
     all: "/organization/all",
     sendInvite: "/organization/invite",
     adminInvites: "/organization/invites",
@@ -90,6 +91,7 @@ export const apiPath = {
     acceptInvite: "/organization/invites/:id/accept",
     rejectInvite: "/organization/invites/:id/reject",
     removeMember: "/organization/:orgId/members/:userId",
+    invitableUsers: "/organization/invitable-users",
     sendJoinRequest: "/organization/join-request",
     joinRequests: "/organization/join-requests",
     myJoinRequests: "/organization/join-requests/my",

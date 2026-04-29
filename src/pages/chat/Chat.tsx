@@ -507,7 +507,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
+    <div className="flex h-[calc(95vh-5rem)] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
       {/* ---- Contacts Panel ---- */}
       <div
         className={`${

@@ -45,6 +45,7 @@ export default function Tasks() {
   const [createStatus, setCreateStatus] = useState<TaskStatus>("pending");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, TaskStatus>>({});
 
   const userId = getUserId();
   const { data: me } = useUserById(userId);
@@ -83,9 +84,13 @@ export default function Tasks() {
   const pagination = tasksRes?.pagination;
 
   const tasks = useMemo(() => {
-    if (tab === "archived" || view === "cards") return rawTasks;
-    return withoutStaleCompletedTasks(rawTasks);
-  }, [rawTasks, tab, view]);
+    const base = tab === "archived" || view === "cards" ? rawTasks : withoutStaleCompletedTasks(rawTasks);
+    // Apply any in-flight optimistic status overrides so the card moves immediately on drop
+    if (Object.keys(optimisticStatuses).length === 0) return base;
+    return base.map((t) =>
+      optimisticStatuses[t._id] ? { ...t, status: optimisticStatuses[t._id] } : t
+    );
+  }, [rawTasks, tab, view, optimisticStatuses]);
 
   const tableRangeLabel = useMemo(() => {
     const total = pagination?.totalTasks ?? 0;
@@ -138,11 +143,37 @@ export default function Tasks() {
     setSelectedTaskId(task._id);
   };
 
+  // Clear optimistic overrides only once the server data confirms the new status —
+  // avoids the flash that happens when clearing too early (before refetch lands).
+  useEffect(() => {
+    setOptimisticStatuses((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      let changed = false;
+      for (const id of Object.keys(next)) {
+        const serverTask = rawTasks.find((t) => t._id === id);
+        if (serverTask && serverTask.status === next[id]) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [rawTasks]);
+
   const handleStatusChange = async (id: string, status: TaskStatus) => {
     setUpdatingId(id);
+    // Move the card immediately — don't wait for the API
+    setOptimisticStatuses((prev) => ({ ...prev, [id]: status }));
     try {
       await updateMut.mutateAsync({ id, body: { status } });
     } catch (e) {
+      // Revert the optimistic move on failure
+      setOptimisticStatuses((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       toast.error((e as ApiError)?.message ?? "Could not update task");
     } finally {
       setUpdatingId(null);
