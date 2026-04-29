@@ -40,7 +40,6 @@ import Button from "../UI/Button";
 import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import { useChatNotifications } from "../../contexts/ChatNotificationContext";
-import { useChatUsers } from "../../apis/api/chat";
 
 const PROJECT_ACCENTS = [
   "bg-violet-500",
@@ -150,17 +149,6 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
 
   // Chat notifications
   const { unreadCounts, totalUnread } = useChatNotifications();
-  const { data: chatUsers = [] } = useChatUsers();
-  // Senders who have unread messages, enriched with name for display
-  const unreadSenders = useMemo(() => {
-    return Object.entries(unreadCounts)
-      .filter(([, count]) => count > 0)
-      .map(([senderId, count]) => ({
-        senderId,
-        count,
-        name: chatUsers.find((u) => u._id === senderId)?.name ?? "Someone",
-      }));
-  }, [unreadCounts, chatUsers]);
 
   const selectedProjectId = useMemo(() => {
     const params = new URLSearchParams(location.search);
