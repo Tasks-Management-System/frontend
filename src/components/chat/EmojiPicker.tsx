@@ -1,0 +1,193 @@
+import { useState, useMemo } from "react";
+import { Search } from "lucide-react";
+
+/* ------------------------------------------------------------------ */
+/* Emoji data                                                          */
+/* ------------------------------------------------------------------ */
+
+const CATEGORIES: { label: string; icon: string; emojis: string[] }[] = [
+  {
+    label: "Frequent",
+    icon: "🕐",
+    emojis: ["😀","😂","😍","🥰","😊","🤔","😢","😡","👍","👎","❤️","🔥","✅","🎉","🙏","💯"],
+  },
+  {
+    label: "Smileys",
+    icon: "😀",
+    emojis: [
+      "😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩",
+      "😘","😗","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐",
+      "🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒",
+      "🤕","🤢","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","🥸","😎","🤓","🧐","😕","😟",
+      "🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖",
+      "😣","😞","😓","😩","😫","🥱","😤","😠","😡","🤬","😈","👿","💀","☠️","💩","🤡",
+    ],
+  },
+  {
+    label: "People",
+    icon: "👋",
+    emojis: [
+      "👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆",
+      "🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️",
+      "💅","🤳","💪","🦾","🦵","🦿","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀",
+      "👁️","👅","👄","💋","👶","🧒","👦","👧","🧑","👱","👨","🧔","👩","🧓","👴","👵",
+      "🙍","🙎","🙅","🙆","💁","🙋","🧏","🙇","🤦","🤷","👮","🕵️","💂","🥷","👷","🫅",
+    ],
+  },
+  {
+    label: "Nature",
+    icon: "🌿",
+    emojis: [
+      "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈",
+      "🙉","🙊","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛",
+      "🦋","🐌","🐞","🐜","🪲","🦟","🦗","🪳","🌸","🌺","🌻","🌹","🍀","🍁","🍂","🍃",
+      "🌱","🌲","🌳","🌴","🌵","🎋","🎍","☘️","🌾","🍄","🐚","🪸","🌊","💧","🌍","⭐",
+    ],
+  },
+  {
+    label: "Food",
+    icon: "🍔",
+    emojis: [
+      "🍎","🍊","🍋","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥝","🍅","🥥","🥑","🍆",
+      "🥦","🥕","🌽","🌶️","🫑","🧄","🧅","🥔","🍠","🥐","🥖","🍞","🥨","🥯","🧀","🥚",
+      "🍳","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🫓","🥙","🧆",
+      "🌮","🌯","🫔","🥗","🥘","🫕","🍜","🍝","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚",
+      "🍘","🍥","🥮","🍡","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜",
+      "☕","🫖","🍵","🧃","🥤","🧋","🍺","🍷","🍸","🍹","🧉","🥂","🍾","🫗",
+    ],
+  },
+  {
+    label: "Activity",
+    icon: "⚽",
+    emojis: [
+      "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🏓","🏸","🏒","🥍","🏑","🏏",
+      "🪃","🥅","⛳","🎣","🤿","🎽","🎿","🛷","🥌","🎯","🪀","🪁","🎮","🕹️","🎲","🧩",
+      "🎭","🎨","🖼️","🎪","🎤","🎧","🎼","🎵","🎶","🎹","🥁","🪘","🎷","🎺","🎸","🪗",
+      "🏆","🥇","🥈","🥉","🏅","🎖️","🎗️","🎫","🎟️","🎀","🎁","🎊","🎉","🎈","🎃","🎄",
+    ],
+  },
+  {
+    label: "Travel",
+    icon: "✈️",
+    emojis: [
+      "🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🛵","🏍️",
+      "🚲","🛴","🛹","🛼","🚁","🛸","🚀","✈️","🛩️","🚂","🚆","🚇","🚈","🚉","🚊","🚝",
+      "⛵","🚤","🛥️","🛳️","⛴️","🚢","🏖️","🏝️","🏜️","🏕️","🏔️","⛰️","🌋","🗻","🏠","🏡",
+      "🏢","🏣","🏤","🏥","🏦","🏨","🏩","🏪","🏫","🏬","🏭","🏯","🏰","🗼","🗽","🗿",
+      "🌐","🗺️","🧭","⏱️","⌚","⏰","🌡️","⛱️","🎡","🎢","🎠","🌅","🌄","🌠","🎑","🌃",
+    ],
+  },
+  {
+    label: "Objects",
+    icon: "💡",
+    emojis: [
+      "⌚","📱","💻","⌨️","🖥️","🖨️","🖱️","📷","📸","📹","🎥","📽️","📞","☎️","📟","📠",
+      "📺","📻","🧭","⏰","⌛","💡","🔦","🕯️","🔋","💰","💳","💎","🔧","🔨","⚒️","🛠️",
+      "🔩","🗜️","⚙️","🔑","🗝️","🔐","🔒","🔓","🔏","📝","✏️","🖊️","📌","📍","📎","🖇️",
+      "📏","📐","✂️","🗃️","📦","📫","📪","📬","📭","📮","🗳️","📋","📁","📂","🗂️","📓",
+      "📔","📒","📕","📗","📘","📙","📚","📖","🔖","🏷️","💊","🩺","🩻","🩹","🧰","🪄",
+    ],
+  },
+  {
+    label: "Symbols",
+    icon: "❤️",
+    emojis: [
+      "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","❤️‍🩹","💕","💞","💓","💗",
+      "💖","💘","💝","💟","☮️","✝️","☪️","🕉️","✡️","🔯","🕎","☯️","☦️","🛐","⛎","♈",
+      "♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","⛔","🚫","💯","🔞","📵","🚳",
+      "✅","❎","🆗","🆙","🆒","🆕","🆓","🔝","🅰️","🅱️","🆎","🆑","🅾️","🆘","⁉️","‼️",
+      "#️⃣","*️⃣","0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟","🔠","🔡","🔢",
+    ],
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Component                                                           */
+/* ------------------------------------------------------------------ */
+
+type Props = {
+  onSelect: (emoji: string) => void;
+};
+
+export default function EmojiPicker({ onSelect }: Props) {
+  const [activeCategory, setActiveCategory] = useState(0);
+  const [search, setSearch] = useState("");
+
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return null;
+    const q = search.toLowerCase();
+    return CATEGORIES.flatMap((c) => c.emojis).filter((e) =>
+      e.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  const displayedEmojis = searchResults ?? CATEGORIES[activeCategory].emojis;
+
+  return (
+    <div className="flex w-[320px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+      {/* Search */}
+      <div className="border-b border-gray-100 px-3 pt-3 pb-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search emoji..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-400/20"
+          />
+        </div>
+      </div>
+
+      {/* Category tabs — hidden during search */}
+      {!search && (
+        <div className="flex border-b border-gray-100 px-1">
+          {CATEGORIES.map((cat, i) => (
+            <button
+              key={cat.label}
+              type="button"
+              title={cat.label}
+              onClick={() => setActiveCategory(i)}
+              className={`flex flex-1 items-center justify-center py-2 text-base transition-all ${
+                activeCategory === i
+                  ? "border-b-2 border-violet-500 opacity-100"
+                  : "opacity-40 hover:opacity-70"
+              }`}
+            >
+              {cat.icon}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Emoji grid */}
+      <div className="h-52 overflow-y-auto p-2">
+        {displayedEmojis.length === 0 ? (
+          <p className="pt-8 text-center text-xs text-gray-400">No emojis found</p>
+        ) : (
+          <div className="grid grid-cols-8 gap-0.5">
+            {displayedEmojis.map((emoji, i) => (
+              <button
+                key={`${emoji}-${i}`}
+                type="button"
+                onClick={() => onSelect(emoji)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition hover:bg-violet-50 hover:scale-110 active:scale-95"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Category label footer */}
+      {!search && (
+        <div className="border-t border-gray-100 px-3 py-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+            {CATEGORIES[activeCategory].label}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

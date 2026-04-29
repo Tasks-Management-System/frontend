@@ -7,8 +7,7 @@ import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatMessage } from "../../types/chat.types";
 import type { User } from "../../types/user.types";
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
+import EmojiPicker from "../../components/chat/EmojiPicker";
 import { useChatNotifications } from "../../contexts/ChatNotificationContext";
 
 /* ------------------------------------------------------------------ */
@@ -511,23 +510,21 @@ const Chat = () => {
 
   // Insert emoji at the current cursor position in the textarea
   const handleEmojiSelect = useCallback(
-    (emoji: { native: string }) => {
+    (emoji: string) => {
       const textarea = inputRef.current;
       if (!textarea) {
-        setMessageInput((prev) => prev + emoji.native);
+        setMessageInput((prev) => prev + emoji);
         return;
       }
       const start = textarea.selectionStart ?? messageInput.length;
       const end = textarea.selectionEnd ?? messageInput.length;
-      const newValue =
-        messageInput.slice(0, start) + emoji.native + messageInput.slice(end);
+      const newValue = messageInput.slice(0, start) + emoji + messageInput.slice(end);
       setMessageInput(newValue);
-      // Restore focus + move cursor after the inserted emoji
+      // Restore focus and move cursor after the inserted emoji
       requestAnimationFrame(() => {
         textarea.focus();
-        const newPos = start + emoji.native.length;
+        const newPos = start + emoji.length;
         textarea.setSelectionRange(newPos, newPos);
-        // Also resize the textarea
         textarea.style.height = "auto";
         textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
       });
@@ -684,17 +681,7 @@ const Chat = () => {
                       ref={emojiPickerRef}
                       className="absolute bottom-full left-0 z-50 mb-2"
                     >
-                      <Picker
-                        data={data}
-                        onEmojiSelect={handleEmojiSelect}
-                        theme="light"
-                        previewPosition="none"
-                        skinTonePosition="search"
-                        maxFrequentRows={2}
-                        perLine={8}
-                        emojiSize={22}
-                        emojiButtonSize={32}
-                      />
+                      <EmojiPicker onSelect={handleEmojiSelect} />
                     </div>
                   )}
                 </div>
