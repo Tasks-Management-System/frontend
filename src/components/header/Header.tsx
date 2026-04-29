@@ -145,6 +145,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
     setElapsedTime(formatElapsed(base));
   }, [
     clockedIn,
+    todayRecord,
     todayRecord?.dayTotalMs,
     todayRecord?.status,
     todayRecord?.punchInTime,

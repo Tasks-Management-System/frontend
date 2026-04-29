@@ -124,7 +124,7 @@ function FilePreviewModal({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [onClose, total]);
 
   return createPortal(
     <div
@@ -359,7 +359,7 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
     setVisible(false);
     const t = window.setTimeout(() => setRendered(false), EXIT_MS);
     return () => window.clearTimeout(t);
-  }, [isOpen, task?._id]);
+  }, [isOpen, task]);
 
   useEffect(() => {
     if (editingTitle) titleRef.current?.focus();

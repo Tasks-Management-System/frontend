@@ -378,7 +378,7 @@ const Settings = () => {
           ]
         : []),
     ],
-    [canToggleUserActive, sessionUser?._id, handleToggleUserActive, updateUserMutation.isPending]
+    [canToggleUserActive, sessionUser?._id, handleToggleUserActive, updateUserMutation.isPending, navigate]
   );
 
   const roleManagementColumns = useMemo(

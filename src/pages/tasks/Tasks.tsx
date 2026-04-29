@@ -80,7 +80,7 @@ export default function Tasks() {
   }, [tab, projectId]);
 
   const { data: tasksRes, isLoading, isError, error } = useTasksList(listFilters);
-  const rawTasks = tasksRes?.tasks ?? [];
+  const rawTasks = useMemo(() => tasksRes?.tasks ?? [], [tasksRes?.tasks]);
   const pagination = tasksRes?.pagination;
 
   const tasks = useMemo(() => {

@@ -148,7 +148,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const activeOrg = activeMode === "member" ? memberOrg : ownedOrg;
 
   // Chat notifications
-  const { unreadCounts, totalUnread } = useChatNotifications();
+  const { totalUnread } = useChatNotifications();
 
   const selectedProjectId = useMemo(() => {
     const params = new URLSearchParams(location.search);

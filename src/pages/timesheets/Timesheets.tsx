@@ -72,7 +72,7 @@ export default function Timesheets() {
   const [year, setYear] = useState(current.year);
 
   const { data, isLoading } = useTimesheets({ week, year });
-  const entries = data?.entries ?? [];
+  const entries = useMemo(() => data?.entries ?? [], [data?.entries]);
   const summary = data?.summary ?? { totalHours: 0, billableHours: 0, nonBillableHours: 0 };
 
   const { data: projects = [] } = useProjectsList(200);
