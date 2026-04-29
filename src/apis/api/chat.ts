@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, uploadFormData } from "../apiService";
-import type { ChatAttachment, ChatMessagesResponse, OnlineUsersResponse } from "../../types/chat.types";
+import type {
+  ChatAttachment,
+  ChatMessagesResponse,
+  OnlineUsersResponse,
+} from "../../types/chat.types";
 import type { User } from "../../types/user.types";
 
 export const useChatMessages = (receiverId: string, page = 1) => {
@@ -35,7 +39,9 @@ export const deleteMessageApi = (messageId: string, deleteFor: "me" | "everyone"
     query: { deleteFor },
   });
 
-export const uploadChatFileApi = (file: File): Promise<{ success: boolean; data: ChatAttachment }> => {
+export const uploadChatFileApi = (
+  file: File
+): Promise<{ success: boolean; data: ChatAttachment }> => {
   const formData = new FormData();
   formData.append("file", file);
   return uploadFormData("POST", "/chat/upload", formData, { auth: true });

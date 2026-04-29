@@ -21,7 +21,15 @@ import {
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useChatMessages, useChatUsers, useOnlineUsers, deleteMessageApi, editMessageApi, clearChatApi, uploadChatFileApi } from "../../apis/api/chat";
+import {
+  useChatMessages,
+  useChatUsers,
+  useOnlineUsers,
+  deleteMessageApi,
+  editMessageApi,
+  clearChatApi,
+  uploadChatFileApi,
+} from "../../apis/api/chat";
 import { getUserId } from "../../utils/auth";
 import { socket } from "../../utils/socket";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
@@ -309,13 +317,7 @@ function isOfficeMime(mimeType: string) {
 /*  File Preview Modal                                                 */
 /* ------------------------------------------------------------------ */
 
-function FilePreviewModal({
-  att,
-  onClose,
-}: {
-  att: ChatAttachment;
-  onClose: () => void;
-}) {
+function FilePreviewModal({ att, onClose }: { att: ChatAttachment; onClose: () => void }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -347,23 +349,11 @@ function FilePreviewModal({
     }
 
     if (isPdfMime(att.mimeType)) {
-      return (
-        <iframe
-          src={att.url}
-          title={att.name}
-          className="h-full w-full rounded-xl"
-        />
-      );
+      return <iframe src={att.url} title={att.name} className="h-full w-full rounded-xl" />;
     }
     if (isOfficeMime(att.mimeType)) {
       const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(att.url)}&embedded=true`;
-      return (
-        <iframe
-          src={viewerUrl}
-          title={att.name}
-          className="h-full w-full rounded-xl"
-        />
-      );
+      return <iframe src={viewerUrl} title={att.name} className="h-full w-full rounded-xl" />;
     }
     // Fallback — not previewable, show download card
     return (
@@ -424,10 +414,7 @@ function FilePreviewModal({
       </div>
 
       {/* Content */}
-      <div
-        className="flex min-h-0 flex-1 items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="flex min-h-0 flex-1 items-center justify-center p-4" onClick={onClose}>
         <div
           className={`${
             isImageMime(att.mimeType)
@@ -533,31 +520,49 @@ function ReplyCard({
         isMine ? "border-white/50 bg-white/15" : "border-violet-400 bg-violet-50/70"
       }`}
     >
-      <p className={`mb-1 text-[11px] font-semibold ${isMine ? "text-violet-200" : "text-violet-600"}`}>
+      <p
+        className={`mb-1 text-[11px] font-semibold ${isMine ? "text-violet-200" : "text-violet-600"}`}
+      >
         {replyTo.sender.name}
       </p>
 
       {firstAtt && (
         <div className="mb-1 flex items-center gap-2">
           {isImageMime(firstAtt.mimeType) ? (
-            <img src={firstAtt.url} alt={firstAtt.name} className="h-10 w-10 rounded-lg object-cover" />
+            <img
+              src={firstAtt.url}
+              alt={firstAtt.name}
+              className="h-10 w-10 rounded-lg object-cover"
+            />
           ) : isVideoMime(firstAtt.mimeType) ? (
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm ${isMine ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}>
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm ${isMine ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}
+            >
               ▶
             </div>
           ) : (
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg ${isMine ? "bg-white/20" : "bg-gray-200"}`}>
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg ${isMine ? "bg-white/20" : "bg-gray-200"}`}
+            >
               {getFileIcon(firstAtt.mimeType)}
             </div>
           )}
-          <span className={`truncate text-[11px] max-w-[140px] ${isMine ? "text-white/70" : "text-gray-500"}`}>
-            {isVideoMime(firstAtt.mimeType) ? "Video" : isImageMime(firstAtt.mimeType) ? "Photo" : firstAtt.name}
+          <span
+            className={`truncate text-[11px] max-w-[140px] ${isMine ? "text-white/70" : "text-gray-500"}`}
+          >
+            {isVideoMime(firstAtt.mimeType)
+              ? "Video"
+              : isImageMime(firstAtt.mimeType)
+                ? "Photo"
+                : firstAtt.name}
           </span>
         </div>
       )}
 
       {(replyTo.message || !firstAtt) && (
-        <p className={`line-clamp-2 text-[11px] leading-relaxed ${isMine ? "text-white/70" : "text-gray-500"}`}>
+        <p
+          className={`line-clamp-2 text-[11px] leading-relaxed ${isMine ? "text-white/70" : "text-gray-500"}`}
+        >
           {replyTo.message || "📎 Attachment"}
         </p>
       )}
@@ -620,10 +625,14 @@ function MessageBubble({
                 isMine ? "border-white/50 bg-white/15" : "border-violet-400 bg-violet-50/70"
               }`}
             >
-              <p className={`mb-0.5 text-[11px] font-semibold ${isMine ? "text-violet-200" : "text-violet-600"}`}>
+              <p
+                className={`mb-0.5 text-[11px] font-semibold ${isMine ? "text-violet-200" : "text-violet-600"}`}
+              >
                 {legacyQuote.name}
               </p>
-              <p className={`line-clamp-2 text-[11px] leading-relaxed ${isMine ? "text-white/70" : "text-gray-500"}`}>
+              <p
+                className={`line-clamp-2 text-[11px] leading-relaxed ${isMine ? "text-white/70" : "text-gray-500"}`}
+              >
                 {legacyQuote.text}
               </p>
             </div>
@@ -638,15 +647,15 @@ function MessageBubble({
             </div>
           )}
 
-          {body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>}
+          {body && (
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>
+          )}
           <div
             className={`mt-1 flex items-center justify-end gap-1.5 ${
               isMine ? "text-violet-200" : "text-gray-400"
             }`}
           >
-            {msg.isEdited && (
-              <span className="text-[10px] italic opacity-70">edited</span>
-            )}
+            {msg.isEdited && <span className="text-[10px] italic opacity-70">edited</span>}
             <span className="text-[10px]">{formatMessageTime(msg.createdAt)}</span>
             {isMine &&
               (msg.isRead ? (
@@ -1017,7 +1026,12 @@ const Chat = () => {
 
     socket.emit(
       "message:send",
-      { receiverId: selectedUserId, message: finalText, attachments: readyAttachments, replyToId: replyTo?._id ?? null },
+      {
+        receiverId: selectedUserId,
+        message: finalText,
+        attachments: readyAttachments,
+        replyToId: replyTo?._id ?? null,
+      },
       (response: { success: boolean; data?: ChatMessage; error?: string }) => {
         if (response.success && response.data) {
           setMessages((prev) => {
@@ -1039,7 +1053,15 @@ const Chat = () => {
     setMessageInput("");
     socket.emit("typing:stop", { receiverId: selectedUserId });
     inputRef.current?.focus();
-  }, [messageInput, selectedUserId, replyTo, currentUserId, selectedUser, editTarget, pendingFiles]);
+  }, [
+    messageInput,
+    selectedUserId,
+    replyTo,
+    currentUserId,
+    selectedUser,
+    editTarget,
+    pendingFiles,
+  ]);
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -1130,9 +1152,7 @@ const Chat = () => {
       try {
         const res = await uploadChatFileApi(pending.file);
         setPendingFiles((prev) =>
-          prev.map((f) =>
-            f.id === pending.id ? { ...f, status: "done", result: res.data } : f
-          )
+          prev.map((f) => (f.id === pending.id ? { ...f, status: "done", result: res.data } : f))
         );
       } catch {
         setPendingFiles((prev) =>
@@ -1589,9 +1609,7 @@ const Chat = () => {
       </div>
 
       {/* ---- File / Image Preview Modal ---- */}
-      {previewFile && (
-        <FilePreviewModal att={previewFile} onClose={() => setPreviewFile(null)} />
-      )}
+      {previewFile && <FilePreviewModal att={previewFile} onClose={() => setPreviewFile(null)} />}
 
       {/* ---- Clear Chat Confirmation Modal ---- */}
       {clearChatConfirm && (
@@ -1650,9 +1668,7 @@ const Chat = () => {
                 <Trash2 className="h-5 w-5 text-red-500" />
               </div>
               <h3 className="text-base font-semibold text-gray-900">Delete message?</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Choose who to delete this message for.
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Choose who to delete this message for.</p>
             </div>
 
             {/* Actions */}
