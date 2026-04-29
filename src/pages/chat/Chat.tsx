@@ -8,16 +8,30 @@ import {
   Check,
   CheckCheck,
   Smile,
+  MoreVertical,
+  Palette,
+  Copy,
+  CornerUpLeft,
+  Trash2,
+  Pencil,
+  Eraser,
+  Paperclip,
+  FileText,
+  Download,
+  X,
 } from "lucide-react";
-import { useChatMessages, useChatUsers, useOnlineUsers } from "../../apis/api/chat";
+import toast from "react-hot-toast";
+import { useChatMessages, useChatUsers, useOnlineUsers, deleteMessageApi, editMessageApi, clearChatApi, uploadChatFileApi } from "../../apis/api/chat";
 import { getUserId } from "../../utils/auth";
 import { socket } from "../../utils/socket";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ChatMessage } from "../../types/chat.types";
+import type { ChatAttachment, ChatMessage, ReplyToMessage } from "../../types/chat.types";
 import type { User } from "../../types/user.types";
 import EmojiPicker from "../../components/chat/EmojiPicker";
+import WallpaperPicker from "../../components/chat/WallpaperPicker";
 import { useChatNotifications } from "../../contexts/ChatNotificationContext";
+import { useChatWallpaper, getWallpaperStyle } from "../../hooks/useChatWallpaper";
 
 /* ------------------------------------------------------------------ */
 /*  Avatar                                                             */
@@ -231,29 +245,456 @@ function ContactList({
 /*  Message Bubble                                                     */
 /* ------------------------------------------------------------------ */
 
-function MessageBubble({ msg, isMine }: { msg: ChatMessage; isMine: boolean }) {
+/** Parse a reply-prefixed message into its quoted part and body.
+ *  Format written by handleSend: "> Name: original\n\nactual reply"
+ *  Returns { quote: { name, text } | null, body: string } */
+function parseMessage(raw: string): { quote: { name: string; text: string } | null; body: string } {
+  if (!raw.startsWith("> ")) return { quote: null, body: raw };
+  const newlineIdx = raw.indexOf("\n\n");
+  if (newlineIdx === -1) return { quote: null, body: raw };
+
+  const quoteLine = raw.slice(2, newlineIdx); // strip leading "> "
+  const colonIdx = quoteLine.indexOf(": ");
+  if (colonIdx === -1) return { quote: null, body: raw };
+
+  return {
+    quote: { name: quoteLine.slice(0, colonIdx), text: quoteLine.slice(colonIdx + 2) },
+    body: raw.slice(newlineIdx + 2),
+  };
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isImageMime(mimeType: string) {
+  return mimeType.startsWith("image/");
+}
+
+function isVideoMime(mimeType: string) {
+  return mimeType.startsWith("video/");
+}
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith("video/")) return "🎬";
+  if (mimeType.startsWith("audio/")) return "🎵";
+  if (mimeType === "application/pdf") return "📄";
+  if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
+  if (mimeType.includes("sheet") || mimeType.includes("excel")) return "📊";
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) return "📑";
+  if (mimeType.includes("zip") || mimeType.includes("rar") || mimeType.includes("compressed"))
+    return "🗜️";
+  return "📎";
+}
+
+function isPdfMime(mimeType: string) {
+  return mimeType === "application/pdf";
+}
+
+function isOfficeMime(mimeType: string) {
   return (
-    <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1 group`}>
+    mimeType.includes("word") ||
+    mimeType.includes("document") ||
+    mimeType.includes("sheet") ||
+    mimeType.includes("excel") ||
+    mimeType.includes("presentation") ||
+    mimeType.includes("powerpoint") ||
+    mimeType.includes("officedocument")
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  File Preview Modal                                                 */
+/* ------------------------------------------------------------------ */
+
+function FilePreviewModal({
+  att,
+  onClose,
+}: {
+  att: ChatAttachment;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const renderContent = () => {
+    if (isImageMime(att.mimeType)) {
+      return (
+        <img
+          src={att.url}
+          alt={att.name}
+          className="max-h-full max-w-full rounded-xl object-contain shadow-2xl"
+        />
+      );
+    }
+    if (isVideoMime(att.mimeType)) {
+      return (
+        <video
+          src={att.url}
+          controls
+          autoPlay
+          className="max-h-full max-w-full rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      );
+    }
+
+    if (isPdfMime(att.mimeType)) {
+      return (
+        <iframe
+          src={att.url}
+          title={att.name}
+          className="h-full w-full rounded-xl"
+        />
+      );
+    }
+    if (isOfficeMime(att.mimeType)) {
+      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(att.url)}&embedded=true`;
+      return (
+        <iframe
+          src={viewerUrl}
+          title={att.name}
+          className="h-full w-full rounded-xl"
+        />
+      );
+    }
+    // Fallback — not previewable, show download card
+    return (
+      <div className="flex flex-col items-center justify-center gap-6 rounded-2xl bg-white p-10 shadow-2xl">
+        <div className="text-6xl">{getFileIcon(att.mimeType)}</div>
+        <div className="text-center">
+          <p className="text-base font-semibold text-gray-800">{att.name}</p>
+          <p className="mt-1 text-sm text-gray-400">{formatFileSize(att.size)}</p>
+        </div>
+        <a
+          href={att.url}
+          download={att.name}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+        >
+          <Download className="h-4 w-4" />
+          Download
+        </a>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Top bar */}
       <div
-        className={`relative max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 shadow-sm ${
-          isMine
-            ? "bg-violet-600 text-white rounded-br-md"
-            : "bg-white text-gray-800 rounded-bl-md border border-gray-100"
+        className="flex shrink-0 items-center justify-between px-4 py-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-white">{att.name}</p>
+          <p className="text-[11px] text-white/50">{formatFileSize(att.size)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href={att.url}
+            download={att.name}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+            title="Download"
+          >
+            <Download className="h-4 w-4" />
+          </a>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div
+        className="flex min-h-0 flex-1 items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div
+          className={`${
+            isImageMime(att.mimeType)
+              ? "flex max-h-full max-w-full items-center justify-center"
+              : "h-full w-full max-w-4xl"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {renderContent()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttachmentPreview({
+  att,
+  isMine,
+  onPreview,
+}: {
+  att: ChatAttachment;
+  isMine: boolean;
+  onPreview: (att: ChatAttachment) => void;
+}) {
+  if (isImageMime(att.mimeType)) {
+    return (
+      <button type="button" onClick={() => onPreview(att)} className="block w-full">
+        <img
+          src={att.url}
+          alt={att.name}
+          className="max-h-56 w-full rounded-xl object-cover transition hover:opacity-90"
+          loading="lazy"
+        />
+      </button>
+    );
+  }
+
+  if (isVideoMime(att.mimeType)) {
+    return (
+      <div className="relative overflow-hidden rounded-xl">
+        <video
+          src={att.url}
+          controls
+          preload="metadata"
+          className="max-h-56 w-full rounded-xl bg-black"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => onPreview(att)}
+      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition ${
+        isMine ? "bg-white/15 hover:bg-white/25" : "bg-gray-100 hover:bg-gray-200"
+      }`}
+    >
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl ${
+          isMine ? "bg-white/20" : "bg-violet-100"
         }`}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.message}</p>
+        {isImageMime(att.mimeType) ? (
+          <FileText className={`h-4 w-4 ${isMine ? "text-white" : "text-violet-600"}`} />
+        ) : (
+          <span>{getFileIcon(att.mimeType)}</span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1 text-left">
+        <p className={`truncate text-xs font-medium ${isMine ? "text-white" : "text-gray-800"}`}>
+          {att.name}
+        </p>
+        <p className={`text-[10px] ${isMine ? "text-white/60" : "text-gray-400"}`}>
+          {formatFileSize(att.size)}
+        </p>
+      </div>
+      <Download className={`h-4 w-4 shrink-0 ${isMine ? "text-white/70" : "text-gray-400"}`} />
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Reply Card                                                         */
+/* ------------------------------------------------------------------ */
+
+function ReplyCard({
+  replyTo,
+  isMine,
+  onClick,
+}: {
+  replyTo: ReplyToMessage;
+  isMine: boolean;
+  onClick: () => void;
+}) {
+  const firstAtt = replyTo.attachments?.[0];
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`mb-2 w-full rounded-xl border-l-[3px] px-3 py-2 text-left transition-opacity hover:opacity-75 ${
+        isMine ? "border-white/50 bg-white/15" : "border-violet-400 bg-violet-50/70"
+      }`}
+    >
+      <p className={`mb-1 text-[11px] font-semibold ${isMine ? "text-violet-200" : "text-violet-600"}`}>
+        {replyTo.sender.name}
+      </p>
+
+      {firstAtt && (
+        <div className="mb-1 flex items-center gap-2">
+          {isImageMime(firstAtt.mimeType) ? (
+            <img src={firstAtt.url} alt={firstAtt.name} className="h-10 w-10 rounded-lg object-cover" />
+          ) : isVideoMime(firstAtt.mimeType) ? (
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm ${isMine ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}>
+              ▶
+            </div>
+          ) : (
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg ${isMine ? "bg-white/20" : "bg-gray-200"}`}>
+              {getFileIcon(firstAtt.mimeType)}
+            </div>
+          )}
+          <span className={`truncate text-[11px] max-w-[140px] ${isMine ? "text-white/70" : "text-gray-500"}`}>
+            {isVideoMime(firstAtt.mimeType) ? "Video" : isImageMime(firstAtt.mimeType) ? "Photo" : firstAtt.name}
+          </span>
+        </div>
+      )}
+
+      {(replyTo.message || !firstAtt) && (
+        <p className={`line-clamp-2 text-[11px] leading-relaxed ${isMine ? "text-white/70" : "text-gray-500"}`}>
+          {replyTo.message || "📎 Attachment"}
+        </p>
+      )}
+    </button>
+  );
+}
+
+function MessageBubble({
+  msg,
+  isMine,
+  hasWallpaper,
+  onCopy,
+  onReply,
+  onDelete,
+  onEdit,
+  onPreview,
+  onScrollToReply,
+}: {
+  msg: ChatMessage;
+  isMine: boolean;
+  hasWallpaper?: boolean;
+  onCopy: () => void;
+  onReply: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onPreview: (att: ChatAttachment) => void;
+  onScrollToReply: (replyId: string) => void;
+}) {
+  // New messages use the replyTo FK; old messages use the "> Name: text" prefix
+  const { quote: legacyQuote, body } = msg.replyTo
+    ? { quote: null, body: msg.message }
+    : parseMessage(msg.message);
+
+  return (
+    <div className={`group mb-1 flex ${isMine ? "justify-end" : "justify-start"}`}>
+      <div className={`flex items-end gap-1.5 ${isMine ? "flex-row-reverse" : "flex-row"}`}>
+        {/* Bubble */}
         <div
-          className={`mt-1 flex items-center justify-end gap-1 ${
-            isMine ? "text-violet-200" : "text-gray-400"
+          className={`relative max-w-[75%] rounded-2xl px-4 py-2.5 sm:max-w-[65%] ${
+            isMine
+              ? "rounded-br-md bg-violet-600 text-white shadow-md"
+              : hasWallpaper
+                ? "rounded-bl-md bg-white/90 text-gray-800 shadow-lg backdrop-blur-sm"
+                : "rounded-bl-md border border-gray-100 bg-white text-gray-800 shadow-sm"
           }`}
         >
-          <span className="text-[10px]">{formatMessageTime(msg.createdAt)}</span>
-          {isMine &&
-            (msg.isRead ? (
-              <CheckCheck className="h-3.5 w-3.5" />
-            ) : (
-              <Check className="h-3.5 w-3.5" />
-            ))}
+          {/* Structured reply card — clickable, scrolls to original */}
+          {msg.replyTo && (
+            <ReplyCard
+              replyTo={msg.replyTo}
+              isMine={isMine}
+              onClick={() => onScrollToReply(msg.replyTo!._id)}
+            />
+          )}
+
+          {/* Legacy backward-compat: old "> Name: text\n\n" encoded messages */}
+          {!msg.replyTo && legacyQuote && (
+            <div
+              className={`mb-2 rounded-xl border-l-[3px] px-3 py-2 ${
+                isMine ? "border-white/50 bg-white/15" : "border-violet-400 bg-violet-50/70"
+              }`}
+            >
+              <p className={`mb-0.5 text-[11px] font-semibold ${isMine ? "text-violet-200" : "text-violet-600"}`}>
+                {legacyQuote.name}
+              </p>
+              <p className={`line-clamp-2 text-[11px] leading-relaxed ${isMine ? "text-white/70" : "text-gray-500"}`}>
+                {legacyQuote.text}
+              </p>
+            </div>
+          )}
+
+          {/* Attachments */}
+          {msg.attachments && msg.attachments.length > 0 && (
+            <div className="mb-2 flex flex-col gap-2">
+              {msg.attachments.map((att, idx) => (
+                <AttachmentPreview key={idx} att={att} isMine={isMine} onPreview={onPreview} />
+              ))}
+            </div>
+          )}
+
+          {body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>}
+          <div
+            className={`mt-1 flex items-center justify-end gap-1.5 ${
+              isMine ? "text-violet-200" : "text-gray-400"
+            }`}
+          >
+            {msg.isEdited && (
+              <span className="text-[10px] italic opacity-70">edited</span>
+            )}
+            <span className="text-[10px]">{formatMessageTime(msg.createdAt)}</span>
+            {isMine &&
+              (msg.isRead ? (
+                <CheckCheck className="h-3.5 w-3.5" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              ))}
+          </div>
+        </div>
+
+        {/* Action bar — fades in on row hover */}
+        <div className="pointer-events-none mb-0.5 flex shrink-0 items-center self-end rounded-xl border border-gray-100 bg-white p-0.5 opacity-0 shadow-lg transition-all duration-150 group-hover:pointer-events-auto group-hover:opacity-100">
+          <button
+            type="button"
+            title="Copy"
+            onClick={onCopy}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Reply"
+            onClick={onReply}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition hover:bg-violet-50 hover:text-violet-600"
+          >
+            <CornerUpLeft className="h-3.5 w-3.5" />
+          </button>
+          {isMine && (
+            <button
+              type="button"
+              title="Edit"
+              onClick={onEdit}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition hover:bg-amber-50 hover:text-amber-500"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {isMine && (
+            <button
+              type="button"
+              title="Delete"
+              onClick={onDelete}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -264,10 +705,16 @@ function MessageBubble({ msg, isMine }: { msg: ChatMessage; isMine: boolean }) {
 /*  Typing Indicator                                                   */
 /* ------------------------------------------------------------------ */
 
-function TypingIndicator({ name }: { name: string }) {
+function TypingIndicator({ name, hasWallpaper }: { name: string; hasWallpaper?: boolean }) {
   return (
     <div className="flex items-center gap-2 px-4 py-2">
-      <div className="flex items-center gap-1 rounded-2xl bg-white border border-gray-100 px-4 py-3 shadow-sm">
+      <div
+        className={`flex items-center gap-1 rounded-2xl px-4 py-3 shadow-sm ${
+          hasWallpaper
+            ? "bg-white/90 backdrop-blur-sm shadow-lg"
+            : "border border-gray-100 bg-white"
+        }`}
+      >
         <div className="flex gap-1">
           <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:0ms]" />
           <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:150ms]" />
@@ -314,6 +761,8 @@ const Chat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [lastMessages, setLastMessages] = useState<Map<string, ChatMessage>>(new Map());
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null);
 
   // Use global unread counts (persisted, visible in sidebar)
   const {
@@ -327,9 +776,33 @@ const Chat = () => {
     [globalUnreadCounts]
   );
 
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<{ id: string; text: string } | null>(null);
+  const [clearChatConfirm, setClearChatConfirm] = useState(false);
+  const [previewFile, setPreviewFile] = useState<ChatAttachment | null>(null);
+
+  type PendingFile = {
+    id: string;
+    file: File;
+    previewUrl?: string;
+    status: "uploading" | "done" | "error";
+    result?: ChatAttachment;
+  };
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [emojiOpen, setEmojiOpen] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Per-conversation wallpaper — keyed by the other user's ID
+  const { wallpaper, setWallpaper } = useChatWallpaper(selectedUserId);
+  const [wallpaperSidebarOpen, setWallpaperSidebarOpen] = useState(false);
+
+  // 3-dot menu
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -408,6 +881,16 @@ const Chat = () => {
       }
     }
 
+    function handleMessageDelete({ messageId }: { messageId: string }) {
+      setMessages((prev) => prev.filter((m) => m._id !== messageId));
+    }
+
+    function handleMessageEdit({ messageId, message }: { messageId: string; message: string }) {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? { ...m, message, isEdited: true } : m))
+      );
+    }
+
     function handleOnline() {
       queryClient.invalidateQueries({ queryKey: ["onlineUsers"] });
     }
@@ -420,6 +903,8 @@ const Chat = () => {
     socket.on("typing:start", handleTypingStart);
     socket.on("typing:stop", handleTypingStop);
     socket.on("message:read", handleMessageRead);
+    socket.on("message:delete", handleMessageDelete);
+    socket.on("message:edit", handleMessageEdit);
     socket.on("user:online", handleOnline);
     socket.on("user:offline", handleOffline);
 
@@ -428,6 +913,8 @@ const Chat = () => {
       socket.off("typing:start", handleTypingStart);
       socket.off("typing:stop", handleTypingStop);
       socket.off("message:read", handleMessageRead);
+      socket.off("message:delete", handleMessageDelete);
+      socket.off("message:edit", handleMessageEdit);
       socket.off("user:online", handleOnline);
       socket.off("user:offline", handleOffline);
     };
@@ -450,6 +937,23 @@ const Chat = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [emojiOpen]);
 
+  // Close 3-dot menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(e.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   // Mark messages as read when selecting a conversation + tell global context
   // which chat is open so new messages from that sender don't increment the badge
   useEffect(() => {
@@ -470,17 +974,50 @@ const Chat = () => {
       setSelectedUserId(id);
       setMessages([]);
       setMessageInput("");
+      setReplyTo(null);
+      setEditTarget(null);
+      setPendingFiles([]);
     },
     [selectedUserId]
   );
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const text = messageInput.trim();
-    if (!text || !selectedUserId) return;
+    const hasFiles = pendingFiles.length > 0;
+    if (!text && !hasFiles) return;
+    if (!selectedUserId) return;
+    if (pendingFiles.some((f) => f.status === "uploading")) {
+      toast.error("Please wait for files to finish uploading");
+      return;
+    }
+
+    // Edit mode — update existing message
+    if (editTarget) {
+      const { id } = editTarget;
+      setEditTarget(null);
+      setMessageInput("");
+      try {
+        const res = await editMessageApi(id, text);
+        if (res.success && res.data) {
+          setMessages((prev) => prev.map((m) => (m._id === id ? res.data! : m)));
+          socket.emit("message:edit", { messageId: id, message: text, receiverId: selectedUserId });
+        }
+      } catch {
+        toast.error("Failed to edit message");
+      }
+      inputRef.current?.focus();
+      return;
+    }
+
+    const finalText = text;
+    const readyAttachments = pendingFiles
+      .filter((f) => f.status === "done" && f.result)
+      .map((f) => f.result!);
+    setPendingFiles([]);
 
     socket.emit(
       "message:send",
-      { receiverId: selectedUserId, message: text },
+      { receiverId: selectedUserId, message: finalText, attachments: readyAttachments, replyToId: replyTo?._id ?? null },
       (response: { success: boolean; data?: ChatMessage; error?: string }) => {
         if (response.success && response.data) {
           setMessages((prev) => {
@@ -498,10 +1035,113 @@ const Chat = () => {
       }
     );
 
+    setReplyTo(null);
     setMessageInput("");
     socket.emit("typing:stop", { receiverId: selectedUserId });
     inputRef.current?.focus();
-  }, [messageInput, selectedUserId]);
+  }, [messageInput, selectedUserId, replyTo, currentUserId, selectedUser, editTarget, pendingFiles]);
+
+  const handleCopy = useCallback((text: string) => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    toast.success("Copied to clipboard");
+  }, []);
+
+  const handleReply = useCallback((msg: ChatMessage) => {
+    setReplyTo(msg);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
+
+  const handleDeleteMsg = useCallback((msgId: string) => {
+    setDeleteTarget(msgId);
+  }, []);
+
+  const handleEditMsg = useCallback((msg: ChatMessage) => {
+    // Strip the reply quote prefix so the user only edits the body
+    const { body } = parseMessage(msg.message);
+    setEditTarget({ id: msg._id, text: body });
+    setReplyTo(null);
+    setMessageInput(body);
+    requestAnimationFrame(() => {
+      const ta = inputRef.current;
+      if (!ta) return;
+      ta.focus();
+      ta.style.height = "auto";
+      ta.style.height = `${Math.min(ta.scrollHeight, 128)}px`;
+      ta.setSelectionRange(body.length, body.length);
+    });
+  }, []);
+
+  const handleConfirmDelete = useCallback(
+    async (deleteFor: "me" | "everyone") => {
+      if (!deleteTarget) return;
+      const id = deleteTarget;
+      setDeleteTarget(null);
+      try {
+        await deleteMessageApi(id, deleteFor);
+        setMessages((prev) => prev.filter((m) => m._id !== id));
+        if (deleteFor === "everyone") {
+          socket.emit("message:delete", { messageId: id, receiverId: selectedUserId });
+        }
+      } catch {
+        toast.error("Failed to delete message");
+      }
+    },
+    [deleteTarget, selectedUserId]
+  );
+
+  const handleScrollToReply = useCallback((replyId: string) => {
+    const el = messageContainerRef.current?.querySelector(
+      `[data-msg-id="${replyId}"]`
+    ) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMsgId(replyId);
+      setTimeout(() => setHighlightedMsgId(null), 1500);
+    } else {
+      toast("Message not visible — scroll up to find it", { icon: "↑" });
+    }
+  }, []);
+
+  const handleClearChat = useCallback(async () => {
+    setClearChatConfirm(false);
+    try {
+      await clearChatApi(selectedUserId);
+      setMessages([]);
+    } catch {
+      toast.error("Failed to clear chat");
+    }
+  }, [selectedUserId]);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!files.length) return;
+
+    const newPending: PendingFile[] = files.map((file) => ({
+      id: `${file.name}-${file.lastModified}-${Math.random()}`,
+      file,
+      previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+      status: "uploading" as const,
+    }));
+
+    setPendingFiles((prev) => [...prev, ...newPending]);
+
+    for (const pending of newPending) {
+      try {
+        const res = await uploadChatFileApi(pending.file);
+        setPendingFiles((prev) =>
+          prev.map((f) =>
+            f.id === pending.id ? { ...f, status: "done", result: res.data } : f
+          )
+        );
+      } catch {
+        setPendingFiles((prev) =>
+          prev.map((f) => (f.id === pending.id ? { ...f, status: "error" } : f))
+        );
+        toast.error(`Failed to upload ${pending.file.name}`);
+      }
+    }
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -574,7 +1214,6 @@ const Chat = () => {
         <div className="flex items-center justify-between border-b border-gray-200/60 px-4 py-4 sm:px-5">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Messages</h2>
-            <p className="text-xs text-gray-500">{onlineUserIds.size} online</p>
           </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
             <MessageSquare className="h-5 w-5" />
@@ -593,13 +1232,15 @@ const Chat = () => {
       </div>
 
       {/* ---- Chat Area ---- */}
-      <div className={`${!mobileShowChat ? "hidden" : "flex"} min-w-0 flex-1 flex-col md:flex`}>
+      <div
+        className={`${!mobileShowChat ? "hidden" : "flex"} relative min-w-0 flex-1 flex-col overflow-hidden md:flex`}
+      >
         {!selectedUserId ? (
           <EmptyState />
         ) : (
           <>
             {/* Chat Header */}
-            <div className="flex items-center gap-3 border-b border-gray-200/60 px-4 py-3 sm:px-6">
+            <div className="relative z-10 flex items-center gap-3 border-b border-gray-200/70 bg-white px-4 py-3 shadow-sm sm:px-6">
               <button
                 type="button"
                 onClick={handleMobileBack}
@@ -630,48 +1271,238 @@ const Chat = () => {
                   </span>
                 </div>
               </div>
+
+              {/* 3-dot menu */}
+              <div className="relative shrink-0">
+                <button
+                  ref={menuButtonRef}
+                  type="button"
+                  title="More options"
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+                    menuOpen
+                      ? "bg-gray-100 text-gray-700"
+                      : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  }`}
+                >
+                  <MoreVertical className="h-4.5 w-4.5" />
+                </button>
+
+                {menuOpen && (
+                  <div
+                    ref={menuRef}
+                    className="absolute right-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setWallpaperSidebarOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 transition hover:bg-violet-50 hover:text-violet-700"
+                    >
+                      <Palette className="h-4 w-4 text-gray-400" />
+                      <span>Wallpaper</span>
+                    </button>
+                    <div className="my-1 h-px bg-gray-100" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setClearChatConfirm(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-500 transition hover:bg-red-50"
+                    >
+                      <Eraser className="h-4 w-4" />
+                      <span>Clear Chat</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Messages */}
             <div
               ref={messageContainerRef}
-              className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50/50 to-white px-3 py-4 sm:px-6"
+              className={`flex-1 overflow-y-auto px-3 py-4 sm:px-6 ${wallpaper === "none" ? "bg-gradient-to-b from-gray-50/50 to-white" : ""}`}
+              style={wallpaper !== "none" ? getWallpaperStyle(wallpaper) : undefined}
             >
               {messages.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-center">
-                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-violet-50">
-                    <MessageSquare className="h-7 w-7 text-violet-400" />
+                  <div
+                    className={`rounded-2xl p-6 ${wallpaper !== "none" ? "bg-white/70 shadow-lg backdrop-blur-md" : ""}`}
+                  >
+                    <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 mx-auto">
+                      <MessageSquare className="h-7 w-7 text-violet-500" />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-700">No messages yet</p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Send a message to start the conversation
+                    </p>
                   </div>
-                  <p className="text-sm font-medium text-gray-600">No messages yet</p>
-                  <p className="mt-0.5 text-xs text-gray-400">
-                    Send a message to start the conversation
-                  </p>
                 </div>
               ) : (
                 messages.map((msg, i) => (
-                  <div key={msg._id}>
+                  <div
+                    key={msg._id}
+                    data-msg-id={msg._id}
+                    className={`rounded-xl transition-all duration-500 ${
+                      highlightedMsgId === msg._id
+                        ? "bg-violet-100/70 ring-2 ring-violet-400 ring-offset-1"
+                        : ""
+                    }`}
+                  >
                     {shouldShowDateSeparator(msg, messages[i - 1]) && (
                       <div className="my-4 flex items-center gap-3">
-                        <div className="h-px flex-1 bg-gray-200" />
-                        <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-[11px] font-medium text-gray-500">
+                        <div
+                          className={`h-px flex-1 ${wallpaper !== "none" ? "bg-white/30" : "bg-gray-200"}`}
+                        />
+                        <span
+                          className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium ${
+                            wallpaper !== "none"
+                              ? "bg-white/70 text-gray-700 shadow backdrop-blur-sm"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
                           {formatDateSeparator(msg.createdAt)}
                         </span>
-                        <div className="h-px flex-1 bg-gray-200" />
+                        <div
+                          className={`h-px flex-1 ${wallpaper !== "none" ? "bg-white/30" : "bg-gray-200"}`}
+                        />
                       </div>
                     )}
-                    <MessageBubble msg={msg} isMine={msg.sender._id === currentUserId} />
+                    <MessageBubble
+                      msg={msg}
+                      isMine={msg.sender._id === currentUserId}
+                      hasWallpaper={wallpaper !== "none"}
+                      onCopy={() => handleCopy(msg.message)}
+                      onReply={() => handleReply(msg)}
+                      onDelete={() => handleDeleteMsg(msg._id)}
+                      onEdit={() => handleEditMsg(msg)}
+                      onPreview={setPreviewFile}
+                      onScrollToReply={handleScrollToReply}
+                    />
                   </div>
                 ))
               )}
 
-              {showTyping && <TypingIndicator name={selectedUser?.name ?? ""} />}
+              {showTyping && (
+                <TypingIndicator
+                  name={selectedUser?.name ?? ""}
+                  hasWallpaper={wallpaper !== "none"}
+                />
+              )}
 
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-gray-200/60 bg-white px-3 py-3 sm:px-6">
+            <div className="relative z-10 border-t border-gray-200/70 bg-white px-3 py-3 shadow-[0_-1px_8px_rgba(0,0,0,0.05)] sm:px-6">
+              {/* Pending file attachments preview */}
+              {pendingFiles.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {pendingFiles.map((pf) => (
+                    <div
+                      key={pf.id}
+                      className="relative flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1.5"
+                    >
+                      {pf.previewUrl ? (
+                        <img
+                          src={pf.previewUrl}
+                          alt={pf.file.name}
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+                          <FileText className="h-5 w-5 text-violet-600" />
+                        </div>
+                      )}
+                      <div className="min-w-0 max-w-[120px]">
+                        <p className="truncate text-xs font-medium text-gray-700">{pf.file.name}</p>
+                        <p className="text-[10px] text-gray-400">{formatFileSize(pf.file.size)}</p>
+                      </div>
+                      {pf.status === "uploading" && (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+                      )}
+                      {pf.status === "error" && (
+                        <span className="text-[10px] text-red-500">Error</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingFiles((prev) => prev.filter((f) => f.id !== pf.id))
+                        }
+                        className="ml-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Edit preview bar */}
+              {editTarget && (
+                <div className="mb-2 flex items-center gap-2 rounded-xl border-l-[3px] border-amber-400 bg-amber-50 py-2 pl-3 pr-2">
+                  <Pencil className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-amber-600">Editing message</p>
+                    <p className="truncate text-xs text-gray-500">{editTarget.text}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditTarget(null);
+                      setMessageInput("");
+                    }}
+                    className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-amber-100 hover:text-gray-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Reply preview bar */}
+              {replyTo && (
+                <div className="mb-2 flex items-center gap-2 rounded-xl border-l-[3px] border-violet-500 bg-violet-50 py-2 pl-3 pr-2">
+                  <CornerUpLeft className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-violet-600">
+                      {replyTo.sender._id === currentUserId ? "You" : selectedUser?.name}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {replyTo.message || (replyTo.attachments?.length ? "📎 Attachment" : "")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-violet-100 hover:text-gray-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-end gap-2 sm:gap-3">
+                {/* Attachment button */}
+                <button
+                  type="button"
+                  title="Attach file"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.mp4,.mp3"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+
                 {/* Emoji toggle button — picker anchors directly above this button */}
                 <div className="relative mb-0.5 shrink-0">
                   <button
@@ -719,7 +1550,7 @@ const Chat = () => {
                 <button
                   type="button"
                   onClick={handleSend}
-                  disabled={!messageInput.trim()}
+                  disabled={!messageInput.trim() && pendingFiles.length === 0}
                   className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm transition-all hover:bg-violet-700 hover:shadow-md disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                 >
                   <Send className="h-5 w-5" />
@@ -733,7 +1564,124 @@ const Chat = () => {
             </div>
           </>
         )}
+
+        {/* ---- Wallpaper Sidebar (slides in from right) ---- */}
+        <div
+          className={`absolute right-0 top-0 z-40 h-full w-72 flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+            wallpaperSidebarOpen ? "flex translate-x-0" : "translate-x-full"
+          }`}
+          aria-hidden={!wallpaperSidebarOpen}
+        >
+          <WallpaperPicker
+            current={wallpaper}
+            onChange={setWallpaper}
+            onClose={() => setWallpaperSidebarOpen(false)}
+          />
+        </div>
+
+        {/* Dim overlay behind the sidebar */}
+        {wallpaperSidebarOpen && (
+          <div
+            className="absolute inset-0 z-30 bg-black/20"
+            onClick={() => setWallpaperSidebarOpen(false)}
+          />
+        )}
       </div>
+
+      {/* ---- File / Image Preview Modal ---- */}
+      {previewFile && (
+        <FilePreviewModal att={previewFile} onClose={() => setPreviewFile(null)} />
+      )}
+
+      {/* ---- Clear Chat Confirmation Modal ---- */}
+      {clearChatConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          onClick={() => setClearChatConfirm(false)}
+        >
+          <div
+            className="w-full max-w-xs overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center px-6 pt-6 pb-4 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                <Eraser className="h-5 w-5 text-red-500" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900">Clear chat?</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                All messages will be removed from your view only.{" "}
+                <span className="font-medium text-gray-700">{selectedUser?.name}</span> will still
+                see the conversation.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 px-6 pb-6">
+              <button
+                type="button"
+                onClick={handleClearChat}
+                className="w-full rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
+              >
+                Clear Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => setClearChatConfirm(false)}
+                className="w-full rounded-xl py-2 text-sm text-gray-400 transition hover:text-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---- Delete Confirmation Modal ---- */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          onClick={() => setDeleteTarget(null)}
+        >
+          <div
+            className="w-full max-w-xs overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon + title */}
+            <div className="flex flex-col items-center px-6 pt-6 pb-4 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                <Trash2 className="h-5 w-5 text-red-500" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900">Delete message?</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Choose who to delete this message for.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2 px-6 pb-6">
+              <button
+                type="button"
+                onClick={() => handleConfirmDelete("everyone")}
+                className="w-full rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
+              >
+                Delete for Everyone
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmDelete("me")}
+                className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
+              >
+                Delete for Me
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="w-full rounded-xl py-2 text-sm text-gray-400 transition hover:text-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

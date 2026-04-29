@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../apiService";
-import type { ChatMessagesResponse, OnlineUsersResponse } from "../../types/chat.types";
+import { api, uploadFormData } from "../apiService";
+import type { ChatAttachment, ChatMessagesResponse, OnlineUsersResponse } from "../../types/chat.types";
 import type { User } from "../../types/user.types";
 
 export const useChatMessages = (receiverId: string, page = 1) => {
@@ -28,6 +28,28 @@ export const useChatUsers = () => {
     },
   });
 };
+
+export const deleteMessageApi = (messageId: string, deleteFor: "me" | "everyone") =>
+  api.del<{ success: boolean }>(`/chat/message/${messageId}`, {
+    auth: true,
+    query: { deleteFor },
+  });
+
+export const uploadChatFileApi = (file: File): Promise<{ success: boolean; data: ChatAttachment }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return uploadFormData("POST", "/chat/upload", formData, { auth: true });
+};
+
+export const clearChatApi = (otherUserId: string) =>
+  api.del<{ success: boolean }>(`/chat/clear/${otherUserId}`, { auth: true });
+
+export const editMessageApi = (messageId: string, message: string) =>
+  api.patch<{ success: boolean; data: import("../../types/chat.types").ChatMessage }>(
+    `/chat/message/${messageId}`,
+    { message },
+    { auth: true }
+  );
 
 export const useOnlineUsers = () => {
   return useQuery({
