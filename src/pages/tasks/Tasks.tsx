@@ -72,9 +72,23 @@ export default function Tasks() {
     const archived = tab === "archived";
     const scope = tab === "my" ? ("my" as const) : undefined;
     if (view === "cards") {
-      return { page: taskListPage, limit: taskListLimit, project: projectId, archived, scope, orgContext: activeMode };
+      return {
+        page: taskListPage,
+        limit: taskListLimit,
+        project: projectId,
+        archived,
+        scope,
+        orgContext: activeMode,
+      };
     }
-    return { page: 1, limit: KANBAN_FETCH_LIMIT, project: projectId, archived, scope, orgContext: activeMode };
+    return {
+      page: 1,
+      limit: KANBAN_FETCH_LIMIT,
+      project: projectId,
+      archived,
+      scope,
+      orgContext: activeMode,
+    };
   }, [tab, projectId, view, taskListPage, taskListLimit, activeMode]);
 
   useEffect(() => {

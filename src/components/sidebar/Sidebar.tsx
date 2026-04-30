@@ -203,10 +203,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   // Chat notifications — only count messages from users in the current active org
   const { unreadCounts } = useChatNotifications();
   const { data: orgChatUsers = [] } = useChatUsers(activeMode);
-  const orgChatUserIds = useMemo(
-    () => new Set(orgChatUsers.map((u) => u._id)),
-    [orgChatUsers]
-  );
+  const orgChatUserIds = useMemo(() => new Set(orgChatUsers.map((u) => u._id)), [orgChatUsers]);
   const totalUnread = Object.entries(unreadCounts)
     .filter(([senderId]) => orgChatUserIds.has(senderId))
     .reduce((sum, [, count]) => sum + count, 0);

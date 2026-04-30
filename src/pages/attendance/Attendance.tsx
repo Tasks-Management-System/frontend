@@ -45,7 +45,11 @@ export default function Attendance() {
     return `${a} – ${b}, ${y}`;
   }, [weekFrom, weekTo, weekMonday]);
 
-  const { data, isLoading, isError, error } = useAttendanceList(date, !!userId && view === "day", activeMode);
+  const { data, isLoading, isError, error } = useAttendanceList(
+    date,
+    !!userId && view === "day",
+    activeMode
+  );
 
   const {
     data: weekData,
