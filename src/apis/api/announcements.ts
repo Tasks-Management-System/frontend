@@ -3,10 +3,14 @@ import { api } from "../apiService";
 import { apiPath } from "../apiPath";
 import type { Announcement, AnnouncementsListResponse } from "../../types/announcement.types";
 
-export function useAnnouncements() {
+export function useAnnouncements(orgContext?: string) {
   return useQuery({
-    queryKey: ["announcements"],
-    queryFn: () => api.get<AnnouncementsListResponse>(apiPath.announcements.list, { auth: true }),
+    queryKey: ["announcements", orgContext],
+    queryFn: () =>
+      api.get<AnnouncementsListResponse>(apiPath.announcements.list, {
+        auth: true,
+        query: orgContext ? { orgContext } : undefined,
+      }),
     select: (data) => data.announcements,
   });
 }

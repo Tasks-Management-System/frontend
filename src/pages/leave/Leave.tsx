@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { ClipboardList, Inbox, Plus } from "lucide-react";
 import { useUserById } from "../../apis/api/auth";
 import { usePendingLeaveRequests } from "../../apis/api/leave";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import Button from "../../components/UI/Button";
 import { LeaveBalanceSummary, MyLeaveHistoryPanel } from "../../components/leave/MyLeaveSection";
@@ -16,10 +17,12 @@ export default function Leave() {
   const { data: user, isLoading: userLoading } = useUserById(userId);
   const roles = user?.role ?? [];
   const canReview = roles.some((r) => ["admin", "hr", "super-admin"].includes(r));
+  const { activeMode } = useActiveOrg();
 
   const [tab, setTab] = useState<"mine" | "inbox">("inbox");
   const { data: pending = [], isLoading: pendingLoading } = usePendingLeaveRequests(
-    !!userId && canReview && tab === "inbox"
+    !!userId && canReview && tab === "inbox",
+    activeMode
   );
 
   const [applyOpen, setApplyOpen] = useState(false);

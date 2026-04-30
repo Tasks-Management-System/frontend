@@ -64,13 +64,14 @@ export function usePaginatedLeaveHistory(options: {
   });
 }
 
-export function usePendingLeaveRequests(enabled = true) {
+export function usePendingLeaveRequests(enabled = true, orgContext?: string) {
   return useQuery({
-    queryKey: leavePendingQueryKey,
+    queryKey: [...leavePendingQueryKey, orgContext],
     enabled,
     queryFn: async () => {
       const res = await api.get<PendingLeavesResponse>(apiPath.leave.pending, {
         auth: true,
+        query: orgContext ? { orgContext } : undefined,
       });
       return res.leaves;
     },

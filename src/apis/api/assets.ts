@@ -13,13 +13,13 @@ export type AssetFilters = {
   assignedTo?: string;
 };
 
-export function useAssets(filters: AssetFilters = {}) {
+export function useAssets(filters: AssetFilters = {}, orgContext?: string) {
   return useQuery({
-    queryKey: ["assets", filters],
+    queryKey: ["assets", filters, orgContext],
     queryFn: () =>
       api.get<AssetsListResponse>(apiPath.assets.list, {
         auth: true,
-        query: filters as Record<string, string>,
+        query: { ...(filters as Record<string, string>), ...(orgContext ? { orgContext } : {}) },
       }),
     select: (data) => data.assets,
   });

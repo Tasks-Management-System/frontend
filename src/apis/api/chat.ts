@@ -21,12 +21,13 @@ export const useChatMessages = (receiverId: string, page = 1) => {
   });
 };
 
-export const useChatUsers = () => {
+export const useChatUsers = (orgContext?: string) => {
   return useQuery({
-    queryKey: ["chatUsers"],
+    queryKey: ["chatUsers", orgContext],
     queryFn: async () => {
       const res = await api.get<{ users: User[] }>("/chat/users", {
         auth: true,
+        query: orgContext ? { orgContext } : undefined,
       });
       return res.users;
     },

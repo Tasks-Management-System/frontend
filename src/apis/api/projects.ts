@@ -3,13 +3,13 @@ import { api } from "../apiService";
 import { apiPath } from "../apiPath";
 import type { Project, ProjectsListResponse } from "../../types/project.types";
 
-export function useProjectsList(limit = 100) {
+export function useProjectsList(limit = 100, orgContext?: string) {
   return useQuery<Project[]>({
-    queryKey: ["projects", limit],
+    queryKey: ["projects", limit, orgContext],
     queryFn: async (): Promise<Project[]> => {
       const res = await api.get<ProjectsListResponse>(apiPath.projects.list, {
         auth: true,
-        query: { page: 1, limit },
+        query: { page: 1, limit, ...(orgContext ? { orgContext } : {}) },
       });
       return res.projects;
     },

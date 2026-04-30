@@ -11,6 +11,7 @@ import {
 } from "../../apis/api/announcements";
 import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import type { Announcement } from "../../types/announcement.types";
 import Modal from "../../components/UI/Model";
 import Button from "../../components/UI/Button";
@@ -34,8 +35,9 @@ export default function Announcements() {
   const { data: user } = useUserById(userId);
   const roles = user?.role ?? [];
   const canManage = roles.some((r: string) => ["admin", "hr", "super-admin"].includes(r));
+  const { activeMode } = useActiveOrg();
 
-  const { data: announcements = [], isLoading } = useAnnouncements();
+  const { data: announcements = [], isLoading } = useAnnouncements(activeMode);
   const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement();
   const markReadMutation = useMarkAnnouncementRead();

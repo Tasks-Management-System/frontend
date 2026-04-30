@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
 import { useAssignableUsers, useUserById } from "../../apis/api/auth";
 import { useProjectsList } from "../../apis/api/projects";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import { useTasksList, useUpdateTask } from "../../apis/api/tasks";
 import { getUserId } from "../../utils/auth";
 import type { TaskStatus } from "../../types/task.types";
@@ -49,8 +50,9 @@ export default function Tasks() {
 
   const userId = getUserId();
   const { data: me } = useUserById(userId);
-  const { data: projects = [] } = useProjectsList(100);
-  const { data: users = [] } = useAssignableUsers();
+  const { activeMode } = useActiveOrg();
+  const { data: projects = [] } = useProjectsList(100, activeMode);
+  const { data: users = [] } = useAssignableUsers(activeMode);
 
   const canCreateTask = (me?.role ?? []).some((r) =>
     ["super-admin", "admin", "manager", "hr", "employee"].includes(r)
@@ -70,10 +72,10 @@ export default function Tasks() {
     const archived = tab === "archived";
     const scope = tab === "my" ? ("my" as const) : undefined;
     if (view === "cards") {
-      return { page: taskListPage, limit: taskListLimit, project: projectId, archived, scope };
+      return { page: taskListPage, limit: taskListLimit, project: projectId, archived, scope, orgContext: activeMode };
     }
-    return { page: 1, limit: KANBAN_FETCH_LIMIT, project: projectId, archived, scope };
-  }, [tab, projectId, view, taskListPage, taskListLimit]);
+    return { page: 1, limit: KANBAN_FETCH_LIMIT, project: projectId, archived, scope, orgContext: activeMode };
+  }, [tab, projectId, view, taskListPage, taskListLimit, activeMode]);
 
   useEffect(() => {
     setTaskListPage(1);

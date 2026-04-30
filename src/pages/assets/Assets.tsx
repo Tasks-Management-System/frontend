@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import {
   Package,
   Plus,
@@ -70,10 +71,14 @@ export default function Assets() {
   const { data: user } = useUserById(userId);
   const roles = user?.role ?? [];
   const canManage = roles.some((r: string) => ["admin", "hr", "super-admin"].includes(r));
-  const { data: employees = [] } = useAssignableUsers();
+  const { activeMode } = useActiveOrg();
+  const { data: employees = [] } = useAssignableUsers(activeMode);
 
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "">("");
-  const { data: assets = [], isLoading } = useAssets(statusFilter ? { status: statusFilter } : {});
+  const { data: assets = [], isLoading } = useAssets(
+    statusFilter ? { status: statusFilter } : {},
+    activeMode
+  );
 
   const createMutation = useCreateAsset();
   const updateMutation = useUpdateAsset();

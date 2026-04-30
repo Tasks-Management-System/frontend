@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import {
   ChevronLeft,
   ChevronRight,
@@ -74,7 +75,8 @@ function localYmd() {
 
 export default function Salary() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useGetSalary(page, PAGE_SIZE);
+  const { activeMode } = useActiveOrg();
+  const { data, isLoading } = useGetSalary(page, PAGE_SIZE, activeMode);
 
   const salaryList = data?.salary ?? [];
   const total = data?.total ?? 0;

@@ -31,12 +31,12 @@ export function localYmd(d = new Date()) {
   return `${y}-${m}-${day}`;
 }
 
-export function attendanceListQueryKey(date: string) {
-  return ["attendance", "list", date] as const;
+export function attendanceListQueryKey(date: string, orgContext?: string) {
+  return ["attendance", "list", date, orgContext] as const;
 }
 
-export function attendanceRangeQueryKey(from: string, to: string) {
-  return ["attendance", "range", from, to] as const;
+export function attendanceRangeQueryKey(from: string, to: string, orgContext?: string) {
+  return ["attendance", "range", from, to, orgContext] as const;
 }
 
 /** Monday 00:00 local for the calendar week containing `d`. */
@@ -60,14 +60,14 @@ export function weekDayYmds(weekMonday: Date): string[] {
   return Array.from({ length: 7 }, (_, i) => localYmd(addDays(weekMonday, i)));
 }
 
-export function useAttendanceRange(from: string, to: string, enabled = true) {
+export function useAttendanceRange(from: string, to: string, enabled = true, orgContext?: string) {
   return useQuery({
-    queryKey: attendanceRangeQueryKey(from, to),
+    queryKey: attendanceRangeQueryKey(from, to, orgContext),
     enabled: enabled && !!from && !!to,
     queryFn: async () => {
       return api.get<AttendanceListResponse>(apiPath.attendance.getAttendance, {
         auth: true,
-        query: { from, to },
+        query: { from, to, ...(orgContext ? { orgContext } : {}) },
       });
     },
     refetchInterval: 60 * 1000,
@@ -94,14 +94,14 @@ export function pickMyAttendanceRecord(
   return match ?? null;
 }
 
-export function useAttendanceList(date: string, enabled = true) {
+export function useAttendanceList(date: string, enabled = true, orgContext?: string) {
   return useQuery({
-    queryKey: attendanceListQueryKey(date),
+    queryKey: attendanceListQueryKey(date, orgContext),
     enabled: enabled && !!date,
     queryFn: async () => {
       return api.get<AttendanceListResponse>(apiPath.attendance.getAttendance, {
         auth: true,
-        query: { date },
+        query: { date, ...(orgContext ? { orgContext } : {}) },
       });
     },
     refetchInterval: 60 * 1000,
@@ -109,8 +109,8 @@ export function useAttendanceList(date: string, enabled = true) {
   });
 }
 
-export function useTodayAttendance(enabled = true) {
-  return useAttendanceList(localYmd(), enabled);
+export function useTodayAttendance(enabled = true, orgContext?: string) {
+  return useAttendanceList(localYmd(), enabled, orgContext);
 }
 
 export function usePunchIn() {

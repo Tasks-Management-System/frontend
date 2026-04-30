@@ -16,12 +16,13 @@ export type TaskListFilters = {
   archived?: boolean;
   scope?: "all" | "my";
   search?: string;
+  orgContext?: string;
 };
 
 export function useTasksList(filters: TaskListFilters) {
-  const { page = 1, limit = 10, project, archived, scope, search } = filters;
+  const { page = 1, limit = 10, project, archived, scope, search, orgContext } = filters;
   return useQuery({
-    queryKey: ["tasks", { page, limit, project, archived, scope, search }],
+    queryKey: ["tasks", { page, limit, project, archived, scope, search, orgContext }],
     queryFn: async () => {
       const res = await api.get<TasksListResponse>(apiPath.tasks.list, {
         auth: true,
@@ -32,6 +33,7 @@ export function useTasksList(filters: TaskListFilters) {
           archived: archived ? "true" : "false",
           ...(scope ? { scope } : {}),
           ...(search?.trim() ? { search: search.trim() } : {}),
+          ...(orgContext ? { orgContext } : {}),
         },
       });
       return res;

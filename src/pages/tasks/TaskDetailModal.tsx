@@ -33,6 +33,7 @@ import {
   useDeleteAttachment,
 } from "../../apis/api/tasks";
 import { useAssignableUsers } from "../../apis/api/auth";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import { ApiError } from "../../apis/apiService";
 import { TASK_STATUS_OPTIONS, taskStatusSelectClass } from "../../constants/taskStatus";
 import { taskAssigneeName, taskProjectName } from "./taskUtils";
@@ -301,7 +302,8 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
   const deleteCommentMut = useDeleteComment();
   const addAttachmentMut = useAddAttachment();
   const deleteAttachmentMut = useDeleteAttachment();
-  const { data: users = [] } = useAssignableUsers();
+  const { activeMode } = useActiveOrg();
+  const { data: users = [] } = useAssignableUsers(activeMode);
 
   // Fetch full task with comments/attachments
   const { data: fullTask } = useTaskById(isOpen && task ? task._id : null);

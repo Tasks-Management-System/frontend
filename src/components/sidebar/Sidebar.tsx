@@ -19,10 +19,10 @@ import {
   Building2,
   ShieldCheck,
   UserCircle2,
-  ArrowLeftRight,
+  UserRound,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import toast from "react-hot-toast";
 import {
   useCreateProject,
@@ -38,8 +38,10 @@ import Modal from "../UI/Model";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
-import { useActiveOrg } from "../../contexts/ActiveOrgContext";
+import { useActiveOrg, type OrgMode } from "../../contexts/ActiveOrgContext";
+import type { Organization } from "../../apis/api/organization";
 import { useChatNotifications } from "../../contexts/ChatNotificationContext";
+import { useChatUsers } from "../../apis/api/chat";
 
 const PROJECT_ACCENTS = [
   "bg-violet-500",
@@ -117,9 +119,9 @@ type SidebarProps = {
 const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100);
-  const createProjectMutation = useCreateProject();
   const { activeMode, setActiveMode, ownedOrg, memberOrg, hasBoth, noOrg } = useActiveOrg();
+  const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100, activeMode);
+  const createProjectMutation = useCreateProject();
   const userId = getUserId();
   const { data: user } = useUserById(userId);
   const [projectsOpen, setProjectsOpen] = useState(true);
@@ -128,15 +130,66 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     projectName: "",
     description: "",
   });
+  const [orgMenuOpen, setOrgMenuOpen] = useState(false);
+  const profileOrgRef = useRef<HTMLDivElement>(null);
+
+  const orgSwitcherOptions = useMemo(() => {
+    const opts: {
+      mode: OrgMode;
+      org: Organization;
+      subtitle: string;
+      Icon: typeof ShieldCheck;
+    }[] = [];
+    if (ownedOrg) {
+      opts.push({
+        mode: "owned",
+        org: ownedOrg,
+        subtitle: "Organization you own",
+        Icon: ShieldCheck,
+      });
+    }
+    if (memberOrg) {
+      opts.push({
+        mode: "member",
+        org: memberOrg,
+        subtitle: "Member access",
+        Icon: UserCircle2,
+      });
+    }
+    return opts;
+  }, [ownedOrg, memberOrg]);
+
+  useEffect(() => {
+    if (!orgMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (profileOrgRef.current && !profileOrgRef.current.contains(e.target as Node)) {
+        setOrgMenuOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOrgMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [orgMenuOpen]);
 
   const userRoles = (user?.role?.length ? user.role : getStoredUserRoles()) ?? [];
 
   // Determine which nav items to show:
   // 1. No org at all → employee view (Salary/Employee/Assets are useless without an org)
   // 2. Has both orgs and switched to member mode → employee view for joined org
-  // 3. Otherwise → use actual DB roles (admin sees full nav)
+  // 3. Viewing owned org → always admin (user created it; DB role may have been corrupted)
+  // 4. Otherwise → use actual DB roles
   const effectiveRoles: string[] =
-    noOrg || (hasBoth && activeMode === "member") ? ["employee"] : userRoles;
+    noOrg || (hasBoth && activeMode === "member")
+      ? ["employee"]
+      : ownedOrg && activeMode === "owned"
+        ? ["admin"]
+        : userRoles;
 
   const canCreateProjects = effectiveRoles.some((r) =>
     ["admin", "manager", "super-admin"].includes(r)
@@ -147,8 +200,16 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   // Active org display info
   const activeOrg = activeMode === "member" ? memberOrg : ownedOrg;
 
-  // Chat notifications
-  const { totalUnread } = useChatNotifications();
+  // Chat notifications — only count messages from users in the current active org
+  const { unreadCounts } = useChatNotifications();
+  const { data: orgChatUsers = [] } = useChatUsers(activeMode);
+  const orgChatUserIds = useMemo(
+    () => new Set(orgChatUsers.map((u) => u._id)),
+    [orgChatUsers]
+  );
+  const totalUnread = Object.entries(unreadCounts)
+    .filter(([senderId]) => orgChatUserIds.has(senderId))
+    .reduce((sum, [, count]) => sum + count, 0);
 
   const selectedProjectId = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -174,6 +235,18 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const openCreateProject = () => {
     setProjectForm({ projectName: "", description: "" });
     setCreateProjectOpen(true);
+  };
+
+  const switchOrgMode = (mode: OrgMode) => {
+    setActiveMode(mode);
+    if (mode === "member") {
+      const adminOnlyPaths = ["/salary", "/employee", "/assets"];
+      if (adminOnlyPaths.includes(location.pathname)) {
+        navigate("/");
+      }
+    }
+    setOrgMenuOpen(false);
+    onMobileClose?.();
   };
 
   const handleSubmitCreateProject = async (e: FormEvent<HTMLFormElement>) => {
@@ -211,54 +284,6 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
           <p className="truncate text-xs text-gray-500">Task Management</p>
         </div>
       </div>
-
-      {/* Org Switcher — only shown when user belongs to two orgs */}
-      {hasBoth && (
-        <div className="border-b border-gray-200/80 px-3 py-2.5">
-          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-            Active Organization
-          </p>
-          <div className="flex items-stretch gap-1.5 rounded-xl bg-gray-100/80 p-1">
-            <button
-              type="button"
-              onClick={() => setActiveMode("owned")}
-              title={ownedOrg?.name}
-              className={`flex flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
-                activeMode === "owned"
-                  ? "bg-white text-violet-700 shadow ring-1 ring-violet-200"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{ownedOrg?.name ?? "My Org"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveMode("member");
-                // Navigate away from admin-only pages if currently on one
-                const adminOnlyPaths = ["/salary", "/employee", "/assets"];
-                if (adminOnlyPaths.includes(location.pathname)) {
-                  navigate("/");
-                }
-              }}
-              title={memberOrg?.name}
-              className={`flex flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
-                activeMode === "member"
-                  ? "bg-white text-sky-600 shadow ring-1 ring-sky-200"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <UserCircle2 className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{memberOrg?.name ?? "Joined Org"}</span>
-            </button>
-          </div>
-          <div className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-gray-400">
-            <ArrowLeftRight className="h-2.5 w-2.5" />
-            <span>Click to switch context</span>
-          </div>
-        </div>
-      )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {visibleMainNav
@@ -370,13 +395,88 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
         </div>
       </nav>
 
-      <div className="border-t border-gray-200/80 p-3">
+      <div ref={profileOrgRef} className="relative border-t border-gray-200/80 p-3">
+        {orgMenuOpen ? (
+          <div
+            className="absolute bottom-full left-3 right-3 z-20 mb-2 overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_-8px_40px_rgba(15,23,42,0.12)]"
+            role="menu"
+            aria-label="Organizations"
+          >
+            <p className="border-b border-gray-100 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+              Organizations
+            </p>
+            <div className="max-h-[min(50vh,14rem)] space-y-0.5 overflow-y-auto p-2">
+              {orgSwitcherOptions.length === 0 ? (
+                <div className="rounded-xl px-3 py-3 text-sm text-gray-600">
+                  <p className="font-medium text-gray-900">No organization yet</p>
+                  <p className="mt-1 text-xs text-gray-500">Create or join one to get started.</p>
+                  <button
+                    type="button"
+                    className="mt-3 w-full rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-700"
+                    onClick={() => {
+                      navigate("/organization");
+                      setOrgMenuOpen(false);
+                      onMobileClose?.();
+                    }}
+                  >
+                    Go to Organization
+                  </button>
+                </div>
+              ) : (
+                orgSwitcherOptions.map(({ mode, org, subtitle, Icon }) => {
+                  const selected = activeMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => switchOrgMode(mode)}
+                      className={[
+                        "group relative flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-200",
+                        selected
+                          ? "bg-gradient-to-r from-violet-600/10 to-indigo-600/5 text-violet-900 shadow-[0_1px_0_rgba(255,255,255,0.8)] ring-1 ring-violet-500/15"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                      ].join(" ")}
+                    >
+                      {selected ? (
+                        <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-violet-600" />
+                      ) : null}
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-gray-500 group-hover:text-gray-700" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold">{org.name}</span>
+                        <span className="mt-0.5 block truncate text-xs font-normal text-gray-500">
+                          {subtitle}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <div className="border-t border-gray-100 p-2">
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={() => {
+                  navigate("/profile");
+                  setOrgMenuOpen(false);
+                  onMobileClose?.();
+                }}
+              >
+                <UserRound className="h-4 w-4 shrink-0 text-gray-500" />
+                Profile settings
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <button
           type="button"
-          onClick={() => {
-            navigate("/profile");
-            onMobileClose?.();
-          }}
+          onClick={() => setOrgMenuOpen((o) => !o)}
+          aria-expanded={orgMenuOpen}
+          aria-haspopup="menu"
           className="flex w-full items-center gap-3 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white to-gray-50 p-3 text-left shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition hover:shadow-[0_12px_36px_rgba(15,23,42,0.08)]"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-sm font-semibold text-white shadow-inner">
@@ -402,22 +502,24 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                   : roleLabel}
             </p>
             {activeOrg && (
-              <p
-                className={`truncate text-xs flex items-center gap-1 mt-0.5 ${
-                  activeMode === "member" ? "text-sky-500" : "text-violet-500"
-                }`}
-              >
+              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-violet-600">
                 <Building2 className="h-3 w-3 shrink-0" />
                 {activeOrg.name}
               </p>
             )}
             {noOrg && (
-              <p className="truncate text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-amber-500">
                 <Building2 className="h-3 w-3 shrink-0" />
-                Create or join an org
+                Tap to add an organization
               </p>
             )}
           </div>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 ${
+              orgMenuOpen ? "rotate-180" : ""
+            }`}
+            aria-hidden
+          />
         </button>
       </div>
 

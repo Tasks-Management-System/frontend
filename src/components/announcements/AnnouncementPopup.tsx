@@ -4,6 +4,7 @@ import { Megaphone, Pin, Check, ChevronRight } from "lucide-react";
 import { useAnnouncements, useMarkAnnouncementRead } from "../../apis/api/announcements";
 import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/auth";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import type { Announcement } from "../../types/announcement.types";
 
 const HIDDEN_FOR_ROLES = ["admin", "super-admin"];
@@ -26,8 +27,9 @@ const AnnouncementPopup = () => {
   const { data: user } = useUserById(userId);
   const roles: string[] = user?.role ?? [];
   const isManager = roles.some((r) => HIDDEN_FOR_ROLES.includes(r));
+  const { activeMode } = useActiveOrg();
 
-  const { data: announcements = [], isLoading } = useAnnouncements();
+  const { data: announcements = [], isLoading } = useAnnouncements(activeMode);
   const markReadMutation = useMarkAnnouncementRead();
 
   // Snapshot the unread list once per session so newly-added items

@@ -37,14 +37,14 @@ interface SalarySingleResponse {
 
 export const salaryQueryKey = ["salary"] as const;
 
-export const useGetSalary = (page = 1, limit = 10) => {
+export const useGetSalary = (page = 1, limit = 10, orgContext?: string) => {
   return useQuery({
-    queryKey: ["salary", "list", page, limit],
+    queryKey: ["salary", "list", page, limit, orgContext],
     placeholderData: keepPreviousData,
     queryFn: async () => {
       const res = await api.get<SalaryListResponse>(apiPath.salary.list, {
         auth: true,
-        query: { page, limit },
+        query: { page, limit, ...(orgContext ? { orgContext } : {}) },
       });
       return res;
     },

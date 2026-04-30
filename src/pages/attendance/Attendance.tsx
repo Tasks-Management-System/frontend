@@ -2,6 +2,7 @@ import { getUserId } from "../../utils/auth";
 import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { useUserById } from "../../apis/api/auth";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import {
   addDays,
   localYmd,
@@ -21,6 +22,7 @@ type ViewMode = "day" | "week";
 export default function Attendance() {
   const userId = getUserId();
   const { data: user } = useUserById(userId);
+  const { activeMode } = useActiveOrg();
   const [view, setView] = useState<ViewMode>("day");
   const [date, setDate] = useState(() => localYmd());
   const [weekMonday, setWeekMonday] = useState(() => startOfWeekMonday());
@@ -43,14 +45,14 @@ export default function Attendance() {
     return `${a} – ${b}, ${y}`;
   }, [weekFrom, weekTo, weekMonday]);
 
-  const { data, isLoading, isError, error } = useAttendanceList(date, !!userId && view === "day");
+  const { data, isLoading, isError, error } = useAttendanceList(date, !!userId && view === "day", activeMode);
 
   const {
     data: weekData,
     isLoading: weekLoading,
     isError: weekError,
     error: weekErr,
-  } = useAttendanceRange(weekFrom, weekTo, !!userId && view === "week");
+  } = useAttendanceRange(weekFrom, weekTo, !!userId && view === "week", activeMode);
 
   const rows = data?.attendance ?? [];
   const weekRows = weekData?.attendance ?? [];

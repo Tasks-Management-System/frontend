@@ -183,13 +183,14 @@ export const useTeamBirthdays = () => {
 };
 
 /** Returns [] when the current user cannot list users (e.g. not admin/hr). */
-export const useAssignableUsers = () => {
+export const useAssignableUsers = (orgContext?: string) => {
   return useQuery<User[]>({
-    queryKey: ["users", "assignable"],
+    queryKey: ["users", "assignable", orgContext],
     queryFn: async (): Promise<User[]> => {
       try {
         const res = await api.get<{ users: User[] }>(apiPath.auth.getUsers, {
           auth: true,
+          query: orgContext ? { orgContext } : undefined,
         });
         return res.users;
       } catch {

@@ -40,6 +40,7 @@ import EmojiPicker from "../../components/chat/EmojiPicker";
 import WallpaperPicker from "../../components/chat/WallpaperPicker";
 import { useChatNotifications } from "../../contexts/ChatNotificationContext";
 import { useChatWallpaper, getWallpaperStyle } from "../../hooks/useChatWallpaper";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 
 /* ------------------------------------------------------------------ */
 /*  Avatar                                                             */
@@ -760,8 +761,9 @@ function EmptyState() {
 const Chat = () => {
   const currentUserId = getUserId();
   const queryClient = useQueryClient();
+  const { activeMode } = useActiveOrg();
 
-  const { data: allUsers = [] } = useChatUsers();
+  const { data: allUsers = [] } = useChatUsers(activeMode);
   const { data: onlineIds = [] } = useOnlineUsers();
   const onlineUserIds = useMemo(() => new Set(onlineIds), [onlineIds]);
 

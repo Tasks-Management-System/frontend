@@ -30,6 +30,7 @@ import {
 import toast from "react-hot-toast";
 
 import { getUserId } from "../../utils/auth";
+import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";
 import Modal from "../../components/UI/Model";
@@ -382,6 +383,7 @@ type ModalKind = "employee" | "project" | "task" | null;
 const Dashboard = () => {
   const userId = getUserId();
   const { data: sessionUser } = useUserById(userId);
+  const { activeMode } = useActiveOrg();
 
   const roles = sessionUser?.role ?? [];
   const isSuperAdmin = roles.includes("super-admin");
@@ -393,21 +395,23 @@ const Dashboard = () => {
   const [chartRange, setChartRange] = useState<ChartRange>("week");
 
   // ------ data ------
-  const { data: users = [] } = useAssignableUsers();
+  const { data: users = [] } = useAssignableUsers(activeMode);
   const { data: teamBirthdayUsers = [] } = useTeamBirthdays();
-  const { data: projects = [] } = useProjectsList();
-  const { data: announcements = [] } = useAnnouncements();
-  const { data: pendingLeaves = [] } = usePendingLeaveRequests(isManager);
+  const { data: projects = [] } = useProjectsList(100, activeMode);
+  const { data: announcements = [] } = useAnnouncements(activeMode);
+  const { data: pendingLeaves = [] } = usePendingLeaveRequests(isManager, activeMode);
 
   const { data: myTasksRes } = useTasksList({
     scope: "my",
     limit: 50,
     archived: false,
+    orgContext: activeMode,
   });
   const { data: orgTasksRes } = useTasksList({
     scope: isManager ? "all" : "my",
     limit: 200,
     archived: false,
+    orgContext: activeMode,
   });
 
   const today = new Date();
@@ -420,13 +424,13 @@ const Dashboard = () => {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   }, [todayDateStr]); // eslint-disable-line react-hooks/preserve-manual-memoization
 
-  const { data: todayAttendance } = useTodayAttendance();
+  const { data: todayAttendance } = useTodayAttendance(true, activeMode);
   const weekFrom = localYmd(weekMonday);
   const weekTo = localYmd(addDays(weekMonday, 6));
-  const { data: weekAttendance } = useAttendanceRange(weekFrom, weekTo);
+  const { data: weekAttendance } = useAttendanceRange(weekFrom, weekTo, true, activeMode);
   const monthFrom = localYmd(monthStart);
   const monthTo = localYmd(new Date(today.getFullYear(), today.getMonth() + 1, 0));
-  const { data: monthAttendance } = useAttendanceRange(monthFrom, monthTo);
+  const { data: monthAttendance } = useAttendanceRange(monthFrom, monthTo, true, activeMode);
 
   const updateLeaveMutation = useUpdateLeaveStatus();
   const createUserMutation = useCreateUserByAdmin();

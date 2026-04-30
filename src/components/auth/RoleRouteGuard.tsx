@@ -20,7 +20,7 @@ const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const allowed = routeAllowedRoles(pathname);
   const userId = getUserId();
   const { data: user, isLoading, isError } = useUserById(userId);
-  const { activeMode, hasBoth, noOrg } = useActiveOrg();
+  const { activeMode, hasBoth, noOrg, ownedOrg } = useActiveOrg();
 
   if (!getToken() || !userId || isError) {
     return <Navigate to="/login" replace />;
@@ -34,11 +34,18 @@ const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const fromApi = user?.role ?? [];
   const dbRoles = fromApi.length ? fromApi : fromStore;
 
-  // Override to employee roles when:
-  // • user has no org at all (fresh account, nothing set up)
-  // • user has both orgs but has switched to their joined-org (member) context
+  // Derive effective roles from org context:
+  // • No org at all → employee (nothing to manage)
+  // • Both orgs, member mode → employee (viewing joined org)
+  // • Viewing owned org → always admin (they created it; DB role may have been corrupted by a bug)
+  // • Otherwise → use actual DB roles
   const isEmployeeContext = noOrg || (hasBoth && activeMode === "member");
-  const effectiveRoles: string[] = isEmployeeContext ? ["employee"] : dbRoles;
+  const isOwnedOrgContext = !!ownedOrg && activeMode === "owned";
+  const effectiveRoles: string[] = isEmployeeContext
+    ? ["employee"]
+    : isOwnedOrgContext
+      ? ["admin"]
+      : dbRoles;
 
   if (isLoading && !fromStore.length) {
     return (
