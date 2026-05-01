@@ -7,6 +7,8 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
   rightLabel?: React.ReactNode;
   type?: string;
+  /** Used when `type` is `"textarea"` (default 4). */
+  rows?: number;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -20,6 +22,7 @@ const Input: React.FC<InputProps> = ({
   onChange,
   name,
   placeholder,
+  rows = 4,
   ...rest
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -50,7 +53,7 @@ const Input: React.FC<InputProps> = ({
             onChange={onChange as unknown as React.ChangeEventHandler<HTMLTextAreaElement>}
             name={name}
             placeholder={placeholder}
-            rows={4}
+            rows={rows}
             className={`w-full px-3 py-2 border rounded-lg outline-none transition resize-none
               focus:ring-2 focus:ring-blue-500
               ${error ? "border-red-500" : "border-gray-300"}
