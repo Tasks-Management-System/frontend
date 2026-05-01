@@ -21,14 +21,15 @@ export default function ScheduleInterviewModal({ open, onClose, applicant }: Pro
   const { data: users = [] } = useUsers();
 
   const toggleInterviewer = (id: string) => {
-    setInterviewers((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setInterviewers((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!scheduledAt) { toast.error("Pick a date and time"); return; }
+    if (!scheduledAt) {
+      toast.error("Pick a date and time");
+      return;
+    }
     try {
       await schedule.mutateAsync({
         applicantId: applicant._id,

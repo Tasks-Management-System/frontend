@@ -33,7 +33,10 @@ export default function CreateApplicantModal({ open, onClose }: Props) {
       toast.error("Name, email, and phone are required");
       return;
     }
-    if (!resume) { toast.error("Resume file is required"); return; }
+    if (!resume) {
+      toast.error("Resume file is required");
+      return;
+    }
 
     try {
       await create.mutateAsync({
@@ -64,41 +67,78 @@ export default function CreateApplicantModal({ open, onClose }: Props) {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Full name *</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Smith" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Jane Smith"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Email *</label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jane@example.com"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Phone *</label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 9876543210" />
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 9876543210"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Experience</label>
-            <Input value={experience} onChange={(e) => setExperience(e.target.value)} placeholder="3 years" />
+            <Input
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+              placeholder="3 years"
+            />
           </div>
         </div>
 
         {/* Skills */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Skills <span className="text-slate-400">(comma separated)</span></label>
-          <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, Node.js, TypeScript" />
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Skills <span className="text-slate-400">(comma separated)</span>
+          </label>
+          <Input
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            placeholder="React, Node.js, TypeScript"
+          />
         </div>
 
         {/* Salary + notice */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Current salary</label>
-            <Input type="number" value={currentSalary} onChange={(e) => setCurrentSalary(e.target.value)} placeholder="600000" />
+            <Input
+              type="number"
+              value={currentSalary}
+              onChange={(e) => setCurrentSalary(e.target.value)}
+              placeholder="600000"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Expected salary</label>
-            <Input type="number" value={expectedSalary} onChange={(e) => setExpectedSalary(e.target.value)} placeholder="900000" />
+            <Input
+              type="number"
+              value={expectedSalary}
+              onChange={(e) => setExpectedSalary(e.target.value)}
+              placeholder="900000"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Notice period</label>
-            <Input value={noticePeriod} onChange={(e) => setNoticePeriod(e.target.value)} placeholder="30 days" />
+            <Input
+              value={noticePeriod}
+              onChange={(e) => setNoticePeriod(e.target.value)}
+              placeholder="30 days"
+            />
           </div>
         </div>
 
@@ -106,18 +146,32 @@ export default function CreateApplicantModal({ open, onClose }: Props) {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">LinkedIn</label>
-            <Input value={linkedIn} onChange={(e) => setLinkedIn(e.target.value)} placeholder="https://linkedin.com/in/…" />
+            <Input
+              value={linkedIn}
+              onChange={(e) => setLinkedIn(e.target.value)}
+              placeholder="https://linkedin.com/in/…"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">GitHub</label>
-            <Input value={github} onChange={(e) => setGithub(e.target.value)} placeholder="https://github.com/…" />
+            <Input
+              value={github}
+              onChange={(e) => setGithub(e.target.value)}
+              placeholder="https://github.com/…"
+            />
           </div>
         </div>
 
         {/* Note */}
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Note</label>
-          <Input type="textarea" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Internal notes…" rows={2} />
+          <Input
+            type="textarea"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Internal notes…"
+            rows={2}
+          />
         </div>
 
         {/* Resume */}

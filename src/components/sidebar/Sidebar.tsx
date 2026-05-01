@@ -407,7 +407,9 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                       <NavLink
                         to={`/tasks?project=${p._id}`}
                         onClick={() => onMobileClose?.()}
-                        className={() => linkClass({ isActive: active, nested: true }) + " flex-1 min-w-0"}
+                        className={() =>
+                          linkClass({ isActive: active, nested: true }) + " flex-1 min-w-0"
+                        }
                       >
                         <span
                           className={`h-2 w-2 shrink-0 rounded-full ${accentForId(p._id)} shadow-sm ring-2 ring-white`}
@@ -417,7 +419,10 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                       </NavLink>
                       {canCreateProjects && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(p);
+                          }}
                           className="ml-1 flex-shrink-0 rounded p-1 text-slate-300 opacity-0 group-hover/proj:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all"
                           title="Delete project"
                         >
@@ -628,13 +633,10 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       </Modal>
 
       {/* Delete project confirm */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete project"
-      >
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete project">
         <p className="text-sm text-slate-600">
-          Delete <span className="font-semibold">{deleteTarget?.projectName}</span>? This cannot be undone.
+          Delete <span className="font-semibold">{deleteTarget?.projectName}</span>? This cannot be
+          undone.
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>

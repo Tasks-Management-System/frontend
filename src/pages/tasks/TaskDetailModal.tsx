@@ -297,7 +297,13 @@ interface TaskDetailModalProps {
   projectOptions?: { label: string; value: string }[];
 }
 
-export function TaskDetailModal({ task, isOpen, onClose, currentUserId, projectOptions }: TaskDetailModalProps) {
+export function TaskDetailModal({
+  task,
+  isOpen,
+  onClose,
+  currentUserId,
+  projectOptions,
+}: TaskDetailModalProps) {
   const updateMut = useUpdateTask();
   const addCommentMut = useAddComment();
   const deleteCommentMut = useDeleteComment();
@@ -1185,8 +1191,8 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId, projectO
                   <select
                     value={
                       typeof activeTask.project === "object"
-                        ? (activeTask.project as { _id: string } | null)?._id ?? ""
-                        : (activeTask.project as string | null | undefined) ?? ""
+                        ? ((activeTask.project as { _id: string } | null)?._id ?? "")
+                        : ((activeTask.project as string | null | undefined) ?? "")
                     }
                     disabled={isBusy}
                     onChange={(e) => save("project", { project: e.target.value })}

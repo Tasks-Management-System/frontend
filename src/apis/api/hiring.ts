@@ -122,11 +122,9 @@ export function useScheduleInterview() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: ScheduleInterviewBody) =>
-      api.post<{ success: boolean; interview: Interview }>(
-        apiPath.interviews.list,
-        body,
-        { auth: true }
-      ),
+      api.post<{ success: boolean; interview: Interview }>(apiPath.interviews.list, body, {
+        auth: true,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: interviewsQueryKey });
       qc.invalidateQueries({ queryKey: hiringQueryKey });

@@ -1,10 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  Plus,
-  Search,
-  TrendingUp,
-  ChevronRight,
-} from "lucide-react";
+import { Plus, Search, TrendingUp, ChevronRight } from "lucide-react";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import { useLeads, useRevenueForecast, useUpdateLeadStage } from "../../apis/api/crm";
 import { useUserById } from "../../apis/api/auth";
@@ -15,11 +10,7 @@ import CreateLeadModal from "../../components/crm/CreateLeadModal";
 import LeadDetailModal from "../../components/crm/LeadDetailModal";
 import toast from "react-hot-toast";
 import type { Client, Lead, LeadStage, ForecastItem } from "../../types/crm.types";
-import {
-  LEAD_STAGE_LABELS,
-  LEAD_STAGE_ORDER,
-  LEAD_STAGE_COLORS,
-} from "../../types/crm.types";
+import { LEAD_STAGE_LABELS, LEAD_STAGE_ORDER, LEAD_STAGE_COLORS } from "../../types/crm.types";
 
 type Tab = "leads" | "revenue";
 
@@ -38,9 +29,7 @@ function LeadCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
     >
       <p className="truncate text-sm font-medium text-slate-800">{lead.title}</p>
       {client && (
-        <p className="mt-0.5 truncate text-xs text-slate-500">
-          {client.company || client.name}
-        </p>
+        <p className="mt-0.5 truncate text-xs text-slate-500">{client.company || client.name}</p>
       )}
       <div className="mt-2 flex items-center justify-between">
         <span className="text-xs font-semibold text-emerald-700">
@@ -65,9 +54,10 @@ function PipelineBoard({
   const updateStage = useUpdateLeadStage(orgContext);
 
   const byStage = useMemo(() => {
-    const map = Object.fromEntries(
-      LEAD_STAGE_ORDER.map((s) => [s, [] as Lead[]])
-    ) as Record<LeadStage, Lead[]>;
+    const map = Object.fromEntries(LEAD_STAGE_ORDER.map((s) => [s, [] as Lead[]])) as Record<
+      LeadStage,
+      Lead[]
+    >;
     for (const l of leads) map[l.stage].push(l);
     return map;
   }, [leads]);
@@ -162,7 +152,6 @@ function LeadsTab({ canManage, orgContext }: { canManage: boolean; orgContext?: 
       {/* Toolbar */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -183,15 +172,15 @@ function LeadsTab({ canManage, orgContext }: { canManage: boolean; orgContext?: 
             activeKey={view}
             onTabChange={(k) => setView(k as "pipeline" | "list")}
           />
-        {canManage && (
-          <Button
-            size="sm"
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={() => setCreateOpen(true)}
-          >
-            New lead
-          </Button>
-        )}
+          {canManage && (
+            <Button
+              size="sm"
+              leftIcon={<Plus className="h-4 w-4" />}
+              onClick={() => setCreateOpen(true)}
+            >
+              New lead
+            </Button>
+          )}
         </div>
       </div>
 
@@ -232,7 +221,11 @@ function LeadsTab({ canManage, orgContext }: { canManage: boolean; orgContext?: 
       )}
 
       {createOpen && (
-        <CreateLeadModal open={createOpen} onClose={() => setCreateOpen(false)} orgContext={orgContext} />
+        <CreateLeadModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          orgContext={orgContext}
+        />
       )}
       {selected && (
         <LeadDetailModal
@@ -257,8 +250,16 @@ function RevenueTab({ orgContext }: { orgContext?: string }) {
     <div>
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { label: "Total pipeline", value: fmt(totalValue), color: "bg-violet-50 text-violet-700" },
-          { label: "Weighted forecast", value: fmt(totalWeighted), color: "bg-emerald-50 text-emerald-700" },
+          {
+            label: "Total pipeline",
+            value: fmt(totalValue),
+            color: "bg-violet-50 text-violet-700",
+          },
+          {
+            label: "Weighted forecast",
+            value: fmt(totalWeighted),
+            color: "bg-emerald-50 text-emerald-700",
+          },
           { label: "Active deals", value: String(items.length), color: "bg-sky-50 text-sky-700" },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl p-4 ${s.color}`}>
@@ -329,7 +330,10 @@ function RevenueTab({ orgContext }: { orgContext?: string }) {
             </tbody>
             <tfoot className="bg-slate-50 font-semibold text-slate-700">
               <tr>
-                <td colSpan={3} className="px-4 py-3 text-xs uppercase tracking-wide text-slate-500">
+                <td
+                  colSpan={3}
+                  className="px-4 py-3 text-xs uppercase tracking-wide text-slate-500"
+                >
                   Total
                 </td>
                 <td className="px-4 py-3 text-right">{fmt(totalValue)}</td>
@@ -351,9 +355,7 @@ export default function CRMPage() {
   const { data: me } = useUserById(userId);
   const { activeMode } = useActiveOrg();
   const roles = me?.role ?? [];
-  const canManage = roles.some((r) =>
-    ["admin", "hr", "super-admin", "manager"].includes(r)
-  );
+  const canManage = roles.some((r) => ["admin", "hr", "super-admin", "manager"].includes(r));
 
   const [tab, setTab] = useState<Tab>("leads");
 

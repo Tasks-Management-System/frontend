@@ -3,8 +3,7 @@ import { api } from "../apiService";
 import { apiPath } from "../apiPath";
 import type { CreateHolidayBody, Holiday } from "../../types/holiday.types";
 
-export const holidaysQueryKey = (year?: number) =>
-  year ? ["holidays", year] : ["holidays"];
+export const holidaysQueryKey = (year?: number) => (year ? ["holidays", year] : ["holidays"]);
 
 export function useHolidays(year?: number, orgContext?: string) {
   return useQuery({
@@ -13,10 +12,10 @@ export function useHolidays(year?: number, orgContext?: string) {
       const query: Record<string, string | number> = {};
       if (year) query.year = year;
       if (orgContext) query.orgContext = orgContext;
-      const res = await api.get<{ success: boolean; holidays: Holiday[] }>(
-        apiPath.holidays.list,
-        { auth: true, query }
-      );
+      const res = await api.get<{ success: boolean; holidays: Holiday[] }>(apiPath.holidays.list, {
+        auth: true,
+        query,
+      });
       return res.holidays ?? [];
     },
   });

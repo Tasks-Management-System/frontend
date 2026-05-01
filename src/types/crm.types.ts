@@ -1,4 +1,4 @@
-export type ClientStatus = 'active' | 'inactive';
+export type ClientStatus = "active" | "inactive";
 
 export interface Client {
   _id: string;
@@ -15,7 +15,7 @@ export interface Client {
   updatedAt: string;
 }
 
-export type LeadStage = 'lead' | 'prospect' | 'proposal' | 'won' | 'lost';
+export type LeadStage = "lead" | "prospect" | "proposal" | "won" | "lost";
 
 export interface Lead {
   _id: string;
@@ -33,7 +33,7 @@ export interface Lead {
   updatedAt: string;
 }
 
-export type ContactLogType = 'call' | 'email' | 'meeting' | 'note';
+export type ContactLogType = "call" | "email" | "meeting" | "note";
 
 export interface ContactLog {
   _id: string;
@@ -59,26 +59,26 @@ export interface ForecastItem {
 }
 
 export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
-  lead: 'Lead',
-  prospect: 'Prospect',
-  proposal: 'Proposal',
-  won: 'Won',
-  lost: 'Lost',
+  lead: "Lead",
+  prospect: "Prospect",
+  proposal: "Proposal",
+  won: "Won",
+  lost: "Lost",
 };
 
-export const LEAD_STAGE_ORDER: LeadStage[] = ['lead', 'prospect', 'proposal', 'won', 'lost'];
+export const LEAD_STAGE_ORDER: LeadStage[] = ["lead", "prospect", "proposal", "won", "lost"];
 
 export const LEAD_STAGE_COLORS: Record<LeadStage, string> = {
-  lead: 'bg-slate-100 text-slate-700',
-  prospect: 'bg-sky-100 text-sky-700',
-  proposal: 'bg-violet-100 text-violet-700',
-  won: 'bg-emerald-100 text-emerald-700',
-  lost: 'bg-red-100 text-red-700',
+  lead: "bg-slate-100 text-slate-700",
+  prospect: "bg-sky-100 text-sky-700",
+  proposal: "bg-violet-100 text-violet-700",
+  won: "bg-emerald-100 text-emerald-700",
+  lost: "bg-red-100 text-red-700",
 };
 
 export const CONTACT_LOG_LABELS: Record<ContactLogType, string> = {
-  call: 'Call',
-  email: 'Email',
-  meeting: 'Meeting',
-  note: 'Note',
+  call: "Call",
+  email: "Email",
+  meeting: "Meeting",
+  note: "Note",
 };

@@ -164,7 +164,8 @@ export async function request<T = unknown>(
     }
     redirectSessionExpired();
     const message =
-      String((data as Record<string, unknown>)?.message || "") || "Session expired. Please sign in again.";
+      String((data as Record<string, unknown>)?.message || "") ||
+      "Session expired. Please sign in again.";
     throw new ApiError({ message, status: 401, data });
   }
 
@@ -212,7 +213,8 @@ export async function uploadFormData<T = unknown>(
     }
     redirectSessionExpired();
     const message =
-      String((data as Record<string, unknown>)?.message || "") || "Session expired. Please sign in again.";
+      String((data as Record<string, unknown>)?.message || "") ||
+      "Session expired. Please sign in again.";
     throw new ApiError({ message, status: 401, data });
   }
 

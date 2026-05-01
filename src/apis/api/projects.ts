@@ -42,10 +42,9 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, orgContext }: { id: string; orgContext?: string }) =>
-      api.del(
-        apiPath.projects.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""),
-        { auth: true }
-      ),
+      api.del(apiPath.projects.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""), {
+        auth: true,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },

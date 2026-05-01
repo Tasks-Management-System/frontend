@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, CalendarDays } from "lucide-react";
 import toast from "react-hot-toast";
-import { useHolidays, useCreateHoliday, useUpdateHoliday, useDeleteHoliday } from "../../apis/api/holidays";
+import {
+  useHolidays,
+  useCreateHoliday,
+  useUpdateHoliday,
+  useDeleteHoliday,
+} from "../../apis/api/holidays";
 import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/session";
 import Button from "../../components/UI/Button";
@@ -11,8 +16,18 @@ import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import type { Holiday, CreateHolidayBody, HolidayType } from "../../types/holiday.types";
 
 const MONTH_NAMES = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function formatDate(dateStr: string) {
@@ -166,15 +181,16 @@ export default function HolidaysPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Holidays</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Company and national holidays for {year}.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Company and national holidays for {year}.</p>
         </div>
         {canManage && (
           <Button
             leftIcon={<Plus className="h-4 w-4" />}
             size="sm"
-            onClick={() => { setEditHoliday(null); setFormOpen(true); }}
+            onClick={() => {
+              setEditHoliday(null);
+              setFormOpen(true);
+            }}
           >
             Add holiday
           </Button>
@@ -189,7 +205,9 @@ export default function HolidaysPage() {
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <span className="min-w-[3rem] text-center text-sm font-semibold text-slate-700">{year}</span>
+        <span className="min-w-[3rem] text-center text-sm font-semibold text-slate-700">
+          {year}
+        </span>
         <button
           onClick={() => setYear((y) => y + 1)}
           className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
@@ -237,8 +255,8 @@ export default function HolidaysPage() {
                           isToday
                             ? "border-violet-200 bg-violet-50"
                             : isPast
-                            ? "border-slate-100 bg-slate-50 opacity-60"
-                            : "border-slate-100 bg-white hover:border-slate-200"
+                              ? "border-slate-100 bg-slate-50 opacity-60"
+                              : "border-slate-100 bg-white hover:border-slate-200"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -294,11 +312,7 @@ export default function HolidaysPage() {
       )}
 
       {/* Delete confirm modal */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete holiday"
-      >
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete holiday">
         <p className="text-sm text-slate-600">
           Delete <span className="font-semibold">{deleteTarget?.name}</span>? This cannot be undone.
         </p>

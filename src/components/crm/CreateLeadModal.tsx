@@ -3,7 +3,13 @@ import toast from "react-hot-toast";
 import Modal from "../UI/Model";
 import Button from "../UI/Button";
 import Input from "../UI/Input";
-import { useCreateLead, useUpdateLead, useClients, useCreateClient, useUpdateClient } from "../../apis/api/crm";
+import {
+  useCreateLead,
+  useUpdateLead,
+  useClients,
+  useCreateClient,
+  useUpdateClient,
+} from "../../apis/api/crm";
 import type { Client, Lead, LeadStage } from "../../types/crm.types";
 import { LEAD_STAGE_LABELS, LEAD_STAGE_ORDER } from "../../types/crm.types";
 
@@ -15,20 +21,25 @@ interface Props {
 }
 
 const INDUSTRIES = [
-  "Technology", "Finance", "Healthcare", "Retail", "Manufacturing",
-  "Education", "Real Estate", "Consulting", "Media", "Other",
+  "Technology",
+  "Finance",
+  "Healthcare",
+  "Retail",
+  "Manufacturing",
+  "Education",
+  "Real Estate",
+  "Consulting",
+  "Media",
+  "Other",
 ];
 
 export default function CreateLeadModal({ open, onClose, existing, orgContext }: Props) {
   const isEdit = !!existing;
-  const existingClient = existing?.client && typeof existing.client === "object"
-    ? existing.client as Client
-    : null;
+  const existingClient =
+    existing?.client && typeof existing.client === "object" ? (existing.client as Client) : null;
 
   // ─── Client fields ────────────────────────────────────────────────────────
-  const [existingClientId, setExistingClientId] = useState<string>(
-    existingClient?._id ?? ""
-  );
+  const [existingClientId, setExistingClientId] = useState<string>(existingClient?._id ?? "");
   const [clientForm, setClientForm] = useState({
     name: existingClient?.name ?? "",
     company: existingClient?.company ?? "",
@@ -46,9 +57,7 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
     value: String(existing?.value ?? ""),
     currency: existing?.currency ?? "INR",
     probability: String(existing?.probability ?? "20"),
-    expectedCloseDate: existing?.expectedCloseDate
-      ? existing.expectedCloseDate.slice(0, 10)
-      : "",
+    expectedCloseDate: existing?.expectedCloseDate ? existing.expectedCloseDate.slice(0, 10) : "",
     notes: existing?.notes ?? "",
   });
 
@@ -60,14 +69,18 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
   const createLead = useCreateLead(orgContext);
   const updateLead = useUpdateLead(orgContext);
   const isPending =
-    createClient.isPending || updateClient.isPending ||
-    createLead.isPending || updateLead.isPending;
+    createClient.isPending ||
+    updateClient.isPending ||
+    createLead.isPending ||
+    updateLead.isPending;
 
-  const setClient = (field: string) =>
+  const setClient =
+    (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setClientForm((p) => ({ ...p, [field]: e.target.value }));
 
-  const setDeal = (field: string) =>
+  const setDeal =
+    (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setDealForm((p) => ({ ...p, [field]: e.target.value }));
 
@@ -87,14 +100,28 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
         });
       }
     } else {
-      setClientForm({ name: "", company: "", email: "", phone: "", website: "", industry: "", notes: "" });
+      setClientForm({
+        name: "",
+        company: "",
+        email: "",
+        phone: "",
+        website: "",
+        industry: "",
+        notes: "",
+      });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientForm.name.trim()) { toast.error("Client name is required"); return; }
-    if (!dealForm.title.trim()) { toast.error("Deal title is required"); return; }
+    if (!clientForm.name.trim()) {
+      toast.error("Client name is required");
+      return;
+    }
+    if (!dealForm.title.trim()) {
+      toast.error("Deal title is required");
+      return;
+    }
 
     try {
       let clientId = existingClientId;
@@ -143,7 +170,6 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
       panelClassName="max-w-xl"
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
         {/* ── Client section ── */}
         <div>
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -155,7 +181,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium text-slate-700">
                 Link to existing client{" "}
-                <span className="font-normal text-slate-400">(optional — leave blank to create new)</span>
+                <span className="font-normal text-slate-400">
+                  (optional — leave blank to create new)
+                </span>
               </label>
               <select
                 value={existingClientId}
@@ -165,7 +193,8 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 <option value="">— Create new client —</option>
                 {allClients.map((c) => (
                   <option key={c._id} value={c._id}>
-                    {c.name}{c.company ? ` — ${c.company}` : ""}
+                    {c.name}
+                    {c.company ? ` — ${c.company}` : ""}
                   </option>
                 ))}
               </select>
@@ -184,7 +213,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 required
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
             </div>
@@ -196,7 +227,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 placeholder="Acme Corp"
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
             </div>
@@ -209,7 +242,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 placeholder="jane@acme.com"
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
             </div>
@@ -221,7 +256,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 placeholder="+91 98765 43210"
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
             </div>
@@ -233,7 +270,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 placeholder="https://acme.com"
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
             </div>
@@ -246,17 +285,20 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 list="crm-industries"
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
               <datalist id="crm-industries">
-                {INDUSTRIES.map((i) => <option key={i} value={i} />)}
+                {INDUSTRIES.map((i) => (
+                  <option key={i} value={i} />
+                ))}
               </datalist>
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Client notes{" "}
-                <span className="font-normal text-slate-400">(internal)</span>
+                Client notes <span className="font-normal text-slate-400">(internal)</span>
               </label>
               <textarea
                 value={clientForm.notes}
@@ -265,7 +307,9 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
                 rows={2}
                 readOnly={useExisting && !isEdit}
                 className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none ${
-                  useExisting && !isEdit ? "border-slate-100 bg-slate-50 text-slate-500" : "border-slate-200"
+                  useExisting && !isEdit
+                    ? "border-slate-100 bg-slate-50 text-slate-500"
+                    : "border-slate-200"
                 }`}
               />
             </div>
@@ -276,9 +320,7 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
 
         {/* ── Deal section ── */}
         <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Deal
-          </p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Deal</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <div className="col-span-2">
               <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -338,9 +380,7 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Probability %
-              </label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Probability %</label>
               <input
                 type="number"
                 value={dealForm.probability}
@@ -364,9 +404,7 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
             </div>
 
             <div className="col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Deal notes
-              </label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Deal notes</label>
               <textarea
                 value={dealForm.notes}
                 onChange={setDeal("notes")}
@@ -384,8 +422,12 @@ export default function CreateLeadModal({ open, onClose, existing, orgContext }:
           </Button>
           <Button type="submit" size="sm" disabled={isPending}>
             {isPending
-              ? isEdit ? "Saving…" : "Creating…"
-              : isEdit ? "Save changes" : "Create lead"}
+              ? isEdit
+                ? "Saving…"
+                : "Creating…"
+              : isEdit
+                ? "Save changes"
+                : "Create lead"}
           </Button>
         </div>
       </form>

@@ -1,13 +1,6 @@
 import { useState, useMemo } from "react";
 import { PillTabBar } from "../../components/UI/PillTabBar";
-import {
-  Plus,
-  Search,
-  Users,
-  Mail,
-  Phone,
-  FileText,
-} from "lucide-react";
+import { Plus, Search, Users, Mail, Phone, FileText } from "lucide-react";
 import { useApplicants } from "../../apis/api/hiring";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import { useUserById } from "../../apis/api/auth";
@@ -26,13 +19,7 @@ function daysAgo(dateStr: string) {
   return d === 0 ? "Today" : `${d}d ago`;
 }
 
-function ApplicantCard({
-  applicant,
-  onClick,
-}: {
-  applicant: Applicant;
-  onClick: () => void;
-}) {
+function ApplicantCard({ applicant, onClick }: { applicant: Applicant; onClick: () => void }) {
   const [resumePreview, setResumePreview] = useState(false);
 
   return (
@@ -83,7 +70,10 @@ function ApplicantCard({
           <div className="flex gap-2">
             {applicant.resume && (
               <button
-                onClick={(e) => { e.stopPropagation(); setResumePreview(true); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setResumePreview(true);
+                }}
                 className="flex items-center gap-1 text-xs text-violet-600 hover:underline"
               >
                 <FileText className="h-3.5 w-3.5" />
@@ -127,7 +117,14 @@ function PipelineBoard({
     return map;
   }, [applicants]);
 
-  const VISIBLE_STAGES: HiringStage[] = ["applied", "screening", "interview_scheduled", "offer", "hired", "rejected"];
+  const VISIBLE_STAGES: HiringStage[] = [
+    "applied",
+    "screening",
+    "interview_scheduled",
+    "offer",
+    "hired",
+    "rejected",
+  ];
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
@@ -284,9 +281,7 @@ export default function HiringPage() {
         <CreateApplicantModal open={createOpen} onClose={() => setCreateOpen(false)} />
       )}
 
-      {selected && (
-        <ApplicantDetailModal applicant={selected} onClose={() => setSelected(null)} />
-      )}
+      {selected && <ApplicantDetailModal applicant={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }

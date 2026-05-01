@@ -24,10 +24,7 @@ export default function ResumePreviewModal({ url, name, onClose }: Props) {
             <ExternalLink className="h-3.5 w-3.5" />
             Open in new tab
           </a>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
-          >
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
             <X className="h-5 w-5" />
           </button>
         </div>

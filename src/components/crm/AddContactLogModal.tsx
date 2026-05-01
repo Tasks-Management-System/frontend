@@ -29,7 +29,10 @@ export default function AddContactLogModal({ open, onClose, clientId, leadId, or
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!summary.trim()) { toast.error("Summary is required"); return; }
+    if (!summary.trim()) {
+      toast.error("Summary is required");
+      return;
+    }
     try {
       await create.mutateAsync({
         client: clientId,
@@ -89,7 +92,9 @@ export default function AddContactLogModal({ open, onClose, clientId, leadId, or
         />
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
           <Button type="submit" size="sm" disabled={create.isPending}>
             {create.isPending ? "Saving…" : "Add log"}
           </Button>

@@ -55,10 +55,9 @@ export function useDeleteClient(orgContext?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      api.del(
-        apiPath.clients.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""),
-        { auth: true }
-      ),
+      api.del(apiPath.clients.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""), {
+        auth: true,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: CLIENTS_KEY }),
   });
 }
@@ -124,7 +123,8 @@ export function useUpdateLeadStage(orgContext?: string) {
   return useMutation({
     mutationFn: ({ id, stage }: { id: string; stage: string }) =>
       api.patch<{ success: boolean; data: Lead }>(
-        apiPath.leads.updateStage.replace(":id", id) + (orgContext ? `?orgContext=${orgContext}` : ""),
+        apiPath.leads.updateStage.replace(":id", id) +
+          (orgContext ? `?orgContext=${orgContext}` : ""),
         { stage },
         { auth: true }
       ),
@@ -136,10 +136,9 @@ export function useDeleteLead(orgContext?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      api.del(
-        apiPath.leads.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""),
-        { auth: true }
-      ),
+      api.del(apiPath.leads.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""), {
+        auth: true,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: LEADS_KEY }),
   });
 }
@@ -187,10 +186,9 @@ export function useDeleteContactLog(orgContext?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      api.del(
-        apiPath.contactLogs.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""),
-        { auth: true }
-      ),
+      api.del(apiPath.contactLogs.byId + id + (orgContext ? `?orgContext=${orgContext}` : ""), {
+        auth: true,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: LOGS_KEY }),
   });
 }

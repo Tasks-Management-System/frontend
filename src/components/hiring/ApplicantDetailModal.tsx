@@ -57,7 +57,9 @@ function InterviewCard({
 
   const avgRating =
     interview.feedback.length > 0
-      ? (interview.feedback.reduce((s, f) => s + (f.rating ?? 0), 0) / interview.feedback.length).toFixed(1)
+      ? (
+          interview.feedback.reduce((s, f) => s + (f.rating ?? 0), 0) / interview.feedback.length
+        ).toFixed(1)
       : null;
 
   const handleResult = async (result: "passed" | "failed") => {
@@ -95,11 +97,15 @@ function InterviewCard({
               interview.result === "passed"
                 ? "bg-emerald-100 text-emerald-700"
                 : interview.result === "failed"
-                ? "bg-red-100 text-red-700"
-                : "bg-slate-100 text-slate-600"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-slate-100 text-slate-600"
             }`}
           >
-            {interview.result === "pending" ? "Pending" : interview.result === "passed" ? "Passed" : "Failed"}
+            {interview.result === "pending"
+              ? "Pending"
+              : interview.result === "passed"
+                ? "Passed"
+                : "Failed"}
           </span>
         </div>
       </div>
@@ -111,11 +117,15 @@ function InterviewCard({
             <div key={fb._id} className="rounded-lg bg-slate-50 px-3 py-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-slate-700">{fb.interviewer.name}</span>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                  fb.recommendation === "proceed" ? "bg-emerald-100 text-emerald-700" :
-                  fb.recommendation === "reject" ? "bg-red-100 text-red-700" :
-                  "bg-amber-100 text-amber-700"
-                }`}>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    fb.recommendation === "proceed"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : fb.recommendation === "reject"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-amber-100 text-amber-700"
+                  }`}
+                >
                   {fb.recommendation}
                 </span>
               </div>
@@ -134,7 +144,12 @@ function InterviewCard({
             <Button size="sm" onClick={() => handleResult("passed")} disabled={setResult.isPending}>
               Mark passed
             </Button>
-            <Button size="sm" variant="danger" onClick={() => handleResult("failed")} disabled={setResult.isPending}>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => handleResult("failed")}
+              disabled={setResult.isPending}
+            >
               Mark failed
             </Button>
           </>
@@ -171,7 +186,12 @@ export default function ApplicantDetailModal({ applicant, onClose }: Props) {
   };
 
   const handleConvert = async () => {
-    if (!confirm(`Create an employee account for ${applicant.name}? A welcome email with a temp password will be sent.`)) return;
+    if (
+      !confirm(
+        `Create an employee account for ${applicant.name}? A welcome email with a temp password will be sent.`
+      )
+    )
+      return;
     try {
       await convertToUser.mutateAsync(applicant._id);
       toast.success("Employee account created — welcome email sent");
@@ -187,12 +207,7 @@ export default function ApplicantDetailModal({ applicant, onClose }: Props) {
 
   return (
     <>
-      <Modal
-        isOpen={true}
-        onClose={onClose}
-        title={applicant.name}
-        panelClassName="max-w-2xl"
-      >
+      <Modal isOpen={true} onClose={onClose} title={applicant.name} panelClassName="max-w-2xl">
         {/* Stage pipeline */}
         <div className="mb-5 flex items-center gap-1 overflow-x-auto pb-1">
           {STAGE_ORDER.map((s, i) => (
@@ -276,10 +291,15 @@ export default function ApplicantDetailModal({ applicant, onClose }: Props) {
 
             {applicant.skills.length > 0 && (
               <div>
-                <p className="mb-1.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Skills</p>
+                <p className="mb-1.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Skills
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {applicant.skills.map((s) => (
-                    <span key={s} className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
+                    <span
+                      key={s}
+                      className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700"
+                    >
                       {s}
                     </span>
                   ))}
@@ -290,11 +310,15 @@ export default function ApplicantDetailModal({ applicant, onClose }: Props) {
             <div className="grid grid-cols-3 gap-3 rounded-xl bg-slate-50 p-3">
               <div>
                 <p className="text-xs text-slate-500">Experience</p>
-                <p className="mt-0.5 text-sm font-medium text-slate-800">{applicant.experience || "—"}</p>
+                <p className="mt-0.5 text-sm font-medium text-slate-800">
+                  {applicant.experience || "—"}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">Notice period</p>
-                <p className="mt-0.5 text-sm font-medium text-slate-800">{applicant.noticePeriod || "—"}</p>
+                <p className="mt-0.5 text-sm font-medium text-slate-800">
+                  {applicant.noticePeriod || "—"}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">Applied</p>
@@ -342,7 +366,9 @@ export default function ApplicantDetailModal({ applicant, onClose }: Props) {
         {activeTab === "interviews" && (
           <div className="space-y-3">
             {interviews.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">No interviews scheduled yet.</p>
+              <p className="py-6 text-center text-sm text-slate-400">
+                No interviews scheduled yet.
+              </p>
             ) : (
               interviews.map((iv) => (
                 <InterviewCard

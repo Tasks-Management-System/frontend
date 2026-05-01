@@ -1,11 +1,26 @@
 import { useState } from "react";
-import { ChevronRight, Pencil, Trash2, Plus, Phone as CallIcon, AtSign, Users, FileText, TrendingUp } from "lucide-react";
+import {
+  ChevronRight,
+  Pencil,
+  Trash2,
+  Plus,
+  Phone as CallIcon,
+  AtSign,
+  Users,
+  FileText,
+  TrendingUp,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import Modal from "../UI/Model";
 import Button from "../UI/Button";
 import CreateLeadModal from "./CreateLeadModal";
 import AddContactLogModal from "./AddContactLogModal";
-import { useContactLogs, useDeleteLead, useDeleteContactLog, useUpdateLeadStage } from "../../apis/api/crm";
+import {
+  useContactLogs,
+  useDeleteLead,
+  useDeleteContactLog,
+  useUpdateLeadStage,
+} from "../../apis/api/crm";
 import type { Client, Lead, ContactLogType } from "../../types/crm.types";
 import {
   LEAD_STAGE_LABELS,
@@ -48,7 +63,7 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
   const deleteLog = useDeleteContactLog(orgContext);
   const updateStage = useUpdateLeadStage(orgContext);
 
-  const clientObj = typeof lead.client === "object" ? lead.client as Client : null;
+  const clientObj = typeof lead.client === "object" ? (lead.client as Client) : null;
   const clientId = clientObj?._id ?? (lead.client as string);
 
   const { data: logsRes } = useContactLogs(clientId, lead._id, orgContext);
@@ -113,7 +128,9 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
         <div className="grid grid-cols-3 gap-3 rounded-xl bg-slate-50 p-4">
           <div>
             <p className="text-xs text-slate-500">Deal value</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">{currency(lead.value, lead.currency)}</p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+              {currency(lead.value, lead.currency)}
+            </p>
           </div>
           <div>
             <p className="text-xs text-slate-500">Probability</p>
@@ -123,13 +140,16 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
             <p className="flex items-center gap-1 text-xs text-slate-500">
               <TrendingUp className="h-3 w-3" /> Weighted
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-emerald-700">{currency(weighted, lead.currency)}</p>
+            <p className="mt-0.5 text-sm font-semibold text-emerald-700">
+              {currency(weighted, lead.currency)}
+            </p>
           </div>
           {clientObj && (
             <div className="col-span-2">
               <p className="text-xs text-slate-500">Client</p>
               <p className="mt-0.5 text-sm font-medium text-slate-800">
-                {clientObj.name}{clientObj.company ? ` — ${clientObj.company}` : ""}
+                {clientObj.name}
+                {clientObj.company ? ` — ${clientObj.company}` : ""}
               </p>
             </div>
           )}
@@ -137,7 +157,9 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
             <div>
               <p className="text-xs text-slate-500">Close date</p>
               <p className="mt-0.5 text-sm font-medium text-slate-800">
-                {new Date(lead.expectedCloseDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                {new Date(lead.expectedCloseDate).toLocaleDateString("en-IN", {
+                  dateStyle: "medium",
+                })}
               </p>
             </div>
           )}
@@ -150,7 +172,9 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
         </div>
 
         {lead.notes && (
-          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{lead.notes}</p>
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {lead.notes}
+          </p>
         )}
 
         {/* Contact logs */}
@@ -158,7 +182,12 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-700">Contact history</p>
             {canManage && clientId && (
-              <Button size="sm" variant="outline" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => setLogOpen(true)}>
+              <Button
+                size="sm"
+                variant="outline"
+                leftIcon={<Plus className="h-3.5 w-3.5" />}
+                onClick={() => setLogOpen(true)}
+              >
                 Log
               </Button>
             )}
@@ -171,15 +200,24 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
               {logs.map((log) => {
                 const Icon = TYPE_ICON[log.type];
                 return (
-                  <div key={log._id} className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-3">
-                    <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[log.type]}`}>
+                  <div
+                    key={log._id}
+                    className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-3"
+                  >
+                    <span
+                      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[log.type]}`}
+                    >
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700">{CONTACT_LOG_LABELS[log.type]}</span>
+                        <span className="text-xs font-semibold text-slate-700">
+                          {CONTACT_LOG_LABELS[log.type]}
+                        </span>
                         <span className="text-xs text-slate-400">
-                          {new Date(log.loggedAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                          {new Date(log.loggedAt).toLocaleDateString("en-IN", {
+                            dateStyle: "medium",
+                          })}
                         </span>
                         {typeof log.loggedBy === "object" && log.loggedBy && (
                           <span className="text-xs text-slate-400">— {log.loggedBy.name}</span>
@@ -188,7 +226,10 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
                       <p className="mt-0.5 text-sm text-slate-600">{log.summary}</p>
                     </div>
                     {canManage && (
-                      <button onClick={() => handleDeleteLog(log._id)} className="flex-shrink-0 text-slate-300 hover:text-red-400">
+                      <button
+                        onClick={() => handleDeleteLog(log._id)}
+                        className="flex-shrink-0 text-slate-300 hover:text-red-400"
+                      >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}
@@ -202,10 +243,21 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
         {/* Actions */}
         {canManage && (
           <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
-            <Button size="sm" variant="outline" leftIcon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              leftIcon={<Pencil className="h-4 w-4" />}
+              onClick={() => setEditOpen(true)}
+            >
               Edit
             </Button>
-            <Button size="sm" variant="danger" leftIcon={<Trash2 className="h-4 w-4" />} onClick={handleDelete} disabled={deleteLead.isPending}>
+            <Button
+              size="sm"
+              variant="danger"
+              leftIcon={<Trash2 className="h-4 w-4" />}
+              onClick={handleDelete}
+              disabled={deleteLead.isPending}
+            >
               Delete
             </Button>
           </div>
@@ -213,11 +265,22 @@ export default function LeadDetailModal({ lead, onClose, canManage, orgContext }
       </Modal>
 
       {editOpen && (
-        <CreateLeadModal open={editOpen} onClose={() => setEditOpen(false)} existing={lead} orgContext={orgContext} />
+        <CreateLeadModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          existing={lead}
+          orgContext={orgContext}
+        />
       )}
 
       {logOpen && clientId && (
-        <AddContactLogModal open={logOpen} onClose={() => setLogOpen(false)} clientId={clientId} leadId={lead._id} orgContext={orgContext} />
+        <AddContactLogModal
+          open={logOpen}
+          onClose={() => setLogOpen(false)}
+          clientId={clientId}
+          leadId={lead._id}
+          orgContext={orgContext}
+        />
       )}
     </>
   );
