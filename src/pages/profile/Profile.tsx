@@ -1,4 +1,4 @@
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useState, useRef } from "react";
 import {
   User,

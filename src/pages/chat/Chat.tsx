@@ -30,7 +30,7 @@ import {
   clearChatApi,
   uploadChatFileApi,
 } from "../../apis/api/chat";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { socket } from "../../utils/socket";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { useQueryClient } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {

@@ -31,7 +31,7 @@ import {
   type Organization,
 } from "../../apis/api/organization";
 import { useUserById } from "../../apis/api/auth";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { ApiError } from "../../apis/apiService";
 import Modal from "../../components/UI/Model";

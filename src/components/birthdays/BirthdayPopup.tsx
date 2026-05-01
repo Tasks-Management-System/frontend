@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Cake, Gift, PartyPopper, Sparkles } from "lucide-react";
 import { useTeamBirthdays, type TeamBirthdayUser } from "../../apis/api/auth";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 
 const DISMISS_KEY_PREFIX = "birthday-popup-dismissed-";
 

@@ -18,7 +18,7 @@ import {
   downloadTimesheetCsv,
 } from "../../apis/api/timesheets";
 import { useUserById } from "../../apis/api/auth";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useProjectsList } from "../../apis/api/projects";
 import { useTasksList } from "../../apis/api/tasks";
 import type { TimesheetEntry } from "../../types/timesheet.types";

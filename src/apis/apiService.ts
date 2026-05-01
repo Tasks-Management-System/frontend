@@ -1,5 +1,7 @@
-import { API_BASE_URL } from "./apiPath";
-import { clearAuth, getToken } from "../utils/auth";
+import { API_BASE_URL, apiPath } from "./apiPath";
+import { clearSession } from "../utils/session";
+import { reconnectSocketWithLatestAuth } from "../utils/socket";
+import type { User } from "../types/user.types";
 
 export const ACCOUNT_INACTIVE_CODE = "ACCOUNT_INACTIVE";
 
@@ -7,7 +9,7 @@ function handleInactiveAccountIfNeeded(status: number, data: unknown, auth: bool
   if (!auth || status !== 403) return;
   const code = (data as { code?: string })?.code;
   if (code !== ACCOUNT_INACTIVE_CODE) return;
-  clearAuth();
+  clearSession();
   const msg = encodeURIComponent(
     (data as { message?: string })?.message || "Your account has been deactivated."
   );
@@ -37,14 +39,14 @@ export class ApiError extends Error {
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
 
 export type RequestOptions = Omit<RequestInit, "method" | "body"> & {
-  /** When true, includes `Authorization: Bearer <token>` if a token exists. */
+  /** When true, treat 401 as "needs session" and attempt cookie refresh (then retry once). */
   auth?: boolean;
-  /** Override token (otherwise read from `localStorage`). */
-  token?: string | null;
   /** Optional query params to append to the URL. */
   query?: QueryParams;
   /** Optional JSON body. */
   body?: unknown;
+  /** @internal */
+  _retryAfterRefresh?: boolean;
 };
 
 function joinUrl(base: string, path: string) {
@@ -65,10 +67,6 @@ function appendQuery(url: string, query?: QueryParams) {
   return url + (url.includes("?") ? "&" : "?") + qs;
 }
 
-function getStoredToken() {
-  return getToken();
-}
-
 async function parseMaybeJson(res: Response) {
   const contentType = res.headers.get("content-type") || "";
   if (contentType.includes("application/json")) return await res.json();
@@ -76,19 +74,75 @@ async function parseMaybeJson(res: Response) {
   return text.length ? text : null;
 }
 
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function tryRefreshAccessToken(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const url = joinUrl(API_BASE_URL, apiPath.auth.refreshToken);
+        const res = await fetch(url, {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await parseMaybeJson(res);
+
+        handleInactiveAccountIfNeeded(res.status, data, true);
+
+        if (!res.ok) return false;
+        reconnectSocketWithLatestAuth();
+        return true;
+      } catch {
+        return false;
+      }
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+function redirectSessionExpired() {
+  clearSession();
+  const msg = encodeURIComponent("Your session has expired. Please sign in again.");
+  window.location.replace(`/login?reason=session_expired&message=${msg}`);
+}
+
+/**
+ * Restore user from HttpOnly cookies without redirecting (for login / layout bootstrap).
+ * Performs one refresh attempt if /auth/me returns 401.
+ */
+export async function resumeSessionFromCookies(): Promise<User | null> {
+  async function getMe(): Promise<User | null> {
+    const url = joinUrl(API_BASE_URL, apiPath.auth.me);
+    const res = await fetch(url, { credentials: "include", cache: "no-store" });
+    const data = await parseMaybeJson(res);
+    if (!res.ok) return null;
+    const user = (data as { user?: User })?.user;
+    return user?._id ? user : null;
+  }
+
+  let user = await getMe();
+  if (user) return user;
+
+  const refreshed = await tryRefreshAccessToken();
+  if (!refreshed) return null;
+
+  user = await getMe();
+  return user;
+}
+
 export async function request<T = unknown>(
   method: HttpMethod,
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { auth = true, token = null, query, headers, body, ...init } = options;
-
-  const finalToken = token ?? (auth ? getStoredToken() : null);
+  const { auth = true, query, headers, body, _retryAfterRefresh = false, ...init } = options;
 
   const url = appendQuery(joinUrl(API_BASE_URL, path), query);
   const finalHeaders: HeadersInit = {
     ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-    ...(finalToken ? { Authorization: `Bearer ${finalToken}` } : {}),
     ...(headers || {}),
   };
 
@@ -96,11 +150,23 @@ export async function request<T = unknown>(
     ...init,
     method,
     headers: finalHeaders,
+    credentials: "include",
     cache: "no-store",
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
   const data = await parseMaybeJson(res);
+
+  if (res.status === 401 && auth && !_retryAfterRefresh) {
+    const refreshed = await tryRefreshAccessToken();
+    if (refreshed) {
+      return request<T>(method, path, { ...options, _retryAfterRefresh: true });
+    }
+    redirectSessionExpired();
+    const message =
+      String((data as Record<string, unknown>)?.message || "") || "Session expired. Please sign in again.";
+    throw new ApiError({ message, status: 401, data });
+  }
 
   if (!res.ok) {
     handleInactiveAccountIfNeeded(res.status, data, auth);
@@ -121,12 +187,10 @@ export async function uploadFormData<T = unknown>(
   formData: FormData,
   options: Omit<RequestOptions, "body"> = {}
 ): Promise<T> {
-  const { auth = true, token = null, query, headers, ...init } = options;
-  const finalToken = token ?? (auth ? getStoredToken() : null);
+  const { auth = true, query, headers, _retryAfterRefresh = false, ...init } = options;
   const url = appendQuery(joinUrl(API_BASE_URL, path), query);
 
   const finalHeaders: HeadersInit = {
-    ...(finalToken ? { Authorization: `Bearer ${finalToken}` } : {}),
     ...(headers || {}),
   };
 
@@ -134,11 +198,23 @@ export async function uploadFormData<T = unknown>(
     ...init,
     method,
     headers: finalHeaders,
+    credentials: "include",
     cache: "no-store",
     body: formData,
   });
 
   const data = await parseMaybeJson(res);
+
+  if (res.status === 401 && auth && !_retryAfterRefresh) {
+    const refreshed = await tryRefreshAccessToken();
+    if (refreshed) {
+      return uploadFormData<T>(method, path, formData, { ...options, _retryAfterRefresh: true });
+    }
+    redirectSessionExpired();
+    const message =
+      String((data as Record<string, unknown>)?.message || "") || "Session expired. Please sign in again.";
+    throw new ApiError({ message, status: 401, data });
+  }
 
   if (!res.ok) {
     handleInactiveAccountIfNeeded(res.status, data, auth);

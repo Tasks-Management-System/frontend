@@ -2,6 +2,7 @@ export const apiPath = {
   auth: {
     signup: "/auth/register",
     login: "/auth/login",
+    me: "/auth/me",
     createUser: "/auth/create-user",
     getUsers: "/auth",
     getUserById: "/auth/",
@@ -43,6 +44,18 @@ export const apiPath = {
     getHiringById: "/hiring/",
     deleteHiring: "/hiring/",
     updateHiring: "/hiring/update/",
+    updateStage: "/hiring/:id/stage",
+    convert: "/hiring/:id/convert",
+  },
+  holidays: {
+    list: "/holidays",
+    byId: "/holidays/",
+  },
+  interviews: {
+    list: "/interviews",
+    byId: "/interviews/",
+    feedback: "/interviews/:id/feedback",
+    result: "/interviews/:id/result",
   },
   notes: {
     list: "/notes",
@@ -79,6 +92,20 @@ export const apiPath = {
     log: "/timesheets/log",
     byId: "/timesheets/",
     exportCsv: "/timesheets/export/csv",
+  },
+  clients: {
+    list: "/clients",
+    byId: "/clients/",
+  },
+  leads: {
+    list: "/leads",
+    byId: "/leads/",
+    forecast: "/leads/forecast",
+    updateStage: "/leads/:id/stage",
+  },
+  contactLogs: {
+    list: "/contact-logs",
+    byId: "/contact-logs/",
   },
   organization: {
     create: "/organization",

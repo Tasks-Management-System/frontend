@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Megaphone, Pin, Check, ChevronRight } from "lucide-react";
 import { useAnnouncements, useMarkAnnouncementRead } from "../../apis/api/announcements";
 import { useUserById } from "../../apis/api/auth";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import type { Announcement } from "../../types/announcement.types";
 

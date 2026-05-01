@@ -1,4 +1,4 @@
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { api, ApiError } from "../../apis/apiService";

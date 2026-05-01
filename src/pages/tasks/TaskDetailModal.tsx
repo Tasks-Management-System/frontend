@@ -294,9 +294,10 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserId?: string;
+  projectOptions?: { label: string; value: string }[];
 }
 
-export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDetailModalProps) {
+export function TaskDetailModal({ task, isOpen, onClose, currentUserId, projectOptions }: TaskDetailModalProps) {
   const updateMut = useUpdateTask();
   const addCommentMut = useAddComment();
   const deleteCommentMut = useDeleteComment();
@@ -1173,6 +1174,36 @@ export function TaskDetailModal({ task, isOpen, onClose, currentUserId }: TaskDe
                 </div>
               )}
             </div>
+
+            {/* Project */}
+            {projectOptions && projectOptions.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Project
+                </p>
+                <div className="relative">
+                  <select
+                    value={
+                      typeof activeTask.project === "object"
+                        ? (activeTask.project as { _id: string } | null)?._id ?? ""
+                        : (activeTask.project as string | null | undefined) ?? ""
+                    }
+                    disabled={isBusy}
+                    onChange={(e) => save("project", { project: e.target.value })}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-60"
+                  >
+                    {projectOptions.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  {saving === "project" && (
+                    <Loader2 className="absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-violet-500" />
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Template badge */}
             {activeTask.templateName && (

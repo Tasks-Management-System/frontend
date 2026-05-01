@@ -1,4 +1,4 @@
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -20,12 +20,17 @@ import {
   ShieldCheck,
   UserCircle2,
   UserRound,
+  CalendarDays,
+  BriefcaseBusiness,
+  Handshake,
+  Trash2,
 } from "lucide-react";
 import logo from "../../assets/Mainlogo.png";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import toast from "react-hot-toast";
 import {
   useCreateProject,
+  useDeleteProject,
   useProjectsList,
   type CreateProjectInput,
 } from "../../apis/api/projects";
@@ -109,6 +114,26 @@ const mainNav: MainNavItem[] = [
     icon: Building2,
     end: false,
   },
+  {
+    path: "/holidays",
+    label: "Holidays",
+    icon: CalendarDays,
+    end: false,
+  },
+  {
+    path: "/hiring",
+    label: "Recruitment",
+    icon: BriefcaseBusiness,
+    end: false,
+    roles: ["admin", "hr", "super-admin", "manager"] as readonly AppRole[],
+  },
+  {
+    path: "/crm",
+    label: "Lead",
+    icon: Handshake,
+    end: false,
+    roles: ["admin", "hr", "super-admin", "manager"] as readonly AppRole[],
+  },
 ];
 
 type SidebarProps = {
@@ -122,9 +147,11 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   const { activeMode, setActiveMode, ownedOrg, memberOrg, hasBoth, noOrg } = useActiveOrg();
   const { data: projects = [], isLoading: projectsLoading } = useProjectsList(100, activeMode);
   const createProjectMutation = useCreateProject();
+  const deleteProjectMutation = useDeleteProject();
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const userId = getUserId();
   const { data: user } = useUserById(userId);
-  const [projectsOpen, setProjectsOpen] = useState(true);
+  const [projectsOpen, setProjectsOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [projectForm, setProjectForm] = useState<CreateProjectInput>({
     projectName: "",
@@ -246,10 +273,21 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     onMobileClose?.();
   };
 
+  const handleDeleteProject = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteProjectMutation.mutateAsync({ id: deleteTarget._id, orgContext: activeMode });
+      toast.success("Project deleted");
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error((err as ApiError)?.message ?? "Could not delete project");
+    }
+  };
+
   const handleSubmitCreateProject = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await createProjectMutation.mutateAsync(projectForm);
+      await createProjectMutation.mutateAsync({ ...projectForm, orgContext: activeMode });
       toast.success("Project created");
       setCreateProjectOpen(false);
       setProjectsOpen(true);
@@ -283,38 +321,31 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {/* Dashboard */}
         {visibleMainNav
-          .filter((item) => item.path !== "/tasks")
-          .map(({ path, label, icon: Icon, end }) => {
-            const isChat = path === "/chat";
-            return (
-              <div key={path}>
-                <NavLink
-                  to={path}
-                  end={end}
-                  onClick={() => onMobileClose?.()}
-                  className={({ isActive }) => linkClass({ isActive })}
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive ? (
-                        <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-violet-600" />
-                      ) : null}
-                      <Icon className="h-5 w-5 shrink-0 text-gray-500 group-hover:text-gray-700" />
-                      <span className="flex-1 truncate">{label}</span>
-                      {/* Unread badge — only on the Chat nav item */}
-                      {isChat && totalUnread > 0 && (
-                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
-                          {totalUnread > 99 ? "99+" : totalUnread}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </NavLink>
-              </div>
-            );
-          })}
+          .filter((item) => item.path === "/")
+          .map(({ path, label, icon: Icon, end }) => (
+            <div key={path}>
+              <NavLink
+                to={path}
+                end={end}
+                onClick={() => onMobileClose?.()}
+                className={({ isActive }) => linkClass({ isActive })}
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive ? (
+                      <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-violet-600" />
+                    ) : null}
+                    <Icon className="h-5 w-5 shrink-0 text-gray-500 group-hover:text-gray-700" />
+                    <span className="flex-1 truncate">{label}</span>
+                  </>
+                )}
+              </NavLink>
+            </div>
+          ))}
 
+        {/* Tasks */}
         <NavLink
           to="/tasks"
           onClick={() => onMobileClose?.()}
@@ -372,24 +403,66 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
                 projects.map((p: Project) => {
                   const active = isTasksRoute && selectedProjectId === p._id;
                   return (
-                    <NavLink
-                      key={p._id}
-                      to={`/tasks?project=${p._id}`}
-                      onClick={() => onMobileClose?.()}
-                      className={() => linkClass({ isActive: active, nested: true })}
-                    >
-                      <span
-                        className={`h-2 w-2 shrink-0 rounded-full ${accentForId(p._id)} shadow-sm ring-2 ring-white`}
-                        aria-hidden
-                      />
-                      <span className="truncate">{p.projectName}</span>
-                    </NavLink>
+                    <div key={p._id} className="group/proj flex items-center">
+                      <NavLink
+                        to={`/tasks?project=${p._id}`}
+                        onClick={() => onMobileClose?.()}
+                        className={() => linkClass({ isActive: active, nested: true }) + " flex-1 min-w-0"}
+                      >
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${accentForId(p._id)} shadow-sm ring-2 ring-white`}
+                          aria-hidden
+                        />
+                        <span className="truncate">{p.projectName}</span>
+                      </NavLink>
+                      {canCreateProjects && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                          className="ml-1 flex-shrink-0 rounded p-1 text-slate-300 opacity-0 group-hover/proj:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all"
+                          title="Delete project"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   );
                 })
               )}
             </div>
           ) : null}
         </div>
+
+        {/* Remaining nav items (everything except Dashboard, Tasks) */}
+        {visibleMainNav
+          .filter((item) => item.path !== "/" && item.path !== "/tasks")
+          .map(({ path, label, icon: Icon, end }) => {
+            const isChat = path === "/chat";
+            return (
+              <div key={path}>
+                <NavLink
+                  to={path}
+                  end={end}
+                  onClick={() => onMobileClose?.()}
+                  className={({ isActive }) => linkClass({ isActive })}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive ? (
+                        <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-violet-600" />
+                      ) : null}
+                      <Icon className="h-5 w-5 shrink-0 text-gray-500 group-hover:text-gray-700" />
+                      <span className="flex-1 truncate">{label}</span>
+                      {isChat && totalUnread > 0 && (
+                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                          {totalUnread > 99 ? "99+" : totalUnread}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              </div>
+            );
+          })}
       </nav>
 
       <div ref={profileOrgRef} className="relative border-t border-gray-200/80 p-3">
@@ -552,6 +625,30 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete project confirm */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete project"
+      >
+        <p className="text-sm text-slate-600">
+          Delete <span className="font-semibold">{deleteTarget?.projectName}</span>? This cannot be undone.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            disabled={deleteProjectMutation.isPending}
+            onClick={handleDeleteProject}
+          >
+            {deleteProjectMutation.isPending ? "Deleting…" : "Delete"}
+          </Button>
+        </div>
       </Modal>
     </>
   );

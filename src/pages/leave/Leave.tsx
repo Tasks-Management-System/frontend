@@ -1,4 +1,4 @@
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useMemo, useState } from "react";
 import { ClipboardList, Inbox, Plus } from "lucide-react";
 import { useUserById } from "../../apis/api/auth";

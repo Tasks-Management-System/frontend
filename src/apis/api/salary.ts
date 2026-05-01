@@ -114,17 +114,12 @@ export const useGenerateSalaryPdf = () => {
   return useMutation({
     mutationKey: ["salary", "pdf"],
     mutationFn: async (id: string) => {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken");
-
       const res = await fetch(`${API_BASE_URL}${apiPath.salary.pdf}${id}`, {
         method: "GET",
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           Accept: "application/pdf",
         },
+        credentials: "include",
         cache: "no-store",
       });
 

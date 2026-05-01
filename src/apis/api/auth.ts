@@ -2,8 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../apiService";
 import { apiPath } from "../apiPath";
 import type { LoginResponse, User } from "../../types/user.types";
-
-type AuthMutationResponse = Omit<LoginResponse, "token"> & { token?: string };
+import { clearSession } from "../../utils/session";
 
 export const useLogin = () => {
   return useMutation({
@@ -29,6 +28,7 @@ export const useLogout = () => {
       return res;
     },
     onSettled: () => {
+      clearSession();
       queryClient.clear();
     },
   });
@@ -47,7 +47,7 @@ export const useSignup = () => {
       password: string;
     }) => {
       const res = await api.post(apiPath.auth.signup, { name, email, password }, { auth: false });
-      return res as AuthMutationResponse;
+      return res as { success: boolean; message?: string; user?: User };
     },
   });
 };

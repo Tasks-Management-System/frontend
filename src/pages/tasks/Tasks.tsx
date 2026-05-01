@@ -7,7 +7,7 @@ import { useAssignableUsers, useUserById } from "../../apis/api/auth";
 import { useProjectsList } from "../../apis/api/projects";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import { useTasksList, useUpdateTask } from "../../apis/api/tasks";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import type { TaskStatus } from "../../types/task.types";
 import { withoutStaleCompletedTasks } from "../../utils/taskStaleHide";
 import Button from "../../components/UI/Button";
@@ -319,6 +319,7 @@ export default function Tasks() {
         isOpen={selectedTaskId !== null}
         onClose={() => setSelectedTaskId(null)}
         currentUserId={userId}
+        projectOptions={projectOptions}
       />
     </div>
   );

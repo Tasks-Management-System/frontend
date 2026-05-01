@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useUserById } from "../../apis/api/auth";
 import { getStoredUserRoles, routeAllowedRoles, userHasAnyRole } from "../../utils/moduleAccess";
-import { getToken, getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 
 type RoleRouteGuardProps = {
@@ -22,7 +22,7 @@ const RoleRouteGuard = ({ children }: RoleRouteGuardProps) => {
   const { data: user, isLoading, isError } = useUserById(userId);
   const { activeMode, hasBoth, noOrg, ownedOrg } = useActiveOrg();
 
-  if (!getToken() || !userId || isError) {
+  if (!userId || isError) {
     return <Navigate to="/login" replace />;
   }
 

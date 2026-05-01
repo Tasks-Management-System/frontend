@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../apiService";
 import { apiPath, API_BASE_URL } from "../apiPath";
-import { getToken } from "../../utils/auth";
 import type { TimesheetEntry, TimesheetsListResponse } from "../../types/timesheet.types";
 
 export type TimesheetFilters = {
@@ -78,15 +77,13 @@ export function downloadTimesheetCsv(filters: TimesheetFilters = {}) {
   if (filters.userId) params.set("userId", filters.userId);
   if (filters.project) params.set("project", filters.project);
 
-  const token = getToken();
   const url = `${API_BASE_URL}${apiPath.timesheets.exportCsv}?${params.toString()}`;
 
   const link = document.createElement("a");
   link.href = url;
   link.setAttribute("download", "timesheet.csv");
 
-  // Fetch with auth and trigger download
-  fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+  fetch(url, { credentials: "include" })
     .then((res) => res.blob())
     .then((blob) => {
       const blobUrl = URL.createObjectURL(blob);

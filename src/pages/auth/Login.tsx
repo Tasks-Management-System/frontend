@@ -4,17 +4,12 @@ import Input from "../../components/UI/Input";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { useEffect, useState } from "react";
-import { ApiError } from "../../apis/apiService";
+import { ApiError, resumeSessionFromCookies } from "../../apis/apiService";
 import { useLogin } from "../../apis/api/auth";
-import { getToken, setToken, setUserId, setStoredRoles } from "../../utils/auth";
+import { setUserId, setStoredRoles } from "../../utils/session";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "../../apis/apiPath";
-import { jwtDecode } from "jwt-decode";
-
-type JwtPayload = {
-  id?: string;
-  role?: string[] | string;
-};
+import type { User } from "../../types/user.types";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,6 +29,11 @@ const Login = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const persistUserFromResponse = (user: User | undefined) => {
+    if (user?._id) setUserId(user._id);
+    setStoredRoles(user?.role);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({ email: "", password: "" });
@@ -42,9 +42,7 @@ const Login = () => {
         email: formData.email,
         password: formData.password,
       });
-      if (res?.token) setToken(res.token);
-      if (res?.user?._id) setUserId(res.user._id);
-      setStoredRoles(res?.user?.role);
+      persistUserFromResponse(res?.user);
       toast.success("Login successful");
       navigate("/");
     } catch (error) {
@@ -60,30 +58,47 @@ const Login = () => {
     }
   };
 
+  /** Cookie session: resume without any token in JS. */
   useEffect(() => {
-    if (getToken()) {
-      navigate("/");
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const user = await resumeSessionFromCookies();
+        if (!cancelled && user?._id) {
+          persistUserFromResponse(user);
+          navigate("/", { replace: true });
+        }
+      } catch {
+        /* not logged in */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
     const provider = params.get("provider");
-    if (token) {
-      setToken(token);
-      try {
-        const decoded = jwtDecode<JwtPayload>(token);
-        if (decoded?.id) setUserId(decoded.id);
-        const rolesRaw = decoded?.role;
-        const roles = Array.isArray(rolesRaw) ? rolesRaw : rolesRaw ? [rolesRaw] : undefined;
-        setStoredRoles(roles);
-      } catch {
-        // ignore decode errors; token will still be used for API calls
-      }
-      toast.success(provider === "google" ? "Logged in with Google" : "Login successful");
-      window.history.replaceState({}, "", window.location.pathname);
-      navigate("/");
+
+    if (provider === "google") {
+      let cancelled = false;
+      (async () => {
+        try {
+          const user = await resumeSessionFromCookies();
+          if (!cancelled && user?._id) {
+            persistUserFromResponse(user);
+            toast.success("Logged in with Google");
+            window.history.replaceState({}, "", window.location.pathname);
+            navigate("/", { replace: true });
+          }
+        } catch {
+          if (!cancelled) toast.error("Could not complete Google sign-in.");
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
   }, [navigate]);
 
@@ -92,6 +107,15 @@ const Login = () => {
     const verified = params.get("verified");
     const reason = params.get("reason");
     const inactiveMsg = params.get("message");
+
+    if (reason === "session_expired") {
+      const text =
+        inactiveMsg && inactiveMsg.trim()
+          ? decodeURIComponent(inactiveMsg)
+          : "Your session has expired. Please sign in again.";
+      toast.error(text, { duration: 5000 });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
 
     if (reason === "account_inactive") {
       const text =
@@ -109,14 +133,13 @@ const Login = () => {
         toast.error("Verification link is invalid.");
       } else if (reason === "invalid_or_expired") {
         toast.error("Verification link is expired or invalid. Please register again.");
-      } else if (reason !== "account_inactive") {
+      } else if (reason !== "account_inactive" && reason !== "session_expired") {
         toast.error("Email verification failed. Please try again.");
       }
     }
   }, []);
 
   const handleGoogleLogin = () => {
-    // full page redirect to backend OAuth start
     window.location.href = `${API_BASE_URL.replace(/\/$/, "")}/auth/google`;
   };
   return (

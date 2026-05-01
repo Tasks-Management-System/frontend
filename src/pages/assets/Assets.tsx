@@ -21,7 +21,7 @@ import {
   useDeleteAsset,
 } from "../../apis/api/assets";
 import { useUserById, useAssignableUsers } from "../../apis/api/auth";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import type { Asset, AssetCondition, AssetStatus } from "../../types/asset.types";
 import Modal from "../../components/UI/Model";
 import Button from "../../components/UI/Button";

@@ -29,7 +29,7 @@ import {
 } from "recharts";
 import toast from "react-hot-toast";
 
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import Button from "../../components/UI/Button";
 import Input from "../../components/UI/Input";

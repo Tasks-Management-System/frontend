@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import { ApiError } from "../../apis/apiService";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
-import { clearAuth, getUserId } from "../../utils/auth";
+import { clearSession, getUserId } from "../../utils/session";
 import { disconnectSocket } from "../../utils/socket";
 
 const routeTitles: Record<string, string> = {
@@ -80,7 +80,7 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
 
   const clearClientSession = () => {
     disconnectSocket();
-    clearAuth();
+    clearSession();
     setIsMenuOpen(false);
   };
 

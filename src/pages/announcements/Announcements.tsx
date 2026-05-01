@@ -10,7 +10,7 @@ import {
   useDeleteAnnouncement,
 } from "../../apis/api/announcements";
 import { useUserById } from "../../apis/api/auth";
-import { getUserId } from "../../utils/auth";
+import { getUserId } from "../../utils/session";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
 import type { Announcement } from "../../types/announcement.types";
 import Modal from "../../components/UI/Model";

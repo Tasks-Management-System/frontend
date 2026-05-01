@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { getUserId } from "../utils/auth";
+import { getUserId } from "../utils/session";
 
 export type WallpaperValue = string; // preset id or data:image/... URL
 

@@ -1,24 +1,13 @@
 /**
- * Centralized auth token management.
- * Single source of truth for all localStorage auth operations.
- * Uses "token" as the canonical key name throughout the app.
+ * Client session hints only (user id / roles for routing and UI).
+ * Authentication is HttpOnly cookies — never store or read tokens in JS.
  */
 
-const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 const USER_ROLES_KEY = "userRoles";
 
-export const getToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  const t = localStorage.getItem(TOKEN_KEY);
-  return t && t.trim() ? t : null;
-};
-
-export const setToken = (token: string): void => {
-  localStorage.setItem(TOKEN_KEY, token);
-};
-
 export const getUserId = (): string => {
+  if (typeof window === "undefined") return "";
   return localStorage.getItem(USER_ID_KEY) ?? "";
 };
 
@@ -47,12 +36,15 @@ export const setStoredRoles = (roles: string[] | undefined): void => {
   localStorage.setItem(USER_ROLES_KEY, JSON.stringify(roles));
 };
 
-export const clearAuth = (): void => {
+/** Clears locally stored user hints (cookies cleared by backend on logout). */
+export const clearSession = (): void => {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(USER_ROLES_KEY);
-  // Remove legacy keys that may still exist from older sessions
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
   localStorage.removeItem("accessToken");
   localStorage.removeItem("authToken");
 };
+
+export const hasSessionHint = (): boolean => getUserId().length > 0;

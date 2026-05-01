@@ -7,10 +7,9 @@ export type AppRole = "super-admin" | "admin" | "employee" | "hr" | "manager";
 export {
   getStoredRoles as getStoredUserRoles,
   setStoredRoles as setStoredUserRoles,
-  clearAuth as clearStoredUserRoles,
-  clearAuth as clearClientAuthSession,
-  getToken as getClientAuthToken,
-} from "./auth";
+  clearSession as clearStoredUserRoles,
+  clearSession as clearClientAuthSession,
+} from "./session";
 
 /**
  * If `allowed` is omitted or empty, any authenticated user passes.

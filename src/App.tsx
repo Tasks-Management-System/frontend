@@ -19,6 +19,9 @@ import Assets from "./pages/assets/Assets";
 import Chat from "./pages/chat/Chat";
 import OrganizationPage from "./pages/organization/OrganizationPage";
 import InvitesPage from "./pages/invites/InvitesPage";
+import HolidaysPage from "./pages/holidays/HolidaysPage";
+import HiringPage from "./pages/hiring/HiringPage";
+import CRMPage from "./pages/crm/CRMPage";
 
 function App() {
   return (
@@ -61,6 +64,9 @@ function App() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/organization" element={<OrganizationPage />} />
           <Route path="/invites" element={<InvitesPage />} />
+          <Route path="/holidays" element={<HolidaysPage />} />
+          <Route path="/hiring" element={<HiringPage />} />
+          <Route path="/crm" element={<CRMPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
