@@ -132,7 +132,7 @@ function HolidayFormModal({ open, onClose, initial }: HolidayFormModalProps) {
 export default function HolidaysPage() {
   const userId = getUserId();
   const { data: user } = useUserById(userId);
-  const { activeMode, ownedOrg, memberOrg, hasBoth, noOrg } = useActiveOrg();
+  const { activeMode, ownedOrg, hasBoth, noOrg } = useActiveOrg();
   const roles = user?.role ?? [];
   const effectiveRoles: string[] =
     noOrg || (hasBoth && activeMode === "member")

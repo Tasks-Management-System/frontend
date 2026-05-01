@@ -202,6 +202,7 @@ export default function ApplicantDetailModal({ applicant, onClose }: Props) {
   };
 
   const daysAgo = Math.floor(
+    // eslint-disable-next-line react-hooks/purity -- display-only age vs createdAt
     (Date.now() - new Date(applicant.createdAt).getTime()) / (1000 * 60 * 60 * 24)
   );
 

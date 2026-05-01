@@ -2,7 +2,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Modal from "../UI/Model";
 import Button from "../UI/Button";
-import Input from "../UI/Input";
 import {
   useCreateLead,
   useUpdateLead,

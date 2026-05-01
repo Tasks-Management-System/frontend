@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, TrendingUp, ChevronRight } from "lucide-react";
+import { Plus, Search, TrendingUp } from "lucide-react";
 import { PillTabBar } from "../../components/UI/PillTabBar";
 import { useLeads, useRevenueForecast, useUpdateLeadStage } from "../../apis/api/crm";
 import { useUserById } from "../../apis/api/auth";
@@ -122,7 +122,8 @@ function LeadsTab({ canManage, orgContext }: { canManage: boolean; orgContext?: 
   const [selected, setSelected] = useState<Lead | null>(null);
 
   const { data: res, isLoading } = useLeads(orgContext);
-  const allLeads = res?.data ?? [];
+  const leadsData = res?.data;
+  const allLeads = useMemo(() => leadsData ?? [], [leadsData]);
 
   const filtered = useMemo(() => {
     let list = allLeads;

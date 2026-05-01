@@ -1055,15 +1055,7 @@ const Chat = () => {
     setMessageInput("");
     socket.emit("typing:stop", { receiverId: selectedUserId });
     inputRef.current?.focus();
-  }, [
-    messageInput,
-    selectedUserId,
-    replyTo,
-    currentUserId,
-    selectedUser,
-    editTarget,
-    pendingFiles,
-  ]);
+  }, [messageInput, selectedUserId, replyTo, editTarget, pendingFiles]);
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});

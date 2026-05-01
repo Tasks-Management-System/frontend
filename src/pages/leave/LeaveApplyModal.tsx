@@ -59,9 +59,8 @@ export function LeaveApplyModal({ isOpen, onClose }: LeaveApplyModalProps) {
     },
   });
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch()
   const daysMode = watch("daysMode");
-  // eslint-disable-next-line react-hooks/incompatible-library
   const subType = watch("subType");
 
   const handleOpen = () => {

@@ -169,7 +169,8 @@ export default function HiringPage() {
   const [selected, setSelected] = useState<Applicant | null>(null);
 
   const { data, isLoading } = useApplicants(1, 200, activeMode);
-  const applicants = data?.hiring ?? [];
+  const hiringList = data?.hiring;
+  const applicants = useMemo(() => hiringList ?? [], [hiringList]);
 
   const filtered = useMemo(() => {
     let list = applicants;

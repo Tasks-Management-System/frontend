@@ -131,11 +131,9 @@ export function TaskCreateModal({
     }
   };
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch()
   const selectedProject = watch("project");
-  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedPriority = watch("priority");
-  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedAssignee = watch("assignedTo");
 
   const addSubtask = () => {
