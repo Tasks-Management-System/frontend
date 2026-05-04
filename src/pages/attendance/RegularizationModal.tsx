@@ -17,10 +17,10 @@ const schema = z
     requestedPunchOut: z.string().min(1, "Requested clock-out is required"),
     reason: z.string().min(10, "Please describe the reason (min 10 characters)").max(500),
   })
-  .refine(
-    (d) => new Date(d.requestedPunchOut) > new Date(d.requestedPunchIn),
-    { message: "Clock-out must be after clock-in", path: ["requestedPunchOut"] }
-  );
+  .refine((d) => new Date(d.requestedPunchOut) > new Date(d.requestedPunchIn), {
+    message: "Clock-out must be after clock-in",
+    path: ["requestedPunchOut"],
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -69,7 +69,7 @@ export function RegularizationModal({ record, isOpen, onClose }: Props) {
         reason: "",
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, record?._id]);
 
   const onSubmit = async (values: FormValues) => {
@@ -92,7 +92,12 @@ export function RegularizationModal({ record, isOpen, onClose }: Props) {
   const hasPending = record?.regularization?.status === "pending";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Request Attendance Correction" panelClassName="max-w-lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Request Attendance Correction"
+      panelClassName="max-w-lg"
+    >
       <div className="space-y-4">
         <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm">
           <p className="font-medium text-amber-900">{dateLabel}</p>
@@ -105,7 +110,8 @@ export function RegularizationModal({ record, isOpen, onClose }: Props) {
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
             <p className="font-medium">Pending request already submitted</p>
             <p className="mt-1 text-xs text-amber-600">
-              Your request is awaiting approval. You cannot submit another until the current one is resolved.
+              Your request is awaiting approval. You cannot submit another until the current one is
+              resolved.
             </p>
           </div>
         ) : (

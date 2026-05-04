@@ -100,9 +100,7 @@ export function MessageBubble({
           )}
 
           {isGroup && !isMine && (
-            <p className="mb-0.5 text-[11px] font-semibold text-violet-500">
-              {msg.sender.name}
-            </p>
+            <p className="mb-0.5 text-[11px] font-semibold text-violet-500">{msg.sender.name}</p>
           )}
 
           {body && (

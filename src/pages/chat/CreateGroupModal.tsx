@@ -239,7 +239,12 @@ export function CreateGroupModal({
                           isSelected ? "bg-violet-50" : "hover:bg-gray-50"
                         }`}
                       >
-                        <Avatar name={user.name} image={user.profileImage} online={isOnline} size="sm" />
+                        <Avatar
+                          name={user.name}
+                          image={user.profileImage}
+                          online={isOnline}
+                          size="sm"
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-gray-800">{user.name}</p>
                           <p className="truncate text-xs text-gray-400">{user.role?.[0] ?? ""}</p>

@@ -207,9 +207,7 @@ export default function Attendance() {
                 <th className="px-4 py-3">Clock Out</th>
                 <th className="px-4 py-3">Day Total</th>
                 <th className="px-4 py-3 text-right">Detail</th>
-                {(canManage || !canViewTeam) && (
-                  <th className="px-4 py-3 text-right">Actions</th>
-                )}
+                {(canManage || !canViewTeam) && <th className="px-4 py-3 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -226,9 +224,7 @@ export default function Attendance() {
                     record={record}
                     showUser={canViewTeam}
                     expanded={expandedId === record._id}
-                    onToggle={() =>
-                      setExpandedId((id) => (id === record._id ? null : record._id))
-                    }
+                    onToggle={() => setExpandedId((id) => (id === record._id ? null : record._id))}
                     canManage={canManage}
                     canRegularize={isOwnRecord && !canManage}
                     onCorrect={(r) => setCorrectionRecord(r)}

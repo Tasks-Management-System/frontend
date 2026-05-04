@@ -91,7 +91,12 @@ export function attendanceRangeQueryKey(from: string, to: string, orgContext?: s
   return ["attendance", "range", from, to, orgContext] as const;
 }
 
-export function attendanceSummaryQueryKey(from: string, to: string, orgContext?: string, userId?: string) {
+export function attendanceSummaryQueryKey(
+  from: string,
+  to: string,
+  orgContext?: string,
+  userId?: string
+) {
   return ["attendance", "summary", from, to, orgContext, userId] as const;
 }
 

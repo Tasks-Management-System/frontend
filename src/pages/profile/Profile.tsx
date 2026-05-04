@@ -340,9 +340,7 @@ const Profile = () => {
         />
       )}
 
-      {activeTab === "Leave History" && (
-        <ProfileLeaveDashboard user={user} userLoading={false} />
-      )}
+      {activeTab === "Leave History" && <ProfileLeaveDashboard user={user} userLoading={false} />}
 
       {activeTab !== "Profile" && activeTab !== "Leave History" && (
         <div className="rounded-2xl bg-white p-12 text-center shadow-sm">

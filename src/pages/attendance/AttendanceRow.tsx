@@ -1,4 +1,11 @@
-import { ChevronDown, ChevronRight, PencilLine, SendHorizonal, ShieldAlert, Clock } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  PencilLine,
+  SendHorizonal,
+  ShieldAlert,
+  Clock,
+} from "lucide-react";
 import type { AttendanceRecord, AttendanceSegment } from "../../types/attendance.types";
 import { breakLineText, formatClock, formatMs } from "./attendanceUtils";
 
@@ -26,7 +33,10 @@ export const STATUS_UI: Record<string, { label: string; className: string }> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const ui = STATUS_UI[status] ?? { label: status, className: "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80" };
+  const ui = STATUS_UI[status] ?? {
+    label: status,
+    className: "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80",
+  };
   return (
     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ui.className}`}>
       {ui.label}
@@ -144,7 +154,10 @@ export function AttendanceRow({
         <td className="py-3 pr-4 font-medium tabular-nums text-slate-900">
           {record.readableDayTotal ?? formatMs(record.dayWorkedMs) ?? "—"}
           {record.note && (
-            <p className="mt-0.5 max-w-[120px] truncate text-[10px] text-slate-400" title={record.note}>
+            <p
+              className="mt-0.5 max-w-[120px] truncate text-[10px] text-slate-400"
+              title={record.note}
+            >
               {record.note}
             </p>
           )}
@@ -158,7 +171,11 @@ export function AttendanceRow({
               onClick={onToggle}
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-violet-700 hover:bg-violet-50"
             >
-              {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {expanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
               Detail
             </button>
           ) : (
@@ -216,7 +233,9 @@ export function AttendanceRow({
               {record.regularization && (
                 <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
                   <p className="font-medium text-slate-700">Regularization Request</p>
-                  <p>Status: <span className="font-medium">{record.regularization.status}</span></p>
+                  <p>
+                    Status: <span className="font-medium">{record.regularization.status}</span>
+                  </p>
                   {record.regularization.reason && <p>Reason: {record.regularization.reason}</p>}
                   {record.regularization.requestedPunchIn && (
                     <p>

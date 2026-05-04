@@ -212,10 +212,7 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   // 4. Otherwise → use actual DB roles
   // When in member mode (joined org), act as employee regardless of DB role.
   // Otherwise always use actual DB roles — noOrg alone never restricts items.
-  const effectiveRoles: string[] =
-    hasBoth && activeMode === "member"
-      ? ["employee"]
-      : userRoles;
+  const effectiveRoles: string[] = hasBoth && activeMode === "member" ? ["employee"] : userRoles;
 
   const canCreateProjects = effectiveRoles.some((r) =>
     ["admin", "manager", "super-admin"].includes(r)

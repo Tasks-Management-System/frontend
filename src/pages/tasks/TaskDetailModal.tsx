@@ -1024,9 +1024,8 @@ export function TaskDetailModal({
 
           {/* Right sidebar */}
           <aside className="flex w-56 shrink-0 flex-col gap-5 overflow-y-auto border-l border-gray-100 bg-gray-50/50 px-4 py-5">
-
-          {/* Project */}
-          {projectOptions && projectOptions.length > 0 && (
+            {/* Project */}
+            {projectOptions && projectOptions.length > 0 && (
               <div>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Project
@@ -1054,7 +1053,7 @@ export function TaskDetailModal({
                 </div>
               </div>
             )}
-            
+
             {/* Status */}
             <div>
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -1211,8 +1210,6 @@ export function TaskDetailModal({
                 </div>
               )}
             </div>
-
-            
 
             {/* Template badge */}
             {activeTask.templateName && (

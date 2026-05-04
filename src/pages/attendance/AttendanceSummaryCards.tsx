@@ -31,7 +31,9 @@ function StatCard({
           <p className={`mt-1 text-2xl font-semibold tabular-nums ${colorClass}`}>{value}</p>
           {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
         </div>
-        <div className={`rounded-lg p-2 ${colorClass.replace("text-", "bg-").replace("-700", "-100").replace("-800", "-100")}`}>
+        <div
+          className={`rounded-lg p-2 ${colorClass.replace("text-", "bg-").replace("-700", "-100").replace("-800", "-100")}`}
+        >
           <Icon className={`h-5 w-5 ${colorClass}`} />
         </div>
       </div>
@@ -144,12 +146,12 @@ export function AttendanceSummaryCards({
 
   const periodPillItems = useMemo(
     () => quickRanges.map((r) => ({ key: r.label, label: r.label })),
-    [quickRanges],
+    [quickRanges]
   );
 
   const activePeriodKey = useMemo(
     () => quickRanges.find((r) => r.from === from && r.to === to)?.label ?? "",
-    [quickRanges, from, to],
+    [quickRanges, from, to]
   );
 
   return (
@@ -207,16 +209,18 @@ export function AttendanceSummaryCards({
         </div>
       )}
 
-      {!isLoading && !isError && displaySummaries.map((summary) => (
-        <div key={summary.user._id} className="space-y-3">
-          {canViewTeam && displaySummaries.length > 1 && (
-            <p className="text-sm font-semibold text-slate-800">
-              {summary.user.name ?? summary.user.email ?? "Employee"}
-            </p>
-          )}
-          <SummaryDisplay summary={summary} />
-        </div>
-      ))}
+      {!isLoading &&
+        !isError &&
+        displaySummaries.map((summary) => (
+          <div key={summary.user._id} className="space-y-3">
+            {canViewTeam && displaySummaries.length > 1 && (
+              <p className="text-sm font-semibold text-slate-800">
+                {summary.user.name ?? summary.user.email ?? "Employee"}
+              </p>
+            )}
+            <SummaryDisplay summary={summary} />
+          </div>
+        ))}
     </div>
   );
 }

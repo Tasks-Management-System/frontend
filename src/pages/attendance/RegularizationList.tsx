@@ -9,8 +9,16 @@ import Modal from "../../components/UI/Model";
 import Button from "../../components/UI/Button";
 
 const STATUS_UI = {
-  pending: { icon: Clock, label: "Pending", className: "text-amber-700 bg-amber-50 ring-amber-200" },
-  approved: { icon: CheckCircle, label: "Approved", className: "text-emerald-700 bg-emerald-50 ring-emerald-200" },
+  pending: {
+    icon: Clock,
+    label: "Pending",
+    className: "text-amber-700 bg-amber-50 ring-amber-200",
+  },
+  approved: {
+    icon: CheckCircle,
+    label: "Approved",
+    className: "text-emerald-700 bg-emerald-50 ring-emerald-200",
+  },
   rejected: { icon: XCircle, label: "Rejected", className: "text-red-700 bg-red-50 ring-red-200" },
 };
 
@@ -19,13 +27,7 @@ interface ResolveModalState {
   action: "approve" | "reject";
 }
 
-function ResolveModal({
-  state,
-  onClose,
-}: {
-  state: ResolveModalState;
-  onClose: () => void;
-}) {
+function ResolveModal({ state, onClose }: { state: ResolveModalState; onClose: () => void }) {
   const [note, setNote] = useState("");
   const resolve = useResolveRegularization();
   const reg = state.record.regularization!;
@@ -33,7 +35,7 @@ function ResolveModal({
 
   const userName =
     typeof state.record.user === "object" && state.record.user
-      ? (state.record.user as { name?: string }).name ?? "Employee"
+      ? ((state.record.user as { name?: string }).name ?? "Employee")
       : "Employee";
 
   const dateLabel = state.record.date
@@ -43,7 +45,9 @@ function ResolveModal({
   const handleResolve = async () => {
     try {
       await resolve.mutateAsync({ id: state.record._id, action: state.action, resolverNote: note });
-      toast.success(isApprove ? "Regularization approved and applied." : "Regularization rejected.");
+      toast.success(
+        isApprove ? "Regularization approved and applied." : "Regularization rejected."
+      );
       onClose();
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Action failed.");
@@ -58,15 +62,24 @@ function ResolveModal({
       panelClassName="max-w-md"
     >
       <div className="space-y-4">
-        <div className={`rounded-lg px-4 py-3 text-sm ${isApprove ? "bg-emerald-50" : "bg-red-50"}`}>
-          <p className={`font-medium ${isApprove ? "text-emerald-900" : "text-red-900"}`}>{userName}</p>
-          <p className={`text-xs ${isApprove ? "text-emerald-600" : "text-red-600"}`}>{dateLabel}</p>
+        <div
+          className={`rounded-lg px-4 py-3 text-sm ${isApprove ? "bg-emerald-50" : "bg-red-50"}`}
+        >
+          <p className={`font-medium ${isApprove ? "text-emerald-900" : "text-red-900"}`}>
+            {userName}
+          </p>
+          <p className={`text-xs ${isApprove ? "text-emerald-600" : "text-red-600"}`}>
+            {dateLabel}
+          </p>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm space-y-1">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Requested times</p>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Requested times
+          </p>
           <p className="text-slate-800">
-            {formatClock(reg.requestedPunchIn as string)} → {formatClock(reg.requestedPunchOut as string)}
+            {formatClock(reg.requestedPunchIn as string)} →{" "}
+            {formatClock(reg.requestedPunchOut as string)}
           </p>
           {reg.reason && <p className="text-xs text-slate-600 mt-1">Reason: {reg.reason}</p>}
         </div>
@@ -182,7 +195,7 @@ export function RegularizationList({ orgContext, canManage }: RegularizationList
                 const StatusIcon = statusUi.icon;
                 const userName =
                   typeof record.user === "object" && record.user
-                    ? (record.user as { name?: string }).name ?? "—"
+                    ? ((record.user as { name?: string }).name ?? "—")
                     : "—";
                 const dateLabel = record.date
                   ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
@@ -211,7 +224,10 @@ export function RegularizationList({ orgContext, canManage }: RegularizationList
                         {statusUi.label}
                       </span>
                       {reg?.resolverNote && (
-                        <p className="mt-1 text-xs text-slate-400 max-w-[160px] truncate" title={reg.resolverNote}>
+                        <p
+                          className="mt-1 text-xs text-slate-400 max-w-[160px] truncate"
+                          title={reg.resolverNote}
+                        >
                           Note: {reg.resolverNote}
                         </p>
                       )}
@@ -254,9 +270,7 @@ export function RegularizationList({ orgContext, canManage }: RegularizationList
         </div>
       )}
 
-      {resolveState && (
-        <ResolveModal state={resolveState} onClose={() => setResolveState(null)} />
-      )}
+      {resolveState && <ResolveModal state={resolveState} onClose={() => setResolveState(null)} />}
     </div>
   );
 }

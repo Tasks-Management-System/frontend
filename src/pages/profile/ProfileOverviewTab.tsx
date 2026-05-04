@@ -85,8 +85,16 @@ export function ProfileOverviewTab({
           {!isEditing ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <InfoField icon={<User className="w-4 h-4" />} label="FULL NAME" value={user?.name} />
-              <InfoField icon={<Mail className="w-4 h-4" />} label="EMAIL ADDRESS" value={user?.email} />
-              <InfoField icon={<Phone className="w-4 h-4" />} label="PHONE NUMBER" value={user?.phone} />
+              <InfoField
+                icon={<Mail className="w-4 h-4" />}
+                label="EMAIL ADDRESS"
+                value={user?.email}
+              />
+              <InfoField
+                icon={<Phone className="w-4 h-4" />}
+                label="PHONE NUMBER"
+                value={user?.phone}
+              />
               <InfoField
                 icon={<Calendar className="w-4 h-4" />}
                 label="DATE OF BIRTH"
@@ -181,7 +189,9 @@ export function ProfileOverviewTab({
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div className="flex items-center gap-2">
               <Briefcase className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Employment Details</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                Employment Details
+              </h2>
             </div>
             <button
               type="button"
@@ -215,7 +225,9 @@ export function ProfileOverviewTab({
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Identity & Banking</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                Identity & Banking
+              </h2>
             </div>
           </div>
 
@@ -236,9 +248,21 @@ export function ProfileOverviewTab({
                 value={user?.bankAccountNo}
                 icon={<CheckCircle2 className="w-4 h-4" />}
               />
-              <InfoField label="BANK NAME" value={user?.bankName} icon={<CheckCircle2 className="w-4 h-4" />} />
-              <InfoField label="IFSC" value={user?.bankIFSC} icon={<CheckCircle2 className="w-4 h-4" />} />
-              <InfoField label="BRANCH" value={user?.bankBranch} icon={<CheckCircle2 className="w-4 h-4" />} />
+              <InfoField
+                label="BANK NAME"
+                value={user?.bankName}
+                icon={<CheckCircle2 className="w-4 h-4" />}
+              />
+              <InfoField
+                label="IFSC"
+                value={user?.bankIFSC}
+                icon={<CheckCircle2 className="w-4 h-4" />}
+              />
+              <InfoField
+                label="BRANCH"
+                value={user?.bankBranch}
+                icon={<CheckCircle2 className="w-4 h-4" />}
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -286,7 +310,9 @@ export function ProfileOverviewTab({
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div className="flex items-center gap-2">
               <FolderKanban className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Structured Details</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                Structured Details
+              </h2>
             </div>
           </div>
           {!isEditing ? (
@@ -370,7 +396,8 @@ export function ProfileOverviewTab({
                 placeholder="Company A, Company B"
               />
               <p className="text-xs text-gray-500">
-                You can type comma-separated values (like &quot;test, test1&quot;) or paste a JSON array.
+                You can type comma-separated values (like &quot;test, test1&quot;) or paste a JSON
+                array.
               </p>
             </div>
           )}

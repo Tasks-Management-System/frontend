@@ -105,7 +105,13 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
 
   // Listen for incoming group messages globally
   useEffect(() => {
-    function handleGroupReceive({ groupId, message: msg }: { groupId: string; message: ChatMessage }) {
+    function handleGroupReceive({
+      groupId,
+      message: msg,
+    }: {
+      groupId: string;
+      message: ChatMessage;
+    }) {
       const currentUserId = localStorage.getItem("userId") ?? "";
       if (msg.sender._id === currentUserId) return;
 

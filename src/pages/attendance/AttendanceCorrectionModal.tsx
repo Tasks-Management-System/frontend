@@ -17,10 +17,10 @@ const correctionSchema = z
     punchOutTime: z.string().min(1, "Clock-out time is required"),
     note: z.string().max(500).optional(),
   })
-  .refine(
-    (d) => new Date(d.punchOutTime) > new Date(d.punchInTime),
-    { message: "Clock-out must be after clock-in", path: ["punchOutTime"] }
-  );
+  .refine((d) => new Date(d.punchOutTime) > new Date(d.punchInTime), {
+    message: "Clock-out must be after clock-in",
+    path: ["punchOutTime"],
+  });
 
 type CorrectionForm = z.infer<typeof correctionSchema>;
 
@@ -46,7 +46,7 @@ export function AttendanceCorrectionModal({ record, isOpen, onClose }: Props) {
 
   const userName =
     typeof record?.user === "object" && record?.user
-      ? (record.user as { name?: string }).name ?? "Employee"
+      ? ((record.user as { name?: string }).name ?? "Employee")
       : "Employee";
 
   const dateLabel = record?.date
@@ -54,9 +54,7 @@ export function AttendanceCorrectionModal({ record, isOpen, onClose }: Props) {
     : "";
 
   // Default punch times: use existing segment[0].punchInTime / last segment's punchOutTime
-  const defaultIn = toDatetimeLocal(
-    record?.segments?.[0]?.punchInTime ?? record?.punchInTime
-  );
+  const defaultIn = toDatetimeLocal(record?.segments?.[0]?.punchInTime ?? record?.punchInTime);
   const defaultOut = toDatetimeLocal(
     record?.segments?.[record.segments!.length - 1]?.punchOutTime ?? record?.punchOutTime
   );
@@ -75,7 +73,7 @@ export function AttendanceCorrectionModal({ record, isOpen, onClose }: Props) {
     if (isOpen) {
       reset({ punchInTime: defaultIn, punchOutTime: defaultOut, note: record?.note ?? "" });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, record?._id]);
 
   const onSubmit = async (values: CorrectionForm) => {

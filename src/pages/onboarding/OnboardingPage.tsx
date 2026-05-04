@@ -45,7 +45,9 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <>
-              <h2 className="mb-1 text-lg font-semibold text-slate-900">Create your organization</h2>
+              <h2 className="mb-1 text-lg font-semibold text-slate-900">
+                Create your organization
+              </h2>
               <p className="mb-6 text-sm text-slate-500">
                 Set up a workspace for your team. This step is optional.
               </p>

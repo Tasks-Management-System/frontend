@@ -146,13 +146,9 @@ export default function OrganizationPage() {
       {!isLoading && (
         <>
           {hasBoth && activeMode === "owned" && <AdminOrgView org={ownedOrg!} userId={userId} />}
-          {hasBoth && activeMode === "member" && (
-            <MemberOrgView org={memberOrg!} userId={userId} />
-          )}
+          {hasBoth && activeMode === "member" && <MemberOrgView org={memberOrg!} userId={userId} />}
           {!hasBoth && ownedOrg && <AdminOrgView org={ownedOrg} userId={userId} />}
-          {!hasBoth && !ownedOrg && memberOrg && (
-            <MemberOrgView org={memberOrg} userId={userId} />
-          )}
+          {!hasBoth && !ownedOrg && memberOrg && <MemberOrgView org={memberOrg} userId={userId} />}
         </>
       )}
 

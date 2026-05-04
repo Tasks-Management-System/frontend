@@ -65,8 +65,7 @@ export const createGroupApi = (payload: {
   description?: string;
   memberIds: string[];
   groupImage?: string | null;
-}) =>
-  api.post<{ success: boolean; data: ChatGroup }>("/chat/groups", payload, { auth: true });
+}) => api.post<{ success: boolean; data: ChatGroup }>("/chat/groups", payload, { auth: true });
 
 export const updateGroupApi = (
   groupId: string,

@@ -164,9 +164,7 @@ const Chat = () => {
   useEffect(() => {
     function handleReceive(msg: ChatMessage) {
       const otherUserId =
-        msg.sender._id === currentUserId
-          ? msg.receiver?._id ?? ""
-          : msg.sender._id;
+        msg.sender._id === currentUserId ? (msg.receiver?._id ?? "") : msg.sender._id;
 
       setLastMessages((prev) => {
         const next = new Map(prev);
@@ -258,7 +256,13 @@ const Chat = () => {
 
   // ── Group socket events ───────────────────────────────────────────────────
   useEffect(() => {
-    function handleGroupReceive({ groupId, message: msg }: { groupId: string; message: ChatMessage }) {
+    function handleGroupReceive({
+      groupId,
+      message: msg,
+    }: {
+      groupId: string;
+      message: ChatMessage;
+    }) {
       setLastGroupMessages((prev) => {
         const next = new Map(prev);
         next.set(groupId, msg);
@@ -295,7 +299,13 @@ const Chat = () => {
     function handleGroupMessageDelete({ messageId }: { messageId: string }) {
       setMessages((prev) => prev.filter((m) => m._id !== messageId));
     }
-    function handleGroupMessageEdit({ messageId, message }: { messageId: string; message: string }) {
+    function handleGroupMessageEdit({
+      messageId,
+      message,
+    }: {
+      messageId: string;
+      message: string;
+    }) {
       setMessages((prev) =>
         prev.map((m) => (m._id === messageId ? { ...m, message, isEdited: true } : m))
       );
@@ -368,13 +378,17 @@ const Chat = () => {
       socket.emit("message:read", { senderId: selectedUserId });
       clearUnread(selectedUserId);
     }
-    return () => { setActiveChatUser(""); };
+    return () => {
+      setActiveChatUser("");
+    };
   }, [selectedUserId, clearUnread, setActiveChatUser]);
 
   useEffect(() => {
     setActiveGroupId(selectedGroupId);
     if (selectedGroupId) clearUnread(`group:${selectedGroupId}`);
-    return () => { setActiveGroupId(""); };
+    return () => {
+      setActiveGroupId("");
+    };
   }, [selectedGroupId, clearUnread, setActiveGroupId]);
 
   // ── Conversation selection handlers ──────────────────────────────────────
@@ -409,12 +423,7 @@ const Chat = () => {
 
   // ── Group management ──────────────────────────────────────────────────────
   const handleCreateGroup = useCallback(
-    async (
-      name: string,
-      description: string,
-      memberIds: string[],
-      groupImage?: string | null
-    ) => {
+    async (name: string, description: string, memberIds: string[], groupImage?: string | null) => {
       try {
         const res = await createGroupApi({
           name,
@@ -436,11 +445,7 @@ const Chat = () => {
   );
 
   const handleUpdateGroup = useCallback(
-    async (payload: {
-      name?: string;
-      description?: string;
-      groupImage?: string | null;
-    }) => {
+    async (payload: { name?: string; description?: string; groupImage?: string | null }) => {
       if (!selectedGroupId) return;
       try {
         await updateGroupApi(selectedGroupId, payload);
@@ -515,9 +520,17 @@ const Chat = () => {
         if (res.success && res.data) {
           setMessages((prev) => prev.map((m) => (m._id === id ? res.data! : m)));
           if (selectedGroupId) {
-            socket.emit("group:message:edit", { messageId: id, message: text, groupId: selectedGroupId });
+            socket.emit("group:message:edit", {
+              messageId: id,
+              message: text,
+              groupId: selectedGroupId,
+            });
           } else {
-            socket.emit("message:edit", { messageId: id, message: text, receiverId: selectedUserId });
+            socket.emit("message:edit", {
+              messageId: id,
+              message: text,
+              receiverId: selectedUserId,
+            });
           }
         }
       } catch {

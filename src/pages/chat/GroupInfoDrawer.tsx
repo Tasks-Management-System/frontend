@@ -223,7 +223,9 @@ export function GroupInfoDrawer({
           ) : (
             <>
               <div className="flex w-full max-w-[220px] items-start justify-center gap-1">
-                <h2 className="flex-1 text-center text-base font-bold text-gray-900">{group.name}</h2>
+                <h2 className="flex-1 text-center text-base font-bold text-gray-900">
+                  {group.name}
+                </h2>
                 {canEdit && (
                   <button
                     type="button"
@@ -264,9 +266,7 @@ export function GroupInfoDrawer({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-gray-800">
                       {member.name}
-                      {isSelf && (
-                        <span className="ml-1 text-xs text-gray-400">(you)</span>
-                      )}
+                      {isSelf && <span className="ml-1 text-xs text-gray-400">(you)</span>}
                     </p>
                     {memberIsCreator ? (
                       <span className="text-[10px] font-medium text-violet-600">Creator</span>

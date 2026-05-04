@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, CalendarDays } from "lucide-react";
 import toast from "react-hot-toast";
-import {
-  useHolidays,
-  useDeleteHoliday,
-} from "../../apis/api/holidays";
+import { useHolidays, useDeleteHoliday } from "../../apis/api/holidays";
 import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/session";
 import Button from "../../components/UI/Button";
@@ -151,7 +148,9 @@ export default function HolidaysPage() {
                           />
                           <div>
                             <p className="text-sm font-medium text-slate-800">{h.name}</p>
-                            <p className="text-xs text-slate-400">{formatHolidayListDate(h.date)}</p>
+                            <p className="text-xs text-slate-400">
+                              {formatHolidayListDate(h.date)}
+                            </p>
                           </div>
                           <span
                             className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
