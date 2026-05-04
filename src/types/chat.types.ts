@@ -26,13 +26,27 @@ export interface ChatReaction {
 export interface ChatMessage {
   _id: string;
   sender: ChatUser;
-  receiver: ChatUser;
+  receiver?: ChatUser | null;
+  group?: { _id: string; name: string } | null;
   message: string;
   isRead: boolean;
   isEdited?: boolean;
   attachments?: ChatAttachment[];
   replyTo?: ReplyToMessage | null;
   reactions?: ChatReaction[];
+  mentions?: ChatUser[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatGroup {
+  _id: string;
+  name: string;
+  description?: string;
+  createdBy: ChatUser;
+  members: ChatUser[];
+  admins: ChatUser[];
+  groupImage: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,4 +67,9 @@ export interface ChatMessagesResponse {
 export interface OnlineUsersResponse {
   success: boolean;
   data: string[];
+}
+
+export interface ChatGroupsResponse {
+  success: boolean;
+  data: ChatGroup[];
 }

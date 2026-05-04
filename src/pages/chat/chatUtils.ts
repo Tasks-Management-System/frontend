@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatReaction } from "../../types/chat.types";
+import type { ChatMessage, ChatReaction, ChatUser } from "../../types/chat.types";
 
 export function formatMessageTime(iso: string) {
   const d = new Date(iso);
@@ -92,6 +92,75 @@ export function getFileIcon(mimeType: string) {
 
 export function isPdfMime(mimeType: string) {
   return mimeType === "application/pdf";
+}
+
+/** Populated mentions; for 1:1 chats falls back to sender/receiver names when REST omits mentions (legacy loads). */
+export function resolveMentionUsersForHighlight(msg: ChatMessage): ChatUser[] {
+  const raw = msg.mentions ?? [];
+  const fromApi: ChatUser[] = [];
+  for (const m of raw) {
+    if (!m || typeof m !== "object") continue;
+    const id = "_id" in m ? String((m as ChatUser)._id) : "";
+    const name = typeof (m as ChatUser).name === "string" ? (m as ChatUser).name.trim() : "";
+    if (!id || !name) continue;
+    const u = m as ChatUser;
+    fromApi.push({ _id: id, name, profileImage: u.profileImage ?? null });
+  }
+  if (fromApi.length > 0) return fromApi;
+
+  if (!msg.group) {
+    const pool: ChatUser[] = [];
+    const add = (u: ChatUser | null | undefined) => {
+      const name = u?.name?.trim();
+      if (!u?._id || !name) return;
+      pool.push({ _id: String(u._id), name, profileImage: u.profileImage ?? null });
+    };
+    add(msg.sender);
+    add(msg.receiver ?? null);
+    const seen = new Set<string>();
+    return pool.filter((x) => (seen.has(x._id) ? false : !!seen.add(x._id)));
+  }
+  return [];
+}
+
+/**
+ * Splits message text into segments and wraps @Name tokens that match
+ * a mentioned user with a highlight span. Returns an array of React nodes.
+ */
+export function renderMentions(
+  text: string,
+  mentions: ChatUser[]
+): (string | { key: string; text: string; highlight: boolean })[] {
+  const safeText = text ?? "";
+  const validNames = [
+    ...new Set(
+      (mentions ?? [])
+        .map((m) => (typeof m?.name === "string" ? m.name.trim() : ""))
+        .filter(Boolean)
+    ),
+  ];
+  if (!validNames.length) return [safeText];
+
+  const mentionNames = new Set(validNames);
+  // Match @word or @multi word (greedy — tries longest first via alternation)
+  const pattern = new RegExp(
+    `(@(?:${[...mentionNames]
+      .sort((a, b) => b.length - a.length)
+      .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|")}))`,
+    "g"
+  );
+
+  const parts: (string | { key: string; text: string; highlight: boolean })[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(safeText)) !== null) {
+    if (match.index > last) parts.push(safeText.slice(last, match.index));
+    parts.push({ key: `${match.index}`, text: match[1], highlight: true });
+    last = match.index + match[1].length;
+  }
+  if (last < safeText.length) parts.push(safeText.slice(last));
+  return parts;
 }
 
 export function isOfficeMime(mimeType: string) {

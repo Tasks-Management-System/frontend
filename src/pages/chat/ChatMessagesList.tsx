@@ -16,6 +16,7 @@ type ChatMessagesListProps = {
   messagesEndRef: RefObject<HTMLDivElement | null>;
   showTyping: boolean;
   typingUserName: string;
+  isGroup?: boolean;
   onCopyText: (text: string) => void;
   onReply: (msg: ChatMessage) => void;
   onDeleteMsg: (msgId: string) => void;
@@ -35,6 +36,7 @@ export function ChatMessagesList({
   messagesEndRef,
   showTyping,
   typingUserName,
+  isGroup = false,
   onCopyText,
   onReply,
   onDeleteMsg,
@@ -85,6 +87,7 @@ export function ChatMessagesList({
               isMine={msg.sender._id === currentUserId}
               hasWallpaper={hasWallpaper}
               currentUserId={currentUserId}
+              isGroup={isGroup}
               onCopy={() => onCopyText(msg.message)}
               onReply={() => onReply(msg)}
               onDelete={() => onDeleteMsg(msg._id)}

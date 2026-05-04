@@ -19,17 +19,18 @@ function getDesktopPermissionFlag(): DesktopNotificationPermission {
 }
 
 type ChatNotificationContextValue = {
-  /** Per-sender unread counts */
+  /** Per-sender unread counts (also keyed as `group:<groupId>`) */
   unreadCounts: UnreadMap;
   /** Sum of all unread counts */
   totalUnread: number;
   /** Clear unread count for a specific sender (called when opening that chat) */
-  clearUnread: (senderId: string) => void;
+  clearUnread: (key: string) => void;
   /** Clear all unread counts */
   clearAll: () => void;
-  /** Tell the context which chat is currently open so messages from that sender
-   *  don't increment the badge while the conversation is visible */
+  /** Tell the context which chat is currently open */
   setActiveChatUser: (userId: string) => void;
+  /** Tell the context which group chat is currently open */
+  setActiveGroupId: (groupId: string) => void;
   /** Browser native notification permission (HTTPS or localhost required) */
   desktopPermission: DesktopNotificationPermission;
   /** Prompt for permission (needs a prior user gesture, e.g. button click). */
@@ -42,6 +43,7 @@ const ChatNotificationContext = createContext<ChatNotificationContextValue>({
   clearUnread: () => undefined,
   clearAll: () => undefined,
   setActiveChatUser: () => undefined,
+  setActiveGroupId: () => undefined,
   desktopPermission: "unsupported",
   requestDesktopNotifications: async () => false,
 });
@@ -65,6 +67,7 @@ function saveToStorage(counts: UnreadMap) {
 export function ChatNotificationProvider({ children }: { children: ReactNode }) {
   const [unreadCounts, setUnreadCounts] = useState<UnreadMap>(loadFromStorage);
   const [activeChatUserId, setActiveChatUserId] = useState("");
+  const [activeGroupId, setActiveGroupIdState] = useState("");
   const [desktopPermission, setDesktopPermission] = useState<DesktopNotificationPermission>(() =>
     getDesktopPermissionFlag()
   );
@@ -77,23 +80,14 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
     return ok;
   }, []);
 
-  // Listen for incoming messages globally so the badge works on every page
+  // Listen for incoming DM messages globally
   useEffect(() => {
     function handleReceive(msg: ChatMessage) {
       const currentUserId = localStorage.getItem("userId") ?? "";
-
-      // Only count messages that someone else sent to me.
-      // We check sender (always populated) rather than receiver because the
-      // backend used to send receiver as a plain string ID (not populated),
-      // making msg.receiver._id unreliable. Checking "sender !== me" is both
-      // simpler and correct: if I'm not the sender, the message is incoming.
       if (msg.sender._id === currentUserId) return;
 
       const senderId = msg.sender._id;
-
       notifyIncomingDesktopChat(msg, activeChatUserId);
-
-      // If this conversation is currently open, don't count it
       if (senderId === activeChatUserId) return;
 
       setUnreadCounts((prev) => {
@@ -108,6 +102,28 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
       socket.off("message:receive", handleReceive);
     };
   }, [activeChatUserId]);
+
+  // Listen for incoming group messages globally
+  useEffect(() => {
+    function handleGroupReceive({ groupId, message: msg }: { groupId: string; message: ChatMessage }) {
+      const currentUserId = localStorage.getItem("userId") ?? "";
+      if (msg.sender._id === currentUserId) return;
+
+      const key = `group:${groupId}`;
+      if (key === `group:${activeGroupId}`) return;
+
+      setUnreadCounts((prev) => {
+        const next = { ...prev, [key]: (prev[key] ?? 0) + 1 };
+        saveToStorage(next);
+        return next;
+      });
+    }
+
+    socket.on("group:message:receive", handleGroupReceive);
+    return () => {
+      socket.off("group:message:receive", handleGroupReceive);
+    };
+  }, [activeGroupId]);
 
   const clearUnread = useCallback((senderId: string) => {
     setUnreadCounts((prev) => {
@@ -128,6 +144,10 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
     setActiveChatUserId(userId);
   }, []);
 
+  const setActiveGroupId = useCallback((groupId: string) => {
+    setActiveGroupIdState(groupId);
+  }, []);
+
   return (
     <ChatNotificationContext.Provider
       value={{
@@ -136,6 +156,7 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
         clearUnread,
         clearAll,
         setActiveChatUser,
+        setActiveGroupId,
         desktopPermission,
         requestDesktopNotifications,
       }}

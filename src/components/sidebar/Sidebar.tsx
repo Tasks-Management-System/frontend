@@ -210,12 +210,12 @@ const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
   // 2. Has both orgs and switched to member mode → employee view for joined org
   // 3. Viewing owned org → always admin (user created it; DB role may have been corrupted)
   // 4. Otherwise → use actual DB roles
+  // When in member mode (joined org), act as employee regardless of DB role.
+  // Otherwise always use actual DB roles — noOrg alone never restricts items.
   const effectiveRoles: string[] =
-    noOrg || (hasBoth && activeMode === "member")
+    hasBoth && activeMode === "member"
       ? ["employee"]
-      : ownedOrg && activeMode === "owned"
-        ? ["admin"]
-        : userRoles;
+      : userRoles;
 
   const canCreateProjects = effectiveRoles.some((r) =>
     ["admin", "manager", "super-admin"].includes(r)

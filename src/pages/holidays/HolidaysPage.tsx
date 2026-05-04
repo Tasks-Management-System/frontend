@@ -3,132 +3,17 @@ import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, CalendarDays } from "l
 import toast from "react-hot-toast";
 import {
   useHolidays,
-  useCreateHoliday,
-  useUpdateHoliday,
   useDeleteHoliday,
 } from "../../apis/api/holidays";
 import { useUserById } from "../../apis/api/auth";
 import { getUserId } from "../../utils/session";
 import Button from "../../components/UI/Button";
 import Modal from "../../components/UI/Model";
-import Input from "../../components/UI/Input";
 import { useActiveOrg } from "../../contexts/ActiveOrgContext";
-import type { Holiday, CreateHolidayBody, HolidayType } from "../../types/holiday.types";
+import type { Holiday } from "../../types/holiday.types";
+import { formatHolidayListDate, groupHolidaysByMonth, HOLIDAY_MONTH_NAMES } from "./holidaysUtils";
+import { HolidayFormModal } from "./HolidayFormModal";
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long" });
-}
-
-function groupByMonth(holidays: Holiday[]): Record<number, Holiday[]> {
-  const map: Record<number, Holiday[]> = {};
-  for (const h of holidays) {
-    const m = new Date(h.date).getMonth();
-    if (!map[m]) map[m] = [];
-    map[m].push(h);
-  }
-  return map;
-}
-
-// ─── Holiday Form Modal ───────────────────────────────────────────────────────
-interface HolidayFormModalProps {
-  open: boolean;
-  onClose: () => void;
-  initial?: Holiday | null;
-}
-
-function HolidayFormModal({ open, onClose, initial }: HolidayFormModalProps) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [date, setDate] = useState(initial?.date ? initial.date.slice(0, 10) : "");
-  const [type, setType] = useState<HolidayType>(initial?.type ?? "company");
-
-  const create = useCreateHoliday();
-  const update = useUpdateHoliday();
-  const isEdit = !!initial;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !date) {
-      toast.error("Name and date are required");
-      return;
-    }
-    const body: CreateHolidayBody = { name: name.trim(), date, type };
-    try {
-      if (isEdit) {
-        await update.mutateAsync({ id: initial._id, body });
-        toast.success("Holiday updated");
-      } else {
-        await create.mutateAsync(body);
-        toast.success("Holiday added");
-      }
-      onClose();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
-    }
-  };
-
-  const loading = create.isPending || update.isPending;
-
-  return (
-    <Modal isOpen={open} onClose={onClose} title={isEdit ? "Edit Holiday" : "Add Holiday"}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Name</label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Republic Day"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Type</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as HolidayType)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            <option value="company">Company holiday</option>
-            <option value="national">National holiday</option>
-          </select>
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" size="sm" disabled={loading}>
-            {loading ? "Saving…" : isEdit ? "Save changes" : "Add holiday"}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-
-// ─── Main page ────────────────────────────────────────────────────────────────
 export default function HolidaysPage() {
   const userId = getUserId();
   const { data: user } = useUserById(userId);
@@ -150,7 +35,7 @@ export default function HolidaysPage() {
   const { data: holidays = [], isLoading } = useHolidays(year, activeMode);
   const deleteHoliday = useDeleteHoliday();
 
-  const grouped = groupByMonth(holidays);
+  const grouped = groupHolidaysByMonth(holidays);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -177,7 +62,6 @@ export default function HolidaysPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Holidays</h1>
@@ -197,9 +81,9 @@ export default function HolidaysPage() {
         )}
       </div>
 
-      {/* Year navigator */}
       <div className="mt-6 flex items-center gap-3">
         <button
+          type="button"
           onClick={() => setYear((y) => y - 1)}
           className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
         >
@@ -209,6 +93,7 @@ export default function HolidaysPage() {
           {year}
         </span>
         <button
+          type="button"
           onClick={() => setYear((y) => y + 1)}
           className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
         >
@@ -216,7 +101,6 @@ export default function HolidaysPage() {
         </button>
       </div>
 
-      {/* Holiday list */}
       <div className="mt-6 space-y-8">
         {isLoading ? (
           <div className="space-y-3">
@@ -240,7 +124,7 @@ export default function HolidaysPage() {
             .map(([monthIdx, list]) => (
               <div key={monthIdx}>
                 <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  {MONTH_NAMES[Number(monthIdx)]}
+                  {HOLIDAY_MONTH_NAMES[Number(monthIdx)]}
                 </h2>
                 <div className="space-y-2">
                   {list.map((h) => {
@@ -267,7 +151,7 @@ export default function HolidaysPage() {
                           />
                           <div>
                             <p className="text-sm font-medium text-slate-800">{h.name}</p>
-                            <p className="text-xs text-slate-400">{formatDate(h.date)}</p>
+                            <p className="text-xs text-slate-400">{formatHolidayListDate(h.date)}</p>
                           </div>
                           <span
                             className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -282,6 +166,7 @@ export default function HolidaysPage() {
                         {canManage && (
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={() => handleEditOpen(h)}
                               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                               title="Edit"
@@ -289,6 +174,7 @@ export default function HolidaysPage() {
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
+                              type="button"
                               onClick={() => setDeleteTarget(h)}
                               className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                               title="Delete"
@@ -306,12 +192,10 @@ export default function HolidaysPage() {
         )}
       </div>
 
-      {/* Form modal */}
       {formOpen && (
         <HolidayFormModal open={formOpen} onClose={handleFormClose} initial={editHoliday} />
       )}
 
-      {/* Delete confirm modal */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete holiday">
         <p className="text-sm text-slate-600">
           Delete <span className="font-semibold">{deleteTarget?.name}</span>? This cannot be undone.

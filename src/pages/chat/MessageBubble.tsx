@@ -3,13 +3,20 @@ import { Check, CheckCheck, Copy, CornerUpLeft, Pencil, Smile, Trash2 } from "lu
 import type { ChatAttachment, ChatMessage } from "../../types/chat.types";
 import { AttachmentPreview } from "./AttachmentPreview";
 import { ReplyCard } from "./ReplyCard";
-import { aggregateReactions, formatMessageTime, parseMessage } from "./chatUtils";
+import {
+  aggregateReactions,
+  formatMessageTime,
+  parseMessage,
+  renderMentions,
+  resolveMentionUsersForHighlight,
+} from "./chatUtils";
 
 type MessageBubbleProps = {
   msg: ChatMessage;
   isMine: boolean;
   hasWallpaper?: boolean;
   currentUserId: string;
+  isGroup?: boolean;
   onCopy: () => void;
   onReply: () => void;
   onDelete: () => void;
@@ -25,6 +32,7 @@ export function MessageBubble({
   isMine,
   hasWallpaper,
   currentUserId,
+  isGroup = false,
   onCopy,
   onReply,
   onDelete,
@@ -91,8 +99,35 @@ export function MessageBubble({
             </div>
           )}
 
+          {isGroup && !isMine && (
+            <p className="mb-0.5 text-[11px] font-semibold text-violet-500">
+              {msg.sender.name}
+            </p>
+          )}
+
           {body && (
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+              {renderMentions(body, resolveMentionUsersForHighlight(msg)).map((part) =>
+                typeof part === "string" ? (
+                  part
+                ) : (
+                  <span
+                    key={part.key}
+                    className={`align-baseline text-[13px] font-semibold tracking-tight ${
+                      isMine
+                        ? "mx-px inline rounded-[5px] bg-white/[0.14] px-1 py-px text-white ring-1 ring-white/35 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.18)]"
+                        : `mx-px inline rounded-[5px] px-1 py-px ring-1 ${
+                            hasWallpaper
+                              ? "bg-violet-50/95 text-violet-900 ring-violet-200/80 shadow-sm"
+                              : "bg-violet-50 text-violet-900 ring-violet-200/70"
+                          }`
+                    }`}
+                  >
+                    {part.text}
+                  </span>
+                )
+              )}
+            </p>
           )}
           <div
             className={`mt-1 flex items-center justify-end gap-1.5 ${

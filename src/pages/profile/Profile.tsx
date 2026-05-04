@@ -1,21 +1,6 @@
 import { getUserId } from "../../utils/session";
-import { useState, useRef } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  MapPin,
-  MessageSquare,
-  Pencil,
-  Camera,
-  Briefcase,
-  FolderKanban,
-  CheckCircle2,
-  TreePalm,
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { useRef, useState } from "react";
+import { MessageSquare, Pencil, Camera, Loader2 } from "lucide-react";
 import { useUserById, useUpdateProfileImage, useUpdateUser } from "../../apis/api/auth";
 import toast from "react-hot-toast";
 import Modal from "../../components/UI/Model";
@@ -24,102 +9,21 @@ import type { User as UserType } from "../../types/user.types";
 import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { ProfilePageSkeleton } from "../../components/UI/Skeleton";
 import { ProfileLeaveDashboard } from "../../components/leave/MyLeaveSection";
-
-const tabs = [
-  { key: "Profile", label: "Profile" },
-  { key: "Attendance", label: "Attendance" },
-  { key: "Leave History", label: "Leave History" },
-  { key: "Payroll", label: "Payroll" },
-  { key: "Documents", label: "Documents" },
-];
-
-function ProfileCover({ url }: { url: string | null }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const showPhoto = Boolean(url) && failedUrl !== url;
-  return (
-    <div className="relative h-32 overflow-hidden rounded-t-2xl sm:h-40 md:h-44">
-      {showPhoto && url ? (
-        <>
-          <img
-            key={url}
-            src={url}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            loading="eager"
-            decoding="async"
-            onError={() => setFailedUrl(url)}
-          />
-          <div
-            className="absolute inset-0 bg-linear-to-t from-black/55 via-black/20 to-transparent"
-            aria-hidden
-          />
-        </>
-      ) : (
-        <div
-          className="h-full w-full bg-linear-to-r from-indigo-600 via-violet-600 to-purple-600"
-          aria-hidden
-        />
-      )}
-    </div>
-  );
-}
-
-/** Avatar with graceful fallback when URL is missing or fails to load (CORS, 404, etc.). */
-function ProfileAvatarFace({
-  url,
-  alt,
-  initials,
-}: {
-  url: string | null;
-  alt: string;
-  initials: string;
-}) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  if (!url || failedUrl === url) {
-    return <span className="select-none">{initials}</span>;
-  }
-  return (
-    <img
-      key={url}
-      src={url}
-      alt={alt}
-      className="h-full w-full object-cover object-center"
-      onError={() => setFailedUrl(url)}
-      loading="lazy"
-    />
-  );
-}
-
-function PreviewModalImage({ url, alt }: { url: string | null; alt: string }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  if (!url || failedUrl === url) {
-    return (
-      <p className="py-8 text-center text-sm text-gray-500">
-        No preview available or image failed to load.
-      </p>
-    );
-  }
-  return (
-    <img
-      key={url}
-      src={url}
-      alt={alt}
-      className="max-h-[70vh] w-full max-w-full rounded-xl object-contain"
-      onError={() => setFailedUrl(url)}
-    />
-  );
-}
+import { PROFILE_PAGE_TABS } from "./profileConstants";
+import type { ProfileEditFormState } from "./profileFormTypes";
+import { PreviewModalImage, ProfileAvatarFace, ProfileCover } from "./ProfileMedia";
+import { ProfileOverviewTab } from "./ProfileOverviewTab";
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState("Profile");
+  const [activeTab, setActiveTab] = useState<string>(PROFILE_PAGE_TABS[0]!.key);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProfileEditFormState>({
     name: "",
     email: "",
     phone: "",
     dob: "",
-    gender: "" as "male" | "female" | "other" | "",
+    gender: "",
     addressLine: "",
     addressCity: "",
     aadharCardNumber: "",
@@ -140,6 +44,7 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startEditing = () => {
+    if (!user) return;
     setFormData({
       name: user?.name ?? "",
       email: user?.email ?? "",
@@ -317,17 +222,16 @@ const Profile = () => {
 
   const profileImageUrl = resolveProfileImageUrl(user?.profileImage);
 
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   if (isLoading) {
     return <ProfilePageSkeleton />;
+  }
+
+  if (!user) {
+    return (
+      <div className="rounded-2xl bg-white p-12 text-center shadow-sm text-gray-500">
+        Could not load profile.
+      </div>
+    );
   }
 
   return (
@@ -415,7 +319,7 @@ const Profile = () => {
 
         <div className="scrollbar-hide overflow-x-auto border-t border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
           <PillTabBar
-            items={tabs.map((t) => ({ key: t.key, label: t.label }))}
+            items={PROFILE_PAGE_TABS.map((t) => ({ key: t.key, label: t.label }))}
             activeKey={activeTab}
             onTabChange={setActiveTab}
             className="min-w-max"
@@ -423,438 +327,20 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Content */}
       {activeTab === "Profile" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Personal Information */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-indigo-600" />
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Personal Information
-                  </h2>
-                </div>
-                {!isEditing ? (
-                  <button
-                    onClick={startEditing}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
-                  >
-                    Edit Info
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={cancelEditing}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={updateUser.isPending}
-                      className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
-                    >
-                      {updateUser.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                      Save
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {!isEditing ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <InfoField
-                    icon={<User className="w-4 h-4" />}
-                    label="FULL NAME"
-                    value={user?.name}
-                  />
-                  <InfoField
-                    icon={<Mail className="w-4 h-4" />}
-                    label="EMAIL ADDRESS"
-                    value={user?.email}
-                  />
-                  <InfoField
-                    icon={<Phone className="w-4 h-4" />}
-                    label="PHONE NUMBER"
-                    value={user?.phone}
-                  />
-                  <InfoField
-                    icon={<Calendar className="w-4 h-4" />}
-                    label="DATE OF BIRTH"
-                    value={formatDate(user?.dob)}
-                  />
-                  <InfoField
-                    icon={<User className="w-4 h-4" />}
-                    label="GENDER"
-                    value={user?.gender}
-                    className="capitalize"
-                  />
-                  <div className="sm:col-span-2">
-                    <InfoField
-                      icon={<MapPin className="w-4 h-4" />}
-                      label="ADDRESS"
-                      value={
-                        user?.address?.length
-                          ? `${user.address[0]?.address ?? ""}${user.address[0]?.city ? `, ${user.address[0].city}` : ""}`.trim() ||
-                            "—"
-                          : undefined
-                      }
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <EditField
-                    label="FULL NAME"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleFormChange}
-                    placeholder="Enter full name"
-                  />
-                  <EditField
-                    label="EMAIL ADDRESS"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleFormChange}
-                    placeholder="Enter email"
-                  />
-                  <EditField
-                    label="PHONE NUMBER"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleFormChange}
-                    placeholder="Enter phone number"
-                  />
-                  <EditField
-                    label="DATE OF BIRTH"
-                    name="dob"
-                    type="date"
-                    value={formData.dob}
-                    onChange={handleFormChange}
-                  />
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
-                      GENDER
-                    </label>
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-                    >
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <EditField
-                    label="ADDRESS"
-                    name="addressLine"
-                    value={formData.addressLine}
-                    onChange={handleFormChange}
-                    placeholder="Street / apartment"
-                  />
-                  <EditField
-                    label="CITY"
-                    name="addressCity"
-                    value={formData.addressCity}
-                    onChange={handleFormChange}
-                    placeholder="City"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Employment Details */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-indigo-600" />
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Employment Details
-                  </h2>
-                </div>
-                <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
-                  View History
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <InfoField
-                  icon={<Briefcase className="w-4 h-4" />}
-                  label="EMPLOYEE ID"
-                  value={user?._id?.slice(-8).toUpperCase()}
-                />
-                <InfoField
-                  icon={<FolderKanban className="w-4 h-4" />}
-                  label="ROLE"
-                  value={user?.role?.join(", ")}
-                  className="capitalize"
-                />
-                <InfoField
-                  icon={<Calendar className="w-4 h-4" />}
-                  label="JOINED"
-                  value={formatDate(user?.createdAt)}
-                />
-              </div>
-            </div>
-
-            {/* Identity & Banking */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-indigo-600" />
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Identity & Banking
-                  </h2>
-                </div>
-              </div>
-
-              {!isEditing ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <InfoField
-                    label="AADHAR"
-                    value={user?.aadharCardNumber}
-                    icon={<CheckCircle2 className="w-4 h-4" />}
-                  />
-                  <InfoField
-                    label="PAN"
-                    value={user?.panCardNumber}
-                    icon={<CheckCircle2 className="w-4 h-4" />}
-                  />
-                  <InfoField
-                    label="BANK ACCOUNT"
-                    value={user?.bankAccountNo}
-                    icon={<CheckCircle2 className="w-4 h-4" />}
-                  />
-                  <InfoField
-                    label="BANK NAME"
-                    value={user?.bankName}
-                    icon={<CheckCircle2 className="w-4 h-4" />}
-                  />
-                  <InfoField
-                    label="IFSC"
-                    value={user?.bankIFSC}
-                    icon={<CheckCircle2 className="w-4 h-4" />}
-                  />
-                  <InfoField
-                    label="BRANCH"
-                    value={user?.bankBranch}
-                    icon={<CheckCircle2 className="w-4 h-4" />}
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <EditField
-                    label="AADHAR"
-                    name="aadharCardNumber"
-                    value={formData.aadharCardNumber}
-                    onChange={handleFormChange}
-                  />
-                  <EditField
-                    label="PAN"
-                    name="panCardNumber"
-                    value={formData.panCardNumber}
-                    onChange={handleFormChange}
-                  />
-                  <EditField
-                    label="BANK ACCOUNT"
-                    name="bankAccountNo"
-                    value={formData.bankAccountNo}
-                    onChange={handleFormChange}
-                  />
-                  <EditField
-                    label="BANK NAME"
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleFormChange}
-                  />
-                  <EditField
-                    label="IFSC"
-                    name="bankIFSC"
-                    value={formData.bankIFSC}
-                    onChange={handleFormChange}
-                  />
-                  <EditField
-                    label="BRANCH"
-                    name="bankBranch"
-                    value={formData.bankBranch}
-                    onChange={handleFormChange}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Skills / Education / Experience / Leaves */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2">
-                  <FolderKanban className="w-5 h-5 text-indigo-600" />
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Structured Details
-                  </h2>
-                </div>
-              </div>
-              {!isEditing ? (
-                <div className="space-y-4">
-                  <InfoField
-                    icon={<FolderKanban className="w-4 h-4" />}
-                    label="SKILLS"
-                    value={
-                      user?.skills?.length
-                        ? user.skills
-                            .map((s) => s.skill)
-                            .filter(Boolean)
-                            .join(", ")
-                        : undefined
-                    }
-                    className="wrap-break-word"
-                  />
-                  <InfoField
-                    icon={<FolderKanban className="w-4 h-4" />}
-                    label="EDUCATION"
-                    value={
-                      user?.education?.length
-                        ? user.education
-                            .map((e) => e.degree)
-                            .filter(Boolean)
-                            .join(", ")
-                        : undefined
-                    }
-                    className="wrap-break-word"
-                  />
-                  <InfoField
-                    icon={<FolderKanban className="w-4 h-4" />}
-                    label="EXPERIENCE"
-                    value={
-                      user?.experience?.length
-                        ? user.experience
-                            .map((e) => e.company)
-                            .filter(Boolean)
-                            .join(", ")
-                        : undefined
-                    }
-                    className="wrap-break-word"
-                  />
-                  <InfoField
-                    icon={<FolderKanban className="w-4 h-4" />}
-                    label="LEAVES"
-                    value={
-                      user?.leaves?.length
-                        ? user.leaves
-                            .map((l) =>
-                              typeof l.totalBalance === "number" ? String(l.totalBalance) : ""
-                            )
-                            .filter(Boolean)
-                            .join(", ")
-                        : undefined
-                    }
-                    className="wrap-break-word"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <EditField
-                    label="SKILLS"
-                    name="skillsJson"
-                    value={formData.skillsJson}
-                    onChange={handleFormChange}
-                    placeholder="test, test1"
-                  />
-                  <EditField
-                    label="EDUCATION"
-                    name="educationJson"
-                    value={formData.educationJson}
-                    onChange={handleFormChange}
-                    placeholder="BSc, MSc"
-                  />
-                  <EditField
-                    label="EXPERIENCE"
-                    name="experienceJson"
-                    value={formData.experienceJson}
-                    onChange={handleFormChange}
-                    placeholder="Company A, Company B"
-                  />
-                  <p className="text-xs text-gray-500">
-                    You can type comma-separated values (like "test, test1") or paste a JSON array.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-              <div className="flex items-center gap-2 mb-4 sm:mb-5">
-                <FolderKanban className="w-5 h-5 text-indigo-400" />
-                <h2 className="text-base sm:text-lg font-semibold ">Quick Stats</h2>
-              </div>
-
-              <div className="space-y-4">
-                <StatRow
-                  icon={<FolderKanban className="w-4 h-4" />}
-                  label="Total Projects"
-                  value="—"
-                  iconBg="bg-indigo-500/20"
-                  iconColor="text-indigo-400"
-                />
-                <StatRow
-                  icon={<CheckCircle2 className="w-4 h-4" />}
-                  label="Tasks Completed"
-                  value="—"
-                  iconBg="bg-emerald-500/20"
-                  iconColor="text-emerald-400"
-                />
-                <StatRow
-                  icon={<TreePalm className="w-4 h-4" />}
-                  label="Annual leave (pool)"
-                  value={
-                    user?.leaves?.[0] &&
-                    typeof user.leaves[0] === "object" &&
-                    "totalBalance" in user.leaves[0]
-                      ? `${String((user.leaves[0] as { totalBalance?: number }).totalBalance ?? "—")} days`
-                      : "—"
-                  }
-                  iconBg="bg-amber-500/20"
-                  iconColor="text-amber-400"
-                />
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between text-xs uppercase tracking-wider text-gray-900 mb-2">
-                  <span>Performance Review</span>
-                  <span className=" font-semibold text-sm">—</span>
-                </div>
-                <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div className="h-full w-0 bg-linear-to-r from-indigo-500 to-purple-500 rounded-full" />
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
-              <div className="flex items-center gap-2 mb-4 sm:mb-5">
-                <Clock className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                  Recent Activity
-                </h2>
-              </div>
-
-              <div className="text-sm text-gray-400 text-center py-6">No recent activity</div>
-            </div>
-          </div>
-        </div>
+        <ProfileOverviewTab
+          user={user}
+          updateUserPending={updateUser.isPending}
+          isEditing={isEditing}
+          formData={formData}
+          startEditing={startEditing}
+          cancelEditing={cancelEditing}
+          handleFormChange={handleFormChange}
+          handleSave={handleSave}
+        />
       )}
 
-      {activeTab === "Leave History" && user && (
+      {activeTab === "Leave History" && (
         <ProfileLeaveDashboard user={user} userLoading={false} />
       )}
 
@@ -864,7 +350,6 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Image Preview Modal */}
       <Modal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
@@ -878,89 +363,5 @@ const Profile = () => {
     </div>
   );
 };
-
-function InfoField({
-  icon,
-  label,
-  value,
-  className = "",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value?: string | null;
-  className?: string;
-}) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-gray-400">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-          {label}
-        </span>
-      </div>
-      <p className={`text-sm font-medium text-gray-900 ${className}`}>{value || "—"}</p>
-    </div>
-  );
-}
-
-function EditField({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  type?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-      />
-    </div>
-  );
-}
-
-function StatRow({
-  icon,
-  label,
-  value,
-  iconBg,
-  iconColor,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  iconBg: string;
-  iconColor: string;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div
-          className={`w-8 h-8 rounded-lg ${iconBg} ${iconColor} flex items-center justify-center`}
-        >
-          {icon}
-        </div>
-        <span className="text-sm text-gray-900">{label}</span>
-      </div>
-      <span className="text-lg font-bold">{value}</span>
-    </div>
-  );
-}
 
 export default Profile;

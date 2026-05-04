@@ -22,6 +22,7 @@ import InvitesPage from "./pages/invites/InvitesPage";
 import HolidaysPage from "./pages/holidays/HolidaysPage";
 import HiringPage from "./pages/hiring/HiringPage";
 import CRMPage from "./pages/crm/CRMPage";
+import OnboardingPage from "./pages/onboarding/OnboardingPage";
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/attendance" element={<Attendance />} />

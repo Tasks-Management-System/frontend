@@ -30,6 +30,11 @@ export const apiPath = {
     endBreak: "/attendance/end-break",
     getAttendance: "/attendance",
     punchOut: "/attendance/punch-out",
+    summary: "/attendance/summary",
+    regularizations: "/attendance/regularizations",
+    correct: "/attendance/:id/correct",
+    requestRegularization: "/attendance/:id/regularize",
+    resolveRegularization: "/attendance/:id/regularize",
   },
   leave: {
     history: "/leave",

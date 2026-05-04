@@ -1,7 +1,11 @@
+import { useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import type { ChangeEvent, Dispatch, KeyboardEvent, RefObject, SetStateAction } from "react";
 import { CornerUpLeft, FileText, Paperclip, Pencil, Send, Smile, X } from "lucide-react";
 import type { ChatMessage } from "../../types/chat.types";
+import type { User } from "../../types/user.types";
 import EmojiPicker from "../../components/chat/EmojiPicker";
+import { MentionSuggestions } from "./MentionSuggestions";
 import { formatFileSize } from "./chatUtils";
 import type { PendingChatFile } from "./chatTypes";
 
@@ -16,6 +20,8 @@ type ChatComposerProps = {
   setEditTarget: (v: { id: string; text: string } | null) => void;
   selectedUserDisplayName?: string;
   currentUserId: string;
+  availableUsers: User[];
+  onMentionAdd: (user: User) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   emojiButtonRef: RefObject<HTMLButtonElement | null>;
   emojiPickerRef: RefObject<HTMLDivElement | null>;
@@ -40,6 +46,8 @@ export function ChatComposer({
   setEditTarget,
   selectedUserDisplayName,
   currentUserId,
+  availableUsers,
+  onMentionAdd,
   fileInputRef,
   emojiButtonRef,
   emojiPickerRef,
@@ -52,6 +60,66 @@ export function ChatComposer({
   onKeyDown,
   onEmojiSelect,
 }: ChatComposerProps) {
+  const mentionContainerRef = useRef<HTMLDivElement>(null);
+
+  // Detect @query at cursor position
+  const getMentionQuery = useCallback((): string | null => {
+    const ta = inputRef.current;
+    if (!ta) return null;
+    const cursor = ta.selectionStart ?? 0;
+    const text = messageInput.slice(0, cursor);
+    const match = text.match(/@([^\s@]*)$/);
+    return match ? match[1] : null;
+  }, [messageInput, inputRef]);
+
+  const mentionQuery = getMentionQuery();
+  const showMentions = mentionQuery !== null;
+
+  const dismissIncompleteMention = useCallback(() => {
+    const ta = inputRef.current;
+    const cursor = ta?.selectionStart ?? messageInput.length;
+    const before = messageInput.slice(0, cursor);
+    const after = messageInput.slice(cursor);
+    if (!/@([^\s@]*)$/.test(before)) return;
+    const stripped = before.replace(/@([^\s@]*)$/, "");
+    flushSync(() => {
+      setMessageInput(stripped + after);
+    });
+    requestAnimationFrame(() => {
+      if (!ta) return;
+      const pos = stripped.length;
+      ta.focus();
+      ta.setSelectionRange(pos, pos);
+    });
+  }, [messageInput, setMessageInput, inputRef]);
+
+  const handleMentionSelect = useCallback(
+    (user: User) => {
+      const ta = inputRef.current;
+      if (!ta) return;
+      const cursor = ta.selectionStart ?? 0;
+      const before = messageInput.slice(0, cursor);
+      const after = messageInput.slice(cursor);
+      const rawName = (user.name ?? "").trim();
+      const displayName = rawName || "unknown";
+      // Replace @query with @DisplayName plus space so picker closes (@… no longer anchored at caret)
+      const replaced = before.replace(/@([^\s@]*)$/, `@${displayName} `);
+      flushSync(() => {
+        setMessageInput(replaced + after);
+      });
+      onMentionAdd(user);
+
+      requestAnimationFrame(() => {
+        ta.focus();
+        const pos = replaced.length;
+        ta.setSelectionRange(pos, pos);
+        ta.style.height = "auto";
+        ta.style.height = `${Math.min(ta.scrollHeight, 128)}px`;
+      });
+    },
+    [messageInput, setMessageInput, onMentionAdd, inputRef]
+  );
+
   return (
     <div className="relative z-10 border-t border-gray-200/70 bg-white px-3 py-3 shadow-[0_-1px_8px_rgba(0,0,0,0.05)] sm:px-6">
       {pendingFiles.length > 0 && (
@@ -173,13 +241,22 @@ export function ChatComposer({
           )}
         </div>
 
-        <div className="relative min-w-0 flex-1">
+        <div ref={mentionContainerRef} className="relative min-w-0 flex-1">
+          {showMentions && (
+            <MentionSuggestions
+              query={mentionQuery}
+              users={availableUsers}
+              currentUserId={currentUserId}
+              onSelect={handleMentionSelect}
+              onDismiss={dismissIncompleteMention}
+            />
+          )}
           <textarea
             ref={inputRef}
             value={messageInput}
             onChange={onInputChange}
             onKeyDown={onKeyDown}
-            placeholder="Type a message..."
+            placeholder="Type a message... (@mention someone)"
             rows={1}
             className="max-h-32 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-500/20"
             style={{ height: "auto", minHeight: "44px" }}
@@ -203,7 +280,7 @@ export function ChatComposer({
 
       <p className="mt-1.5 text-[11px] text-gray-400 sm:hidden">Tap send or press Enter</p>
       <p className="mt-1.5 hidden text-[11px] text-gray-400 sm:block">
-        Press Enter to send · Shift+Enter for new line
+        Press Enter to send · Shift+Enter for new line · @ to mention
       </p>
     </div>
   );

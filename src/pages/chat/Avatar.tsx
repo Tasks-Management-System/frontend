@@ -5,11 +5,13 @@ export function Avatar({
   image,
   online,
   size = "md",
+  shape = "circle",
 }: {
   name: string;
   image: string | null;
   online?: boolean;
   size?: "sm" | "md" | "lg";
+  shape?: "circle" | "rounded";
 }) {
   const url = resolveProfileImageUrl(image);
   const initials = name
@@ -21,11 +23,12 @@ export function Avatar({
 
   const dim = size === "lg" ? "h-12 w-12" : size === "md" ? "h-10 w-10" : "h-8 w-8";
   const textSize = size === "lg" ? "text-base" : size === "md" ? "text-sm" : "text-xs";
+  const rounding = shape === "rounded" ? "rounded-xl" : "rounded-full";
 
   return (
     <div className="relative shrink-0">
       <div
-        className={`${dim} flex items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white font-semibold ${textSize} overflow-hidden ring-2 ring-white shadow-sm`}
+        className={`${dim} ${rounding} flex items-center justify-center bg-gradient-to-br from-violet-500 to-indigo-600 text-white font-semibold ${textSize} overflow-hidden ring-2 ring-white shadow-sm`}
       >
         {url ? (
           <img src={url} alt={name} className="h-full w-full object-cover" />

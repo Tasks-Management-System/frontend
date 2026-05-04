@@ -11,6 +11,7 @@ import BirthdayPopup from "../birthdays/BirthdayPopup";
 import { ActiveOrgProvider } from "../../contexts/ActiveOrgContext";
 import { ChatNotificationProvider } from "../../contexts/ChatNotificationContext";
 import { resumeSessionFromCookies } from "../../apis/apiService";
+import { needsOnboarding } from "../../pages/onboarding/onboardingStorage";
 
 const DashboardLayout = () => {
   const location = useLocation();
@@ -63,8 +64,14 @@ const DashboardLayout = () => {
     );
   }
 
-  if (!getUserId()) {
+  const currentUserId = getUserId();
+
+  if (!currentUserId) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (needsOnboarding(currentUserId)) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (
