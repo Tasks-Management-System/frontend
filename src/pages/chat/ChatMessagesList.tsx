@@ -67,9 +67,7 @@ export function ChatMessagesList({
           >
             {shouldShowDateSeparator(msg, messages[i - 1]) && (
               <div className="my-4 flex items-center gap-3">
-                <div
-                  className={`h-px flex-1 ${hasWallpaper ? "bg-white/30" : "bg-gray-200"}`}
-                />
+                <div className={`h-px flex-1 ${hasWallpaper ? "bg-white/30" : "bg-gray-200"}`} />
                 <span
                   className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium ${
                     hasWallpaper
@@ -79,9 +77,7 @@ export function ChatMessagesList({
                 >
                   {formatDateSeparator(msg.createdAt)}
                 </span>
-                <div
-                  className={`h-px flex-1 ${hasWallpaper ? "bg-white/30" : "bg-gray-200"}`}
-                />
+                <div className={`h-px flex-1 ${hasWallpaper ? "bg-white/30" : "bg-gray-200"}`} />
               </div>
             )}
             <MessageBubble
@@ -102,9 +98,7 @@ export function ChatMessagesList({
         ))
       )}
 
-      {showTyping && (
-        <TypingIndicator name={typingUserName} hasWallpaper={hasWallpaper} />
-      )}
+      {showTyping && <TypingIndicator name={typingUserName} hasWallpaper={hasWallpaper} />}
 
       <div ref={messagesEndRef} />
     </div>

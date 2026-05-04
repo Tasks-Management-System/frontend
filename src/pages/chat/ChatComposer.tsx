@@ -1,13 +1,5 @@
 import type { ChangeEvent, Dispatch, KeyboardEvent, RefObject, SetStateAction } from "react";
-import {
-  CornerUpLeft,
-  FileText,
-  Paperclip,
-  Pencil,
-  Send,
-  Smile,
-  X,
-} from "lucide-react";
+import { CornerUpLeft, FileText, Paperclip, Pencil, Send, Smile, X } from "lucide-react";
 import type { ChatMessage } from "../../types/chat.types";
 import EmojiPicker from "../../components/chat/EmojiPicker";
 import { formatFileSize } from "./chatUtils";
@@ -87,9 +79,7 @@ export function ChatComposer({
               {pf.status === "uploading" && (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
               )}
-              {pf.status === "error" && (
-                <span className="text-[10px] text-red-500">Error</span>
-              )}
+              {pf.status === "error" && <span className="text-[10px] text-red-500">Error</span>}
               <button
                 type="button"
                 onClick={() => setPendingFiles((prev) => prev.filter((f) => f.id !== pf.id))}

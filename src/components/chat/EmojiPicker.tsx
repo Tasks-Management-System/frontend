@@ -755,14 +755,16 @@ export default function EmojiPicker({ onSelect, variant = "light" }: Props) {
   const footer = isDark ? "border-gray-700 bg-gray-950/90" : "border-gray-100 bg-white";
   const footerMuted = isDark ? "text-gray-500" : "text-gray-400";
 
-  const previewEmoji = hovered ?? (displayedEmojis[0] ?? "😀");
+  const previewEmoji = hovered ?? displayedEmojis[0] ?? "😀";
 
   return (
     <div className={`flex w-[320px] flex-col overflow-hidden rounded-2xl border ${shell}`}>
       {/* Search */}
       <div className={`border-b px-3 pt-3 pb-2 ${searchWrap}`}>
         <div className="relative">
-          <Search className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${searchIcon}`} />
+          <Search
+            className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${searchIcon}`}
+          />
           <input
             type="text"
             placeholder="Search all emoji"
@@ -783,7 +785,9 @@ export default function EmojiPicker({ onSelect, variant = "light" }: Props) {
               title={cat.label}
               onClick={() => setActiveCategory(i)}
               className={`flex flex-1 items-center justify-center py-2 text-base transition-all ${
-                activeCategory === i ? `border-b-2 ${tabActive} opacity-100` : "opacity-45 hover:opacity-80"
+                activeCategory === i
+                  ? `border-b-2 ${tabActive} opacity-100`
+                  : "opacity-45 hover:opacity-80"
               }`}
             >
               {cat.icon}
@@ -816,7 +820,9 @@ export default function EmojiPicker({ onSelect, variant = "light" }: Props) {
 
       {/* Preview footer — Slack-style */}
       <div className={`flex items-center gap-2 border-t px-3 py-2 ${footer}`}>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center text-2xl">{previewEmoji}</span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center text-2xl">
+          {previewEmoji}
+        </span>
         <div className="min-w-0 flex-1">
           <p className={`text-[10px] font-semibold uppercase tracking-wider ${footerMuted}`}>
             {!search && CATEGORIES[activeCategory].label}

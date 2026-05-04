@@ -11,9 +11,7 @@ const STORAGE_KEY = "chatUnreadCounts";
 
 type UnreadMap = Record<string, number>; // senderId → unread count
 
-export type DesktopNotificationPermission =
-  | NotificationPermission
-  | "unsupported"; // SSR or Notification API unavailable
+export type DesktopNotificationPermission = NotificationPermission | "unsupported"; // SSR or Notification API unavailable
 
 function getDesktopPermissionFlag(): DesktopNotificationPermission {
   if (!isDesktopNotificationSupported()) return "unsupported";
@@ -67,8 +65,8 @@ function saveToStorage(counts: UnreadMap) {
 export function ChatNotificationProvider({ children }: { children: ReactNode }) {
   const [unreadCounts, setUnreadCounts] = useState<UnreadMap>(loadFromStorage);
   const [activeChatUserId, setActiveChatUserId] = useState("");
-  const [desktopPermission, setDesktopPermission] = useState<DesktopNotificationPermission>(
-    () => getDesktopPermissionFlag()
+  const [desktopPermission, setDesktopPermission] = useState<DesktopNotificationPermission>(() =>
+    getDesktopPermissionFlag()
   );
 
   const totalUnread = Object.values(unreadCounts).reduce((s, n) => s + n, 0);

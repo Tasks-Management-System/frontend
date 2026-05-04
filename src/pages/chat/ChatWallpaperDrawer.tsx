@@ -24,9 +24,7 @@ export function ChatWallpaperDrawer({
       >
         <WallpaperPicker current={wallpaper} onChange={setWallpaper} onClose={onClose} />
       </div>
-      {open && (
-        <div className="absolute inset-0 z-30 bg-black/20" onClick={onClose} />
-      )}
+      {open && <div className="absolute inset-0 z-30 bg-black/20" onClick={onClose} />}
     </>
   );
 }

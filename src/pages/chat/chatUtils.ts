@@ -46,7 +46,10 @@ export function aggregateReactions(reactions: ChatReaction[] | undefined, curren
 /** Parse a reply-prefixed message into its quoted part and body.
  *  Format written by handleSend: "> Name: original\n\nactual reply"
  *  Returns { quote: { name, text } | null, body: string } */
-export function parseMessage(raw: string): { quote: { name: string; text: string } | null; body: string } {
+export function parseMessage(raw: string): {
+  quote: { name: string; text: string } | null;
+  body: string;
+} {
   if (!raw.startsWith("> ")) return { quote: null, body: raw };
   const newlineIdx = raw.indexOf("\n\n");
   if (newlineIdx === -1) return { quote: null, body: raw };

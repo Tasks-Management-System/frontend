@@ -44,9 +44,7 @@ export function ChatHeader({
         <div className="flex items-center gap-1.5">
           <Circle
             className={`h-2 w-2 ${
-              isSelectedOnline
-                ? "fill-emerald-500 text-emerald-500"
-                : "fill-gray-300 text-gray-300"
+              isSelectedOnline ? "fill-emerald-500 text-emerald-500" : "fill-gray-300 text-gray-300"
             }`}
           />
           <span className="text-xs text-gray-500">

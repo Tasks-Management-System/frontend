@@ -188,14 +188,15 @@ export function MessageBubble({
             </button>
           ))}
           {hoveredEmoji && (
-  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 w-max rounded-lg border bg-white shadow-lg p-2 text-xs">
-    
-    <div className="font-semibold mb-1">{hoveredEmoji}</div>
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 w-max rounded-lg border bg-white shadow-lg p-2 text-xs">
+              <div className="font-semibold mb-1">{hoveredEmoji}</div>
 
-    <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
-                {grouped.find((g) => g.emoji === hoveredEmoji)?.users.map((u: { _id: string; name: string }) => (
-                  <span key={u._id}>{u._id === currentUserId ? "You" : u.name}</span>
-                ))}
+              <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
+                {grouped
+                  .find((g) => g.emoji === hoveredEmoji)
+                  ?.users.map((u: { _id: string; name: string }) => (
+                    <span key={u._id}>{u._id === currentUserId ? "You" : u.name}</span>
+                  ))}
               </div>
             </div>
           )}

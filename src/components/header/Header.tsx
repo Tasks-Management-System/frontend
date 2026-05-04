@@ -234,8 +234,8 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
             </p>
             {desktopPermission === "denied" ? (
               <p className="mt-0.5 text-xs leading-snug text-gray-600">
-                Browser notifications are blocked. Enable them in your browser settings for this site
-                to get message banners.
+                Browser notifications are blocked. Enable them in your browser settings for this
+                site to get message banners.
               </p>
             ) : desktopPermission === "unsupported" ? (
               <p className="mt-0.5 text-xs leading-snug text-gray-600">
