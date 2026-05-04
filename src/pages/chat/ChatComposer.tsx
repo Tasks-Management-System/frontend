@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import type { ChangeEvent, Dispatch, KeyboardEvent, RefObject, SetStateAction } from "react";
 import { CornerUpLeft, FileText, Paperclip, Pencil, Send, Smile, X } from "lucide-react";
@@ -61,19 +61,19 @@ export function ChatComposer({
   onEmojiSelect,
 }: ChatComposerProps) {
   const mentionContainerRef = useRef<HTMLDivElement>(null);
+  const [caretPos, setCaretPos] = useState(0);
 
-  // Detect @query at cursor position
-  const getMentionQuery = useCallback((): string | null => {
-    const ta = inputRef.current;
-    if (!ta) return null;
-    const cursor = ta.selectionStart ?? 0;
-    const text = messageInput.slice(0, cursor);
-    const match = text.match(/@([^\s@]*)$/);
+  const mentionQuery = useMemo((): string | null => {
+    const before = messageInput.slice(0, caretPos);
+    const match = before.match(/@([^\s@]*)$/);
     return match ? match[1] : null;
-  }, [messageInput, inputRef]);
+  }, [messageInput, caretPos]);
 
-  const mentionQuery = getMentionQuery();
   const showMentions = mentionQuery !== null;
+
+  const syncCaretFromTarget = useCallback((target: HTMLTextAreaElement) => {
+    setCaretPos(target.selectionStart ?? 0);
+  }, []);
 
   const dismissIncompleteMention = useCallback(() => {
     const ta = inputRef.current;
@@ -244,7 +244,7 @@ export function ChatComposer({
         <div ref={mentionContainerRef} className="relative min-w-0 flex-1">
           {showMentions && (
             <MentionSuggestions
-              query={mentionQuery}
+              query={mentionQuery ?? ""}
               users={availableUsers}
               currentUserId={currentUserId}
               onSelect={handleMentionSelect}
@@ -254,12 +254,18 @@ export function ChatComposer({
           <textarea
             ref={inputRef}
             value={messageInput}
-            onChange={onInputChange}
+            onChange={(e) => {
+              syncCaretFromTarget(e.target);
+              onInputChange(e);
+            }}
             onKeyDown={onKeyDown}
             placeholder="Type a message... (@mention someone)"
             rows={1}
             className="max-h-32 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-500/20"
             style={{ height: "auto", minHeight: "44px" }}
+            onSelect={(e) => syncCaretFromTarget(e.currentTarget)}
+            onKeyUp={(e) => syncCaretFromTarget(e.currentTarget)}
+            onClick={(e) => syncCaretFromTarget(e.currentTarget)}
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;
               target.style.height = "auto";

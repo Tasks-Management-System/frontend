@@ -4,6 +4,7 @@ import {
   useRef,
   useCallback,
   useMemo,
+  startTransition,
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
@@ -79,13 +80,17 @@ const Chat = () => {
 
   useEffect(() => {
     if (selectedUserId && chatData?.data) {
-      setMessages(chatData.data.map((m) => ({ ...m, reactions: m.reactions ?? [] })));
+      startTransition(() => {
+        setMessages(chatData.data.map((m) => ({ ...m, reactions: m.reactions ?? [] })));
+      });
     }
   }, [chatData, selectedUserId]);
 
   useEffect(() => {
     if (selectedGroupId && groupChatData?.data) {
-      setMessages(groupChatData.data.map((m) => ({ ...m, reactions: m.reactions ?? [] })));
+      startTransition(() => {
+        setMessages(groupChatData.data.map((m) => ({ ...m, reactions: m.reactions ?? [] })));
+      });
     }
   }, [groupChatData, selectedGroupId]);
 

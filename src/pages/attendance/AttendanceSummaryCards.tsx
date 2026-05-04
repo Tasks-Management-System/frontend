@@ -116,13 +116,11 @@ export function AttendanceSummaryCards({
 
   const { data, isLoading, isError } = useAttendanceSummary(from, to, true, orgContext);
 
-  const summaries = data?.summaries ?? [];
-
-  // For non-team-viewers, only show their own summary
   const displaySummaries = useMemo(() => {
+    const summaries = data?.summaries ?? [];
     if (canViewTeam) return summaries;
     return summaries.filter((s) => String(s.user._id) === String(selfUserId));
-  }, [summaries, canViewTeam, selfUserId]);
+  }, [data?.summaries, canViewTeam, selfUserId]);
 
   const quickRanges = useMemo(() => {
     const mo = new Date(today.getFullYear(), today.getMonth(), 1);

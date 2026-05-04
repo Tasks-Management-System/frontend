@@ -9,7 +9,7 @@ import {
 import type { AttendanceRecord, AttendanceSegment } from "../../types/attendance.types";
 import { breakLineText, formatClock, formatMs } from "./attendanceUtils";
 
-export const STATUS_UI: Record<string, { label: string; className: string }> = {
+const STATUS_UI: Record<string, { label: string; className: string }> = {
   not_started: {
     label: "Not started",
     className: "bg-slate-100 text-slate-700 ring-1 ring-slate-200/80",
