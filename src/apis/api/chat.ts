@@ -58,6 +58,13 @@ export const editMessageApi = (messageId: string, message: string) =>
     { auth: true }
   );
 
+export const toggleReactionApi = (messageId: string, emoji: string) =>
+  api.post<{ success: boolean; data: { reactions: import("../../types/chat.types").ChatReaction[] } }>(
+    `/chat/message/${messageId}/reaction`,
+    { emoji },
+    { auth: true }
+  );
+
 export const useOnlineUsers = () => {
   return useQuery({
     queryKey: ["onlineUsers"],

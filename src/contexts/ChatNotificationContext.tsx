@@ -1,10 +1,24 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { socket } from "../utils/socket";
 import type { ChatMessage } from "../types/chat.types";
+import {
+  isDesktopNotificationSupported,
+  notifyIncomingDesktopChat,
+  requestChatDesktopNotifications,
+} from "../utils/desktopNotification";
 
 const STORAGE_KEY = "chatUnreadCounts";
 
 type UnreadMap = Record<string, number>; // senderId → unread count
+
+export type DesktopNotificationPermission =
+  | NotificationPermission
+  | "unsupported"; // SSR or Notification API unavailable
+
+function getDesktopPermissionFlag(): DesktopNotificationPermission {
+  if (!isDesktopNotificationSupported()) return "unsupported";
+  return Notification.permission;
+}
 
 type ChatNotificationContextValue = {
   /** Per-sender unread counts */
@@ -18,6 +32,10 @@ type ChatNotificationContextValue = {
   /** Tell the context which chat is currently open so messages from that sender
    *  don't increment the badge while the conversation is visible */
   setActiveChatUser: (userId: string) => void;
+  /** Browser native notification permission (HTTPS or localhost required) */
+  desktopPermission: DesktopNotificationPermission;
+  /** Prompt for permission (needs a prior user gesture, e.g. button click). */
+  requestDesktopNotifications: () => Promise<boolean>;
 };
 
 const ChatNotificationContext = createContext<ChatNotificationContextValue>({
@@ -26,6 +44,8 @@ const ChatNotificationContext = createContext<ChatNotificationContextValue>({
   clearUnread: () => undefined,
   clearAll: () => undefined,
   setActiveChatUser: () => undefined,
+  desktopPermission: "unsupported",
+  requestDesktopNotifications: async () => false,
 });
 
 function loadFromStorage(): UnreadMap {
@@ -47,8 +67,21 @@ function saveToStorage(counts: UnreadMap) {
 export function ChatNotificationProvider({ children }: { children: ReactNode }) {
   const [unreadCounts, setUnreadCounts] = useState<UnreadMap>(loadFromStorage);
   const [activeChatUserId, setActiveChatUserId] = useState("");
+  const [desktopPermission, setDesktopPermission] = useState<DesktopNotificationPermission>(
+    () => getDesktopPermissionFlag()
+  );
 
   const totalUnread = Object.values(unreadCounts).reduce((s, n) => s + n, 0);
+
+  useEffect(() => {
+    setDesktopPermission(getDesktopPermissionFlag());
+  }, []);
+
+  const requestDesktopNotifications = useCallback(async () => {
+    const ok = await requestChatDesktopNotifications();
+    setDesktopPermission(getDesktopPermissionFlag());
+    return ok;
+  }, []);
 
   // Listen for incoming messages globally so the badge works on every page
   useEffect(() => {
@@ -63,6 +96,8 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
       if (msg.sender._id === currentUserId) return;
 
       const senderId = msg.sender._id;
+
+      notifyIncomingDesktopChat(msg, activeChatUserId);
 
       // If this conversation is currently open, don't count it
       if (senderId === activeChatUserId) return;
@@ -101,7 +136,15 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
 
   return (
     <ChatNotificationContext.Provider
-      value={{ unreadCounts, totalUnread, clearUnread, clearAll, setActiveChatUser }}
+      value={{
+        unreadCounts,
+        totalUnread,
+        clearUnread,
+        clearAll,
+        setActiveChatUser,
+        desktopPermission,
+        requestDesktopNotifications,
+      }}
     >
       {children}
     </ChatNotificationContext.Provider>

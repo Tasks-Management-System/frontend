@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { User, Settings, LogOut, ChevronDown, Menu, Coffee, Bell } from "lucide-react";
 import { useMyInvites } from "../../apis/api/organization";
-import { useLocation } from "react-router-dom";
 import { useUserById, useLogout } from "../../apis/api/auth";
 import {
   clientCurrentSessionWorkedMs,
@@ -19,6 +18,7 @@ import { resolveProfileImageUrl } from "../../utils/mediaUrl";
 import { getStoredUserRoles, userHasAnyRole, type AppRole } from "../../utils/moduleAccess";
 import { clearSession, getUserId } from "../../utils/session";
 import { disconnectSocket } from "../../utils/socket";
+import { useChatNotifications } from "../../contexts/ChatNotificationContext";
 
 const routeTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -184,6 +184,8 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
     }
   };
 
+  const { desktopPermission, requestDesktopNotifications } = useChatNotifications();
+
   const location = useLocation();
   const title =
     routeTitles[location.pathname] ??
@@ -217,9 +219,52 @@ const Header = ({ onOpenSidebar }: HeaderProps) => {
   const mainHint =
     status === "on_break" ? "End break" : status === "working" ? "Punch out" : "Punch in";
 
+  const showDesktopAlertsBanner =
+    desktopPermission === "default" ||
+    desktopPermission === "denied" ||
+    desktopPermission === "unsupported";
+
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/80 shadow-sm sticky top-0 z-30 min-h-16">
-      <div className="flex items-center justify-between min-h-16 px-4 sm:px-6">
+    <header className="sticky top-0 z-30 min-h-16 border-b border-gray-200/80 bg-white/90 shadow-sm backdrop-blur-md">
+      {showDesktopAlertsBanner && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-200/70 bg-gradient-to-r from-violet-50/95 to-indigo-50/90 px-4 py-2.5 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90">
+              Desktop alerts
+            </p>
+            {desktopPermission === "denied" ? (
+              <p className="mt-0.5 text-xs leading-snug text-gray-600">
+                Browser notifications are blocked. Enable them in your browser settings for this site
+                to get message banners.
+              </p>
+            ) : desktopPermission === "unsupported" ? (
+              <p className="mt-0.5 text-xs leading-snug text-gray-600">
+                Notifications need a secure page (HTTPS or localhost). Chat desktop alerts aren’t
+                available on this URL.
+              </p>
+            ) : (
+              <p className="mt-0.5 text-xs leading-snug text-gray-700">
+                Get a native notification when someone messages you (HTTPS or localhost).
+              </p>
+            )}
+          </div>
+          {desktopPermission === "default" && (
+            <button
+              type="button"
+              className="shrink-0 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700"
+              onClick={() =>
+                void requestDesktopNotifications().then((ok) => {
+                  toast.success(ok ? "Desktop alerts enabled" : "Permission not granted");
+                })
+              }
+            >
+              Allow notifications
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="flex min-h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           {onOpenSidebar ? (
             <button

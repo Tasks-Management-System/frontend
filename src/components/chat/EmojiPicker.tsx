@@ -723,11 +723,14 @@ const CATEGORIES: { label: string; icon: string; emojis: string[] }[] = [
 
 type Props = {
   onSelect: (emoji: string) => void;
+  /** Slack-style dark popover for message reactions */
+  variant?: "light" | "dark";
 };
 
-export default function EmojiPicker({ onSelect }: Props) {
+export default function EmojiPicker({ onSelect, variant = "light" }: Props) {
   const [activeCategory, setActiveCategory] = useState(0);
   const [search, setSearch] = useState("");
+  const [hovered, setHovered] = useState<string | null>(null);
 
   const searchResults = useMemo(() => {
     if (!search.trim()) return null;
@@ -737,25 +740,42 @@ export default function EmojiPicker({ onSelect }: Props) {
 
   const displayedEmojis = searchResults ?? CATEGORIES[activeCategory].emojis;
 
+  const isDark = variant === "dark";
+  const shell = isDark
+    ? "border-gray-700 bg-gray-900 text-gray-100 shadow-2xl ring-1 ring-white/10"
+    : "border-gray-200 bg-white shadow-xl";
+  const searchWrap = isDark ? "border-gray-700" : "border-gray-100";
+  const searchIcon = isDark ? "text-gray-500" : "text-gray-400";
+  const inputCls = isDark
+    ? "border-gray-600 bg-gray-800 py-2 pl-8 pr-3 text-sm text-gray-100 placeholder:text-gray-500 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30"
+    : "border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-400/20";
+  const catBorder = isDark ? "border-gray-700" : "border-gray-100";
+  const tabActive = isDark ? "border-violet-400" : "border-violet-500";
+  const gridHover = isDark ? "hover:bg-gray-800" : "hover:bg-violet-50";
+  const footer = isDark ? "border-gray-700 bg-gray-950/90" : "border-gray-100 bg-white";
+  const footerMuted = isDark ? "text-gray-500" : "text-gray-400";
+
+  const previewEmoji = hovered ?? (displayedEmojis[0] ?? "😀");
+
   return (
-    <div className="flex w-[320px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+    <div className={`flex w-[320px] flex-col overflow-hidden rounded-2xl border ${shell}`}>
       {/* Search */}
-      <div className="border-b border-gray-100 px-3 pt-3 pb-2">
+      <div className={`border-b px-3 pt-3 pb-2 ${searchWrap}`}>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          <Search className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${searchIcon}`} />
           <input
             type="text"
-            placeholder="Search emoji..."
+            placeholder="Search all emoji"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-400/20"
+            className={`w-full rounded-lg border ${inputCls}`}
           />
         </div>
       </div>
 
       {/* Category tabs — hidden during search */}
       {!search && (
-        <div className="flex border-b border-gray-100 px-1">
+        <div className={`flex border-b px-1 ${catBorder}`}>
           {CATEGORIES.map((cat, i) => (
             <button
               key={cat.label}
@@ -763,9 +783,7 @@ export default function EmojiPicker({ onSelect }: Props) {
               title={cat.label}
               onClick={() => setActiveCategory(i)}
               className={`flex flex-1 items-center justify-center py-2 text-base transition-all ${
-                activeCategory === i
-                  ? "border-b-2 border-violet-500 opacity-100"
-                  : "opacity-40 hover:opacity-70"
+                activeCategory === i ? `border-b-2 ${tabActive} opacity-100` : "opacity-45 hover:opacity-80"
               }`}
             >
               {cat.icon}
@@ -777,15 +795,17 @@ export default function EmojiPicker({ onSelect }: Props) {
       {/* Emoji grid */}
       <div className="h-52 overflow-y-auto p-2">
         {displayedEmojis.length === 0 ? (
-          <p className="pt-8 text-center text-xs text-gray-400">No emojis found</p>
+          <p className={`pt-8 text-center text-xs ${footerMuted}`}>No emojis found</p>
         ) : (
           <div className="grid grid-cols-8 gap-0.5">
             {displayedEmojis.map((emoji, i) => (
               <button
                 key={`${emoji}-${i}`}
                 type="button"
+                onMouseEnter={() => setHovered(emoji)}
+                onMouseLeave={() => setHovered(null)}
                 onClick={() => onSelect(emoji)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition hover:bg-violet-50 hover:scale-110 active:scale-95"
+                className={`flex h-9 w-9 items-center justify-center rounded-lg text-xl transition ${gridHover} hover:scale-110 active:scale-95`}
               >
                 {emoji}
               </button>
@@ -794,14 +814,17 @@ export default function EmojiPicker({ onSelect }: Props) {
         )}
       </div>
 
-      {/* Category label footer */}
-      {!search && (
-        <div className="border-t border-gray-100 px-3 py-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-            {CATEGORIES[activeCategory].label}
+      {/* Preview footer — Slack-style */}
+      <div className={`flex items-center gap-2 border-t px-3 py-2 ${footer}`}>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center text-2xl">{previewEmoji}</span>
+        <div className="min-w-0 flex-1">
+          <p className={`text-[10px] font-semibold uppercase tracking-wider ${footerMuted}`}>
+            {!search && CATEGORIES[activeCategory].label}
+            {search && "Search"}
           </p>
+          <p className="truncate text-xs font-medium opacity-90">{previewEmoji}</p>
         </div>
-      )}
+      </div>
     </div>
   );
 }

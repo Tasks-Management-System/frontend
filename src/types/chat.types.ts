@@ -18,6 +18,11 @@ export interface ChatAttachment {
   size: number;
 }
 
+export interface ChatReaction {
+  emoji: string;
+  user: ChatUser;
+}
+
 export interface ChatMessage {
   _id: string;
   sender: ChatUser;
@@ -27,6 +32,7 @@ export interface ChatMessage {
   isEdited?: boolean;
   attachments?: ChatAttachment[];
   replyTo?: ReplyToMessage | null;
+  reactions?: ChatReaction[];
   createdAt: string;
   updatedAt: string;
 }
