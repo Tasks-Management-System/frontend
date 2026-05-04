@@ -71,10 +71,6 @@ export function ChatNotificationProvider({ children }: { children: ReactNode }) 
 
   const totalUnread = Object.values(unreadCounts).reduce((s, n) => s + n, 0);
 
-  useEffect(() => {
-    setDesktopPermission(getDesktopPermissionFlag());
-  }, []);
-
   const requestDesktopNotifications = useCallback(async () => {
     const ok = await requestChatDesktopNotifications();
     setDesktopPermission(getDesktopPermissionFlag());

@@ -108,6 +108,8 @@ const Chat = () => {
 
   useEffect(() => {
     if (chatData?.data) {
+      // Sync TanStack Query result into mutable list (socket merges require local state).
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional cache → state bridge
       setMessages(chatData.data.map((m) => ({ ...m, reactions: m.reactions ?? [] })));
     }
   }, [chatData, selectedUserId]);
